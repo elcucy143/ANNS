@@ -37,7 +37,6 @@ const CategoryPage = ({ title }) => {
             <div className="product-grid">
                 {products.length > 0 ? (
                     <>
-                        {displayTitle === "Women's Wear" && <h2 className="subsection-title">New arrivals coming soon to Women's Wear!</h2>}
                         <div className="products-list">
                             {products.map(product => (
                                 <ProductCard key={product.id} product={product} />

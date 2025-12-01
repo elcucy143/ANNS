@@ -24,13 +24,13 @@
     /* Ensure track is wide enough */
 }
 
-.product-card {
+.carousel-card {
     width: 280px;
     flex-shrink: 0;
     transition: transform 0.3s ease;
 }
 
-.product-card:hover {
+.carousel-card:hover {
     transform: translateY(-5px);
 }
 
@@ -49,7 +49,7 @@
     transition: transform 0.5s ease;
 }
 
-.product-card:hover .product-image img {
+.carousel-card:hover .product-image img {
     transform: scale(1.05);
 }
 
@@ -68,7 +68,7 @@
     transition: bottom 0.3s ease;
 }
 
-.product-card:hover .add-to-cart-btn {
+.carousel-card:hover .add-to-cart-btn {
     bottom: 0;
 }
 

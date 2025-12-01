@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, ShoppingBag, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, ShoppingBag, Search, User } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 import './Navbar.css';
 import logo from '../assets/logo.jpg';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { getCartCount } = useCart();
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setTimeout(() => document.getElementById('search-input')?.focus(), 100);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
   };
 
   const navLinks = [
@@ -30,7 +51,10 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons mobile-only">
-          <ShoppingBag size={24} />
+          <Link to="/cart" className="cart-icon-link">
+            <ShoppingBag size={24} />
+            {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
+          </Link>
           <button onClick={toggleMenu} className="menu-toggle">
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -50,8 +74,26 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons desktop-only">
-          <Search size={24} className="icon" />
-          <ShoppingBag size={24} className="icon" />
+          {isSearchOpen ? (
+            <form onSubmit={handleSearchSubmit} className="search-form">
+              <input
+                id="search-input"
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => !searchQuery && setIsSearchOpen(false)}
+              />
+              <button type="submit"><Search size={20} /></button>
+            </form>
+          ) : (
+            <Search size={24} className="icon" onClick={toggleSearch} />
+          )}
+          <User size={24} className="icon" />
+          <Link to="/cart" className="cart-icon-link">
+            <ShoppingBag size={24} className="icon" />
+            {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
+          </Link>
         </div>
       </div>
     </nav>

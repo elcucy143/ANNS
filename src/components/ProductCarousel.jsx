@@ -23,7 +23,7 @@ const ProductCarousel = () => {
                 <div className="carousel-container">
                     <div className="carousel-track">
                         {products.map((product) => (
-                            <div key={product.id} className="product-card">
+                            <div key={product.id} className="carousel-card">
                                 <div className="product-image">
                                     <img src={product.image} alt={product.name} />
                                     <button className="add-to-cart-btn">Add to Cart</button>

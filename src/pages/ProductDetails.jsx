@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Star, Truck, RefreshCw, Clock, Minus, Plus } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
 
 import productsData from '../assets/json/products.json';
@@ -9,6 +10,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 
 const ProductDetails = () => {
     const { id } = useParams();
+    const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Red');
@@ -47,6 +49,10 @@ const ProductDetails = () => {
         } else if (type === 'decrement' && quantity > 1) {
             setQuantity(prev => prev - 1);
         }
+    };
+
+    const handleAddToCart = () => {
+        addToCart(product, quantity, selectedSize, selectedColor);
     };
 
     return (
@@ -119,7 +125,7 @@ const ProductDetails = () => {
                             <span>{quantity}</span>
                             <button onClick={() => handleQuantityChange('increment')}><Plus size={16} /></button>
                         </div>
-                        <button className="add-to-cart-primary">Add to Cart</button>
+                        <button className="add-to-cart-primary" onClick={handleAddToCart}>Add to Cart</button>
                     </div>
 
                     {/* Shipping Info */}
