@@ -1,0 +1,241 @@
+{
+    "Womens Wear": [
+        {
+            "id": "ww001",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹2,500.00",
+            "discount": "20% off",
+            "image": "/src/assets/banarasi-saree.png",
+            "otherImages": [
+                "/src/assets/cotton-kurti.png",
+                "/src/assets/banarasi-saree.png"
+            ],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        },
+        {
+            "id": "ww002",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,000.00",
+            "discount": "",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "blue",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        },
+        {
+            "id": "ww003",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,050.00",
+            "discount": "",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        },
+        {
+            "id": "ww005",
+            "name": "Test product",
+            "description": "Test product description",
+            "price": "1,200",
+            "discount": "10% off",
+            "image": "",
+            "color": "yellow",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL"
+            ],
+            "stock": "25",
+            "featured": "no"
+        }
+    ],
+    "Accessories": [
+        {
+            "id": "acc001",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,050.00",
+            "discount": "20% off",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        }
+    ],
+    "Mens Wear": [
+        {
+            "id": "mw001",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,050.00",
+            "discount": "20% off",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        }
+    ],
+    "Gifts": [
+        {
+            "id": "gif001",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,050.00",
+            "discount": "20% off",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        }
+    ],
+    "Jewellery": [
+        {
+            "id": "jw001",
+            "name": "Embroidery Anarkali Suit",
+            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
+            "available": "",
+            "price": "₹1,050.00",
+            "discount": "20% off",
+            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "otherImages": [],
+            "color": "red",
+            "sizes": [
+                "S",
+                "M",
+                "L",
+                "XL",
+                "XXL"
+            ],
+            "subcategory": [],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [
+                "rev001",
+                "rev002",
+                "rev003",
+                "rev004"
+            ],
+            "shipping": {},
+            "featured": "yes",
+            "campaign": ""
+        }
+    ]
+}
