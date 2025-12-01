@@ -1,9 +1,7 @@
 .product-card {
     width: 100%;
-    max-width: 300px;
     flex-shrink: 0;
     transition: transform 0.3s ease;
-    margin: 0 auto;
 }
 
 .product-card:hover {
