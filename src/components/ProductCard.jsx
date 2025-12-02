@@ -5,8 +5,7 @@ import './ProductCard.css';
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
 
-    const handleAddToCart = (e) => {
-        e.preventDefault();
+    const handleAddToCart = () => {
         addToCart(product);
     };
 

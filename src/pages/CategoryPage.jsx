@@ -34,14 +34,12 @@ const CategoryPage = ({ title }) => {
                 <p>Explore our latest collection of {displayTitle}.</p>
             </header>
 
-            <div className="product-grid">
+            <div className="products-list">
                 {products.length > 0 ? (
                     <>
-                        <div className="products-list">
-                            {products.map(product => (
-                                <ProductCard key={product.id} product={product} />
-                            ))}
-                        </div>
+                        {products.map(product => (
+                            <ProductCard key={product.id} product={product} />
+                        ))}
                     </>
                 ) : (
                     <div className="empty-state">
