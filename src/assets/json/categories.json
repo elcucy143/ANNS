@@ -1,0 +1,61 @@
+{
+    "categories": [
+        {
+            "name": "Women's Wear",
+            "subCategories": [
+                "Three piece sets",
+                "Two piece sets",
+                "One piece kurtis",
+                "Anarkalis",
+                "Cord sets",
+                "Tunics",
+                "Long skirts",
+                "Combos - sale"
+            ]
+        },
+        {
+            "name": "Gifts",
+            "subCategories": [
+                "Customized hampers",
+                "Combo sets",
+                "Customized wallets",
+                "Customized bottles & mugs",
+                "Table tops",
+                "Resin items",
+                "Customized frames",
+                "Wall hangings",
+                "Customized chocolates",
+                "Customized clocks",
+                "Customized keychains",
+                "Customized chains",
+                "Handmade crafts"
+            ]
+        },
+        {
+            "name": "Jewellery",
+            "subCategories": [
+                "Diamond finish harams",
+                "Diamond finish necksets",
+                "Diamond finish earrings",
+                "Hip belts",
+                "Matt finish harams",
+                "Matt finish necksets",
+                "Matt finish earrings",
+                "Locket sets",
+                "Studs",
+                "Black beads sets",
+                "Invisible/ minimalist chains",
+                "Malas",
+                "Bracelets & kadas",
+                "Sun and moon",
+                "Tikkas",
+                "Bangles",
+                "Changeable stones",
+                "Combo sets",
+                "Jada billas",
+                "Rings",
+                "Champa swaraalu & maateelu"
+            ]
+        }
+    ]
+}

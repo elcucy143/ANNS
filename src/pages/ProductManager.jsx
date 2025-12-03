@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import productsData from '../assets/json/products.json';
+import categoriesData from '../assets/json/categories.json';
 import './ProductManager.css';
 
 const ProductManager = () => {
@@ -14,13 +15,20 @@ const ProductManager = () => {
             id: '',
             name: '',
             description: '',
+            available: '',
             price: '',
             discount: '',
             image: '',
+            otherImages: [],
             color: '',
             sizes: [],
+            subcategory: [],
             stock: '',
-            featured: 'no'
+            similarProducts: [],
+            reviews: [],
+            shipping: [],
+            featured: 'no',
+            campaign: []
         };
     }
 
@@ -30,7 +38,17 @@ const ProductManager = () => {
         } else {
             const product = products[selectedCategory].find(p => p.id === selectedProductId);
             if (product) {
-                setFormData({ ...product });
+                // Normalize data types to ensure arrays are arrays
+                setFormData({
+                    ...product,
+                    sizes: Array.isArray(product.sizes) ? product.sizes : [],
+                    otherImages: Array.isArray(product.otherImages) ? product.otherImages : [],
+                    subcategory: Array.isArray(product.subcategory) ? product.subcategory : [],
+                    similarProducts: Array.isArray(product.similarProducts) ? product.similarProducts : [],
+                    reviews: Array.isArray(product.reviews) ? product.reviews : [],
+                    shipping: Array.isArray(product.shipping) ? product.shipping : [],
+                    campaign: Array.isArray(product.campaign) ? product.campaign : []
+                });
             }
         }
     }, [selectedProductId, selectedCategory, products]);
@@ -49,6 +67,16 @@ const ProductManager = () => {
             ...prev,
             [field]: value
         }));
+    };
+
+    const getSubcategories = () => {
+        // Map product category keys to categories.json names if needed
+        const categoryMap = {
+            "Womens Wear": "Women's Wear"
+        };
+        const searchName = categoryMap[selectedCategory] || selectedCategory;
+        const category = categoriesData.categories.find(c => c.name === searchName);
+        return category ? category.subCategories : [];
     };
 
     const handleSubmit = (e) => {
@@ -161,6 +189,16 @@ const ProductManager = () => {
                     />
                 </div>
 
+                <div className="form-group">
+                    <label>Available (e.g., In Stock):</label>
+                    <input
+                        type="text"
+                        name="available"
+                        value={formData.available}
+                        onChange={handleInputChange}
+                    />
+                </div>
+
                 <div className="form-row">
                     <div className="form-group">
                         <label>Price:</label>
@@ -193,6 +231,16 @@ const ProductManager = () => {
                     />
                 </div>
 
+                <div className="form-group">
+                    <label>Other Images (comma separated URLs):</label>
+                    <textarea
+                        name="otherImages"
+                        value={formData.otherImages?.join(', ') || ''}
+                        onChange={(e) => handleArrayChange(e, 'otherImages')}
+                        rows="2"
+                    />
+                </div>
+
                 <div className="form-row">
                     <div className="form-group">
                         <label>Color:</label>
@@ -214,6 +262,36 @@ const ProductManager = () => {
                     </div>
                 </div>
 
+                <div className="form-group">
+                    <label>Subcategory:</label>
+                    <div className="subcategory-options">
+                        {getSubcategories().length > 0 ? (
+                            <select
+                                multiple
+                                value={formData.subcategory}
+                                onChange={(e) => {
+                                    const options = [...e.target.selectedOptions];
+                                    const values = options.map(option => option.value);
+                                    setFormData(prev => ({ ...prev, subcategory: values }));
+                                }}
+                                style={{ height: '100px' }}
+                            >
+                                {getSubcategories().map(sub => (
+                                    <option key={sub} value={sub}>{sub}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="text"
+                                placeholder="No predefined subcategories. Type manually (comma separated)"
+                                value={formData.subcategory?.join(', ') || ''}
+                                onChange={(e) => handleArrayChange(e, 'subcategory')}
+                            />
+                        )}
+                        <small>Hold Ctrl/Cmd to select multiple</small>
+                    </div>
+                </div>
+
                 <div className="form-row">
                     <div className="form-group">
                         <label>Stock:</label>
@@ -231,6 +309,47 @@ const ProductManager = () => {
                             <option value="no">No</option>
                         </select>
                     </div>
+                </div>
+
+                <div className="form-group">
+                    <label>Campaign (comma separated):</label>
+                    <input
+                        type="text"
+                        name="campaign"
+                        value={formData.campaign?.join(', ') || ''}
+                        onChange={(e) => handleArrayChange(e, 'campaign')}
+                        placeholder="e.g., Pan India Shipping, Easy Returns"
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Shipping Info (comma separated):</label>
+                    <input
+                        type="text"
+                        name="shipping"
+                        value={formData.shipping?.join(', ') || ''}
+                        onChange={(e) => handleArrayChange(e, 'shipping')}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Reviews (IDs comma separated):</label>
+                    <input
+                        type="text"
+                        name="reviews"
+                        value={formData.reviews?.join(', ') || ''}
+                        onChange={(e) => handleArrayChange(e, 'reviews')}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label>Similar Products (IDs comma separated):</label>
+                    <input
+                        type="text"
+                        name="similarProducts"
+                        value={formData.similarProducts?.join(', ') || ''}
+                        onChange={(e) => handleArrayChange(e, 'similarProducts')}
+                    />
                 </div>
 
                 <div className="form-actions">
