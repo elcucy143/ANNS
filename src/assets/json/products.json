@@ -2,240 +2,484 @@
     "Womens Wear": [
         {
             "id": "ww001",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹2,500.00",
-            "discount": "20% off",
-            "image": "/src/assets/banarasi-saree.png",
+            "name": "Green Anarkali dress",
+            "description": "Traditional Indian green Anarkali dress",
+            "available": "In Stock",
+            "price": "₹2,000",
+            "discount": "10% off",
+            "image": "/src/assets/img/ww001-green-dress.jpg",
             "otherImages": [
-                "/src/assets/cotton-kurti.png",
-                "/src/assets/banarasi-saree.png"
+                "/src/assets/img/ww001-green-dress2.jpg"
             ],
-            "color": "red",
+            "color": "green",
             "sizes": [
-                "S",
                 "M",
                 "L",
-                "XL",
-                "XXL"
+                "XL"
             ],
-            "subcategory": [],
+            "subcategory": [
+                "Three piece sets"
+            ],
             "stock": "10",
-            "similarProducts": [],
+            "similarProducts": [
+                "ww002"
+            ],
             "reviews": [
                 "rev001",
-                "rev002",
-                "rev003",
-                "rev004"
+                "rev002"
             ],
-            "shipping": {},
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
             "featured": "yes",
-            "campaign": ""
+            "campaign": [
+                ""
+            ]
         },
         {
             "id": "ww002",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,000.00",
-            "discount": "",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-            "otherImages": [],
-            "color": "blue",
+            "name": "White long salwar suite dress",
+            "description": "Traditional Indian ",
+            "available": "In Stock",
+            "price": "₹1,500",
+            "discount": "10% off",
+            "image": "/src/assets/img/ww002-white-salwar-dress.jpg",
+            "otherImages": [
+                "/src/assets/img/ww002-white-salwar-dress2.jpg",
+                "/src/assets/img/ww002-white-salwar-dress3.jpg"
+            ],
+            "color": "white",
             "sizes": [
-                "S",
                 "M",
                 "L",
-                "XL",
-                "XXL"
+                "XL"
             ],
-            "subcategory": [],
-            "stock": "10",
-            "similarProducts": [],
-            "reviews": [
-                "rev001",
-                "rev002",
-                "rev003"
+            "subcategory": [
+                "Three piece sets",
+                "Anarkalis"
             ],
-            "shipping": {},
-            "featured": "yes",
-            "campaign": ""
-        },
-        {
-            "id": "ww003",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,050.00",
-            "discount": "",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-            "otherImages": [],
-            "color": "red",
-            "sizes": [
-                "S",
-                "M",
-                "L",
-                "XL",
-                "XXL"
+            "stock": "15",
+            "similarProducts": [
+                "ww001"
             ],
-            "subcategory": [],
-            "stock": "10",
-            "similarProducts": [],
             "reviews": [
                 "rev001",
                 "rev002",
                 "rev003",
                 "rev004"
             ],
-            "shipping": {},
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
             "featured": "yes",
-            "campaign": ""
+            "campaign": []
         },
         {
-            "id": "ww005",
-            "name": "Test product",
-            "description": "Test product description",
-            "price": "1,200",
-            "discount": "10% off",
-            "image": "",
-            "color": "yellow",
+            "id": "ww003",
+            "name": "Green Salwar suit dress",
+            "description": "Traditional Indian green Salwar suit dress",
+            "available": "",
+            "price": "₹1,800",
+            "discount": "",
+            "image": "/src/assets/img/ww003-thick-green-dress.jpg",
+            "otherImages": [
+                "/src/assets/img/ww003-thick-green-dress2.jpg"
+            ],
+            "color": "dark green",
             "sizes": [
                 "S",
                 "M",
                 "L",
                 "XL"
             ],
-            "stock": "25",
-            "featured": "no"
-        }
-    ],
-    "Accessories": [
-        {
-            "id": "acc001",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,050.00",
-            "discount": "20% off",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-            "otherImages": [],
-            "color": "red",
-            "sizes": [
-                "S",
-                "M",
-                "L",
-                "XL",
-                "XXL"
+            "subcategory": [
+                "Three piece sets",
+                "Anarkalis"
             ],
-            "subcategory": [],
             "stock": "10",
-            "similarProducts": [],
+            "similarProducts": [
+                "ww002",
+                "ww001"
+            ],
             "reviews": [
                 "rev001",
                 "rev002",
                 "rev003",
-                "rev004"
+                "rev004",
+                "rev005"
             ],
-            "shipping": {},
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
             "featured": "yes",
-            "campaign": ""
-        }
-    ],
-    "Mens Wear": [
+            "campaign": [
+                "NewArrivals"
+            ]
+        },
         {
-            "id": "mw001",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,050.00",
-            "discount": "20% off",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "id": "ww004",
+            "name": "Maroon Anarkali dress",
+            "description": "Traditional Indian maroon Anarkali dress",
+            "available": "In Stock",
+            "price": "₹1,500",
+            "discount": "10% off",
+            "image": "/src/assets/img/ww004-maroon-dress.jpg",
+            "otherImages": [],
+            "color": "maroon",
+            "sizes": [
+                "M",
+                "L",
+                "XL"
+            ],
+            "subcategory": [
+                "Three piece sets",
+                "Anarkalis"
+            ],
+            "stock": "5",
+            "similarProducts": [
+                "ww002",
+                "ww001"
+            ],
+            "reviews": [
+                "rev001",
+                "rev002"
+            ],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "yes",
+            "campaign": [
+                "NewArrivals"
+            ]
+        },
+        {
+            "id": "ww005",
+            "name": "Red dupatta Anarkali",
+            "description": "Traditional Indian red dupatta anarkali dress",
+            "available": "In Stock",
+            "price": "₹2,200",
+            "discount": "10% off",
+            "image": "/src/assets/img/ww005-red-anarkali-dress.jpg",
             "otherImages": [],
             "color": "red",
             "sizes": [
-                "S",
                 "M",
                 "L",
-                "XL",
-                "XXL"
+                "XL"
             ],
-            "subcategory": [],
-            "stock": "10",
-            "similarProducts": [],
+            "subcategory": [
+                "Three piece sets",
+                "Anarkalis"
+            ],
+            "stock": "5",
+            "similarProducts": [
+                "ww002"
+            ],
             "reviews": [
                 "rev001",
-                "rev002",
-                "rev003",
-                "rev004"
+                "rev002"
             ],
-            "shipping": {},
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
             "featured": "yes",
-            "campaign": ""
+            "campaign": [
+                "NewArrivals"
+            ]
+        },
+        {
+            "id": "ww006",
+            "name": "Maroon dupatta Anarkali dress",
+            "description": "Traditional Indian red dupatta Anarkali dress",
+            "available": "In Stock",
+            "price": "₹1,800",
+            "discount": "",
+            "image": "/src/assets/img/ww006-red-dupatta-dress.jpg",
+            "otherImages": [
+                "/src/assets/img/ww006-red-dupatta-dress2.jpg",
+                "/src/assets/img/ww006-red-dupatta-dress3.jpg",
+                "/src/assets/img/ww006-red-dupatta-dress4.jpg"
+            ],
+            "color": "maroon",
+            "sizes": [
+                "M",
+                "L",
+                "XL"
+            ],
+            "subcategory": [
+                "Three piece sets",
+                "Anarkalis"
+            ],
+            "stock": "5",
+            "similarProducts": [
+                "ww002",
+                "ww004"
+            ],
+            "reviews": [
+                "rev001",
+                "rev002"
+            ],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "no",
+            "campaign": [
+                "NewArrivals"
+            ]
         }
     ],
     "Gifts": [
         {
-            "id": "gif001",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,050.00",
-            "discount": "20% off",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "id": "gf001",
+            "name": "Men's gift set",
+            "description": "Men's engraved gift set",
+            "available": "In Stock",
+            "price": "₹2,000",
+            "discount": "10% off",
+            "image": "/src/assets/img/gf001-mens-giftset-kit1.jpg",
             "otherImages": [],
-            "color": "red",
-            "sizes": [
-                "S",
-                "M",
-                "L",
-                "XL",
-                "XXL"
+            "color": "black",
+            "sizes": [],
+            "subcategory": [
+                "Customized wallets",
+                "Customized bottles & mugs"
             ],
-            "subcategory": [],
             "stock": "10",
+            "similarProducts": [
+                "gf002"
+            ],
+            "reviews": [
+                "rev007",
+                "rev008"
+            ],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "yes",
+            "campaign": []
+        },
+        {
+            "id": "gf002",
+            "name": "Men's Gift set kit",
+            "description": "Custom men's Gift set kit",
+            "available": "In Stock",
+            "price": "₹1,800",
+            "discount": "10% off",
+            "image": "/src/assets/img/gf002-mens-giftset-kit2.jpg",
+            "otherImages": [],
+            "color": "black",
+            "sizes": [],
+            "subcategory": [
+                "Customized hampers",
+                "Combo sets",
+                "Customized wallets",
+                "Customized bottles & mugs"
+            ],
+            "stock": "10",
+            "similarProducts": [
+                "gf001"
+            ],
+            "reviews": [
+                "rev007",
+                "rev008"
+            ],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "no",
+            "campaign": []
+        },
+        {
+            "id": "gf003",
+            "name": "Customized men's gift set",
+            "description": "Customized men's gift set: Bottle, Coffe mug, notebook, Wallet",
+            "available": "In Stock",
+            "price": "₹1,800",
+            "discount": "10% off",
+            "image": "/src/assets/img/gf003-mens-giftset-kit3.jpg",
+            "otherImages": [],
+            "color": "black",
+            "sizes": [],
+            "subcategory": [
+                "Customized hampers",
+                "Combo sets",
+                "Customized wallets",
+                "Customized bottles & mugs"
+            ],
+            "stock": "",
+            "similarProducts": [
+                "gf001",
+                "gf002"
+            ],
+            "reviews": [],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "yes",
+            "campaign": []
+        },
+        {
+            "id": "gf005",
+            "name": "Couple's photo frame with timeline art",
+            "description": "Couple's photo frame with timeline art",
+            "available": "In Stock",
+            "price": "₹800",
+            "discount": "10% off",
+            "image": "/src/assets/img/gf005-couple-photoart.jpg",
+            "otherImages": [],
+            "color": "white",
+            "sizes": [
+                "5X6"
+            ],
+            "subcategory": [
+                "Customized frames"
+            ],
+            "stock": "5",
             "similarProducts": [],
             "reviews": [
-                "rev001",
-                "rev002",
-                "rev003",
-                "rev004"
+                "rev010",
+                "rev011"
             ],
-            "shipping": {},
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days"
+            ],
             "featured": "yes",
-            "campaign": ""
+            "campaign": []
         }
     ],
     "Jewellery": [
         {
             "id": "jw001",
-            "name": "Embroidery Anarkali Suit",
-            "description": "A stunning embroidered Anarkali suit with intricate detailing.",
-            "available": "",
-            "price": "₹1,050.00",
-            "discount": "20% off",
-            "image": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+            "name": "Black beads set",
+            "description": "Traditional and stylish Black beads set",
+            "available": "In Stock",
+            "price": "₹750",
+            "discount": "",
+            "image": "/src/assets/img/jw001-blackbeads-set.jpg",
             "otherImages": [],
-            "color": "red",
-            "sizes": [
-                "S",
-                "M",
-                "L",
-                "XL",
-                "XXL"
+            "color": "black",
+            "sizes": [],
+            "subcategory": [
+                "Black beads sets"
             ],
-            "subcategory": [],
             "stock": "10",
             "similarProducts": [],
-            "reviews": [
-                "rev001",
-                "rev002",
-                "rev003",
-                "rev004"
+            "reviews": [],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
             ],
-            "shipping": {},
-            "featured": "yes",
-            "campaign": ""
+            "featured": "no",
+            "campaign": []
+        },
+        {
+            "id": "jw002",
+            "name": "Ear rings",
+            "description": "Designer ear rings",
+            "available": "In Stock",
+            "price": "₹500",
+            "discount": "10% off",
+            "image": "/src/assets/img/jw002-ear-flower-rings.jpg",
+            "otherImages": [],
+            "color": "gold",
+            "sizes": [
+                "M",
+                "L",
+                "XL"
+            ],
+            "subcategory": [
+                "Matt finish earrings",
+                "Rings"
+            ],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "no",
+            "campaign": []
+        },
+        {
+            "id": "jw003",
+            "name": "Butta Ear rings",
+            "description": "Designer Butta ear rings",
+            "available": "In Stock",
+            "price": "₹800",
+            "discount": "10% off",
+            "image": "/src/assets/img/jw003-ear-rings-butta.jpg",
+            "otherImages": [],
+            "color": "gold",
+            "sizes": [
+                "M",
+                "L",
+                "XL"
+            ],
+            "subcategory": [
+                "Matt finish earrings",
+                "Rings"
+            ],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "no",
+            "campaign": []
+        },
+        {
+            "id": "jw005",
+            "name": "Designer necklace set",
+            "description": "Designer necklace set",
+            "available": "In Stock",
+            "price": "₹1000",
+            "discount": "10% off",
+            "image": "/src/assets/img/jw005-green-necklace-set1.jpg",
+            "otherImages": [],
+            "color": "green",
+            "sizes": [
+                "M",
+                "L",
+                "XL"
+            ],
+            "subcategory": [
+                "Necklaces"
+            ],
+            "stock": "10",
+            "similarProducts": [],
+            "reviews": [],
+            "shipping": [
+                "Pan India Shipping",
+                "Ships in 3-5 days",
+                "Easy Returns"
+            ],
+            "featured": "no",
+            "campaign": []
         }
     ]
 }

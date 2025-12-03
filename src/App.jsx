@@ -26,7 +26,7 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/admin" element={<ProductManager />} />
+            <Route path="/product-manager" element={<ProductManager />} />
           </Routes>
         </Layout>
       </Router>

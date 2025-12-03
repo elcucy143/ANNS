@@ -123,3 +123,23 @@
 .btn-export:hover {
     opacity: 0.9;
 }
+
+.subcategory-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.subcategory-options select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    overflow-y: auto;
+}
+
+.subcategory-options small {
+    color: #666;
+    font-size: 0.8rem;
+    font-style: italic;
+}
