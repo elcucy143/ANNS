@@ -4,6 +4,8 @@ import { Trash2, Minus, Plus, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './Cart.css';
 
+import images from '../assets/images';
+
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
 
@@ -25,35 +27,38 @@ const Cart = () => {
 
             <div className="cart-grid">
                 <div className="cart-items">
-                    {cartItems.map((item) => (
-                        <div key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
-                            <div className="cart-item-image">
-                                <img src={item.image} alt={item.name} />
-                            </div>
-                            <div className="cart-item-details">
-                                <h3>{item.name}</h3>
-                                <p className="item-variant">Size: {item.size} | Color: {item.color}</p>
-                                <p className="item-price">{item.price}</p>
-                            </div>
-                            <div className="cart-item-actions">
-                                <div className="quantity-selector small">
-                                    <button onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity - 1)}>
-                                        <Minus size={16} />
-                                    </button>
-                                    <span>{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity + 1)}>
-                                        <Plus size={16} />
+                    {cartItems.map((item) => {
+                        const filename = item.image ? item.image.split('/').pop() : '';
+                        return (
+                            <div key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
+                                <div className="cart-item-image">
+                                    <img src={images[filename] || item.image} alt={item.name} />
+                                </div>
+                                <div className="cart-item-details">
+                                    <h3>{item.name}</h3>
+                                    <p className="item-variant">Size: {item.size} | Color: {item.color}</p>
+                                    <p className="item-price">{item.price}</p>
+                                </div>
+                                <div className="cart-item-actions">
+                                    <div className="quantity-selector small">
+                                        <button onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity - 1)}>
+                                            <Minus size={16} />
+                                        </button>
+                                        <span>{item.quantity}</span>
+                                        <button onClick={() => updateQuantity(item.id, item.size, item.color, item.quantity + 1)}>
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                    <button
+                                        className="remove-btn"
+                                        onClick={() => removeFromCart(item.id, item.size, item.color)}
+                                    >
+                                        <Trash2 size={20} />
                                     </button>
                                 </div>
-                                <button
-                                    className="remove-btn"
-                                    onClick={() => removeFromCart(item.id, item.size, item.color)}
-                                >
-                                    <Trash2 size={20} />
-                                </button>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <div className="cart-summary">

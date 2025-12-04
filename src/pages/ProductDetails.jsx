@@ -8,6 +8,8 @@ import productsData from '../assets/json/products.json';
 
 import Breadcrumbs from '../components/Breadcrumbs';
 
+import images from '../assets/images';
+
 const ProductDetails = () => {
     const { id } = useParams();
     const { addToCart } = useCart();
@@ -55,6 +57,12 @@ const ProductDetails = () => {
         addToCart(product, quantity, selectedSize, selectedColor);
     };
 
+    const getImageSrc = (path) => {
+        if (!path) return '';
+        const filename = path.split('/').pop();
+        return images[filename] || path;
+    };
+
     return (
         <div className="product-details-page container">
             <Breadcrumbs items={breadcrumbItems} />
@@ -62,11 +70,11 @@ const ProductDetails = () => {
                 {/* Image Gallery */}
                 <div className="product-gallery">
                     <div className="main-image">
-                        <img src={product.images[0]} alt={product.name} />
+                        <img src={getImageSrc(product.images[0])} alt={product.name} />
                     </div>
                     <div className="thumbnail-list">
                         {product.images.map((img, index) => (
-                            <img key={index} src={img} alt={`View ${index + 1}`} className="thumbnail" />
+                            <img key={index} src={getImageSrc(img)} alt={`View ${index + 1}`} className="thumbnail" />
                         ))}
                     </div>
                 </div>
