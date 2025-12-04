@@ -16,6 +16,12 @@ const ProductDetails = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedSize, setSelectedSize] = useState('M');
     const [selectedColor, setSelectedColor] = useState('Red');
+    const [selectedImage, setSelectedImage] = useState(null);
+
+    // Reset selected image when product changes
+    React.useEffect(() => {
+        setSelectedImage(null);
+    }, [id]);
 
     // Find product by ID across all categories and get category name
     const findProductAndCategory = (id) => {
@@ -69,12 +75,27 @@ const ProductDetails = () => {
             <div className="product-details-grid">
                 {/* Image Gallery */}
                 <div className="product-gallery">
-                    <div className="main-image">
-                        <img src={getImageSrc(product.images[0])} alt={product.name} />
+                    <div
+                        className="main-image"
+                        onMouseMove={(e) => {
+                            const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                            const x = ((e.clientX - left) / width) * 100;
+                            const y = ((e.clientY - top) / height) * 100;
+                            e.currentTarget.style.setProperty('--x', `${x}%`);
+                            e.currentTarget.style.setProperty('--y', `${y}%`);
+                        }}
+                    >
+                        <img src={getImageSrc(selectedImage || product.images[0])} alt={product.name} />
                     </div>
                     <div className="thumbnail-list">
                         {product.images.map((img, index) => (
-                            <img key={index} src={getImageSrc(img)} alt={`View ${index + 1}`} className="thumbnail" />
+                            <img
+                                key={index}
+                                src={getImageSrc(img)}
+                                alt={`View ${index + 1}`}
+                                className={`thumbnail ${selectedImage === img || (!selectedImage && index === 0) ? 'active' : ''}`}
+                                onClick={() => setSelectedImage(img)}
+                            />
                         ))}
                     </div>
                 </div>
