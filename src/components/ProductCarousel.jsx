@@ -4,6 +4,8 @@ import './ProductCarousel.css';
 
 import productsData from '../assets/json/products.json';
 
+import images from '../assets/images';
+
 // Flatten products from all categories and pick a few for the carousel
 const getAllProducts = () => {
     let allProducts = [];
@@ -22,18 +24,21 @@ const ProductCarousel = () => {
                 <h2 className="section-title">Featured Collection</h2>
                 <div className="carousel-container">
                     <div className="carousel-track">
-                        {products.map((product) => (
-                            <div key={product.id} className="carousel-card">
-                                <div className="product-image">
-                                    <img src={product.image} alt={product.name} />
-                                    <button className="add-to-cart-btn">Add to Cart</button>
+                        {products.map((product) => {
+                            const filename = product.image ? product.image.split('/').pop() : '';
+                            return (
+                                <div key={product.id} className="carousel-card">
+                                    <div className="product-image">
+                                        <img src={images[filename] || product.image} alt={product.name} />
+                                        <button className="add-to-cart-btn">Add to Cart</button>
+                                    </div>
+                                    <div className="product-info">
+                                        <h3>{product.name}</h3>
+                                        <span className="price">{product.price}</span>
+                                    </div>
                                 </div>
-                                <div className="product-info">
-                                    <h3>{product.name}</h3>
-                                    <span className="price">{product.price}</span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>
