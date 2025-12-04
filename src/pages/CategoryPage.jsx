@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import './CategoryPage.css';
 
@@ -10,6 +10,9 @@ import Breadcrumbs from '../components/Breadcrumbs';
 
 const CategoryPage = ({ title }) => {
     const { category } = useParams();
+    const [searchParams] = useSearchParams();
+    const subcategoryFilter = searchParams.get('subcategory');
+
     const displayTitle = title || category?.replace('-', ' ');
 
     // Helper to map display title to JSON key
@@ -20,7 +23,17 @@ const CategoryPage = ({ title }) => {
     };
 
     const categoryKey = getCategoryKey(displayTitle);
-    const products = productsData[categoryKey] || [];
+    let products = productsData[categoryKey] || [];
+
+    // Filter by subcategory if present
+    if (subcategoryFilter) {
+        products = products.filter(product => {
+            if (Array.isArray(product.subcategory)) {
+                return product.subcategory.includes(subcategoryFilter);
+            }
+            return product.subcategory === subcategoryFilter;
+        });
+    }
 
     const breadcrumbItems = [
         { label: displayTitle, path: `/${displayTitle.toLowerCase().replace(/ /g, '-')}` }
