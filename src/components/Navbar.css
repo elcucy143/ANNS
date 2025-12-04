@@ -217,6 +217,23 @@
     flex-direction: column;
 }
 
+.dropdown-menu.multi-column {
+    flex-direction: row;
+    min-width: 440px;
+    /* Adjust based on column width */
+}
+
+.dropdown-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    border-right: 1px solid #eee;
+}
+
+.dropdown-column:last-child {
+    border-right: none;
+}
+
 .dropdown-item {
     padding: 10px 20px;
     color: var(--color-text);

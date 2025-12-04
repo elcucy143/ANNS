@@ -86,20 +86,24 @@ const Navbar = () => {
                   </Link>
 
                   {categoryData && activeDropdown === link.name && (
-                    <div className="dropdown-menu">
-                      {categoryData.subCategories.map((sub) => (
-                        <Link
-                          key={sub}
-                          to={`${link.path}?subcategory=${encodeURIComponent(sub)}`}
-                          className="dropdown-item"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsOpen(false);
-                            setActiveDropdown(null);
-                          }}
-                        >
-                          {sub}
-                        </Link>
+                    <div className={`dropdown-menu ${categoryData.subCategories.length > 10 ? 'multi-column' : ''}`}>
+                      {Array.from({ length: Math.ceil(categoryData.subCategories.length / 10) }).map((_, colIndex) => (
+                        <div key={colIndex} className="dropdown-column">
+                          {categoryData.subCategories.slice(colIndex * 10, (colIndex + 1) * 10).map((sub) => (
+                            <Link
+                              key={sub}
+                              to={`${link.path}?subcategory=${encodeURIComponent(sub)}`}
+                              className="dropdown-item"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                setActiveDropdown(null);
+                              }}
+                            >
+                              {sub}
+                            </Link>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   )}
