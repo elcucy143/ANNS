@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './ProductCarousel.css';
 
 import productsData from '../assets/json/products.json';
@@ -28,14 +29,24 @@ const ProductCarousel = () => {
                             const filename = product.image ? product.image.split('/').pop() : '';
                             return (
                                 <div key={product.id} className="carousel-card">
-                                    <div className="product-image">
-                                        <img src={images[filename] || product.image} alt={product.name} />
-                                        <button className="add-to-cart-btn">Add to Cart</button>
-                                    </div>
-                                    <div className="product-info">
-                                        <h3>{product.name}</h3>
-                                        <span className="price">{product.price}</span>
-                                    </div>
+                                    <Link to={`/product/${product.id}`} className="carousel-product-link">
+                                        <div className="product-image">
+                                            <img src={images[filename] || product.image} alt={product.name} />
+                                            <button
+                                                className="add-to-cart-btn"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    // Add to cart logic can be added here later
+                                                }}
+                                            >
+                                                Add to Cart
+                                            </button>
+                                        </div>
+                                        <div className="product-info">
+                                            <h3>{product.name}</h3>
+                                            <span className="price">{product.price}</span>
+                                        </div>
+                                    </Link>
                                 </div>
                             );
                         })}

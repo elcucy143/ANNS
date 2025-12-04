@@ -5,8 +5,11 @@ import { useCart } from '../context/CartContext';
 import './Navbar.css';
 import logo from '../assets/logo.jpg';
 
+import categoriesData from '../assets/json/categories.json';
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { getCartCount } = useCart();
@@ -62,14 +65,47 @@ const Navbar = () => {
 
         <div className={`navbar-links ${isOpen ? 'active' : ''}`}>
           <ul>
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <Link to={link.path} onClick={() => setIsOpen(false)}>
-                  {link.name}
-                  {/* {link.name === 'Sale' && <img src="/src/assets/santa-hat.png" alt="Santa Hat" className="sparkle-icon" />} */}
-                </Link>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const categoryData = categoriesData.categories.find(c => c.name === link.name);
+
+              return (
+                <li
+                  key={link.name}
+                  className="nav-item"
+                  onMouseEnter={() => setActiveDropdown(link.name)}
+                  onMouseLeave={() => setActiveDropdown(null)}
+                >
+                  <Link
+                    to={link.path}
+                    onClick={() => {
+                      setIsOpen(false);
+                      setActiveDropdown(null);
+                    }}
+                  >
+                    {link.name}
+                  </Link>
+
+                  {categoryData && activeDropdown === link.name && (
+                    <div className="dropdown-menu">
+                      {categoryData.subCategories.map((sub) => (
+                        <Link
+                          key={sub}
+                          to={`${link.path}?subcategory=${encodeURIComponent(sub)}`}
+                          className="dropdown-item"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOpen(false);
+                            setActiveDropdown(null);
+                          }}
+                        >
+                          {sub}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
 
