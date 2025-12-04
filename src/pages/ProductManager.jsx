@@ -5,10 +5,14 @@ import './ProductManager.css';
 
 const ProductManager = () => {
     const [products, setProducts] = useState(productsData);
-    const [selectedCategory, setSelectedCategory] = useState(Object.keys(productsData)[0]);
+    const [selectedCategory, setSelectedCategory] = useState(Object.keys(productsData).length > 0 ? Object.keys(productsData)[0] : '');
     const [selectedProductId, setSelectedProductId] = useState('new');
     const [formData, setFormData] = useState(getInitialFormData());
     const [notification, setNotification] = useState('');
+
+    if (!productsData || Object.keys(productsData).length === 0) {
+        return <div className="container" style={{ padding: '50px' }}>Loading products or no data available...</div>;
+    }
 
     function getInitialFormData() {
         return {
