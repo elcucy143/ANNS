@@ -51,14 +51,9 @@ const Footer = () => {
                 </div>
             </div>
             <div className="footer-bottom">
-                <p>&copy; {new Date().getFullYear()} ANNS. All rights reserved.</p>
-                <div className="payment-methods">
-                    <span>Secure Payments: </span>
-                    <span>Visa</span>
-                    <span>Mastercard</span>
-                    <span>PayPal</span>
-                    <span>Stripe</span>
-                </div>
+                <p>
+                    &copy; {new Date().getFullYear()} ANNS. All rights reserved. | Secure Payments: Visa  Mastercard  PayPal
+                </p>
             </div>
         </footer>
     );
