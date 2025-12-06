@@ -9,6 +9,7 @@ import productsData from '../assets/json/products.json';
 import Breadcrumbs from '../components/Breadcrumbs';
 
 import images from '../assets/images';
+import ProductCarousel from '../components/ProductCarousel';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -115,21 +116,23 @@ const ProductDetails = () => {
                     <p className="product-description">{product.description}</p>
 
                     {/* Colors */}
-                    <div className="product-option">
-                        <h3>Color: {selectedColor}</h3>
-                        <div className="color-options">
-                            {/* JSON has single color string, adapting to array for UI consistency or just showing one */}
-                            {[product.color || 'Red'].map(color => (
-                                <button
-                                    key={color}
-                                    className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
-                                    style={{ backgroundColor: color.toLowerCase() }}
-                                    onClick={() => setSelectedColor(color)}
-                                    aria-label={color}
-                                />
-                            ))}
+                    {product.color && (
+                        <div className="product-option">
+                            <h3>Color: {selectedColor}</h3>
+                            <div className="color-options">
+                                {/* JSON has single color string, adapting to array for UI consistency or just showing one */}
+                                {[product.color].map(color => (
+                                    <button
+                                        key={color}
+                                        className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
+                                        style={{ backgroundColor: color.toLowerCase() }}
+                                        onClick={() => setSelectedColor(color)}
+                                        aria-label={color}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Sizes */}
                     <div className="product-option">
@@ -174,7 +177,27 @@ const ProductDetails = () => {
                     </div>
                 </div>
             </div>
-        </div>
+
+
+            {/* Similar Products Carousel */}
+            {
+                product.similarProducts && product.similarProducts.length > 0 && (() => {
+                    // Resolve similar product IDs to actual product objects
+                    const similarProductsList = product.similarProducts.map(id => {
+                        const { product: p } = findProductAndCategory(id);
+                        return p;
+                    }).filter(Boolean); // Filter out any not found products
+
+                    if (similarProductsList.length === 0) return null;
+
+                    return (
+                        <div className="similar-products-section">
+                            <ProductCarousel products={similarProductsList} title="You May Also Like" />
+                        </div>
+                    );
+                })()
+            }
+        </div >
     );
 };
 
