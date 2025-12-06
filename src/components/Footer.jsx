@@ -1,5 +1,5 @@
 import React from 'react';
-import { Facebook, Instagram, Twitter, Mail, MapPin, Phone } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, MapPin, Phone } from 'lucide-react';
 import './Footer.css';
 import logo from '../assets/logo-f.jpg';
 
@@ -35,18 +35,18 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4>Contact Us</h4>
                     <ul className="contact-info">
-                        <li><MapPin size={16} /> 123 Gachibowli, Hyderabad, TG, INDIA</li>
-                        <li><Phone size={16} /> +91 9981234567</li>
-                        <li><Mail size={16} /> hello@anns.com</li>
+                        <li><MapPin size={16} /> Plot no.24/25, Sri Sai Nilaya, Kukatpally, Hyderabad, TG, INDIA</li>
+                        <li><Phone size={16} /> +91 9849792562</li>
+                        <li><Mail size={16} /> sales@annsonline.shop</li>
                     </ul>
                 </div>
 
                 <div className="footer-section">
                     <h4>Follow Us</h4>
                     <div className="social-icons">
-                        <a href="#"><Instagram size={20} /></a>
-                        <a href="#"><Facebook size={20} /></a>
-                        <a href="#"><Twitter size={20} /></a>
+                        <a target="_blank" href="https://www.instagram.com/anns_attire?igsh=b3lxb3pnaDN5ZWdp"><Instagram size={20} /></a>
+                        <a target="_blank" href="https://www.facebook.com/share/1DtVBiVhwX/"><Facebook size={20} /></a>
+                        <a target="_blank" href="https://www.youtube.com/@a.s.trendsgifts"><Youtube size={20} /></a>
                     </div>
                 </div>
             </div>
