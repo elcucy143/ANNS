@@ -62,3 +62,13 @@
         gap: 40px;
     }
 }
+
+.success-msg {
+    color: green;
+    margin-top: 10px;
+}
+
+.error-msg {
+    color: red;
+    margin-top: 10px;
+}

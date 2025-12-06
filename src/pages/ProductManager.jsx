@@ -10,6 +10,32 @@ const ProductManager = () => {
     const [formData, setFormData] = useState(getInitialFormData());
     const [notification, setNotification] = useState('');
 
+    // Auth State
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [loginError, setLoginError] = useState('');
+
+    const PROTECTED_PASS_HASH = "YW5uc2FkbWluMjAyNQ=="; // annsadmin2025
+
+    useEffect(() => {
+        const isAuth = sessionStorage.getItem('pm_auth');
+        if (isAuth === 'true') {
+            setIsAuthenticated(true);
+        }
+    }, []);
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        // Simple base64 encode check
+        if (btoa(passwordInput) === PROTECTED_PASS_HASH) {
+            setIsAuthenticated(true);
+            sessionStorage.setItem('pm_auth', 'true');
+            setLoginError('');
+        } else {
+            setLoginError('Invalid Password');
+        }
+    };
+
     if (!productsData || Object.keys(productsData).length === 0) {
         return <div className="container" style={{ padding: '50px' }}>Loading products or no data available...</div>;
     }
@@ -56,6 +82,26 @@ const ProductManager = () => {
             }
         }
     }, [selectedProductId, selectedCategory, products]);
+
+    if (!isAuthenticated) {
+        return (
+            <div className="login-container container">
+                <form onSubmit={handleLogin} className="login-form">
+                    <h2>Restricted Access</h2>
+                    <p>Please enter password to continue</p>
+                    {loginError && <p className="error-msg">{loginError}</p>}
+                    <input
+                        type="password"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        placeholder="Password"
+                        autoFocus
+                    />
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        );
+    }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
