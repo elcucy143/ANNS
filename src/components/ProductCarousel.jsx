@@ -16,13 +16,14 @@ const getAllProducts = () => {
     return allProducts.slice(0, 5); // Display first 5 products
 };
 
-const products = getAllProducts();
+const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
+    // Use input products if provided, otherwise fetch default featured products
+    const products = inputProducts || getAllProducts();
 
-const ProductCarousel = () => {
     return (
         <section className="product-carousel-section">
             <div className="container">
-                <h2 className="section-title">Featured Collection</h2>
+                <h2 className="section-title">{title}</h2>
                 <div className="carousel-container">
                     <div className="carousel-track">
                         {products.map((product) => {
