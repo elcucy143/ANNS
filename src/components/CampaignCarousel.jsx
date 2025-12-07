@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './CampaignCarousel.css';
+import cmpWw from '../assets/cmp-ww.jpg';
+import cmpJw from '../assets/cmp-jw.jpg';
+import cmpGf from '../assets/cmp-gf.jpg';
 
+/*
 const campaigns = [
     {
         id: 1,
@@ -22,6 +26,31 @@ const campaigns = [
         title: 'Kids Collection',
         description: 'Adorable outfits for your little ones',
         image: 'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+        link: '/gifts'
+    }
+];
+*/
+
+const campaigns = [
+    {
+        id: 1,
+        title: 'Women\'s Wear',
+        description: 'Shop our Women’s Wear collection featuring designer dresses, ethnic wear, Indo-western outfits, and everyday essentials crafted for comfort and style.',
+        image: cmpWw,
+        link: '/womens-wear'
+    },
+    {
+        id: 2,
+        title: 'Jewellery Collection',
+        description: 'Browse our latest traditional and modern jewellery collection. Find handcrafted earrings, designer necklaces, and premium accessories perfect for every occasion.',
+        image: cmpJw,
+        link: '/sale'
+    },
+    {
+        id: 3,
+        title: 'Finely crafted Gift Collection',
+        description: 'Discover our finely crafted gift collection, designed to inspire joy and celebrate every special moment.',
+        image: cmpGf,
         link: '/gifts'
     }
 ];
