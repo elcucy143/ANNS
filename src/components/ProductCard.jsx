@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
                 </div>
                 <div className="product-info">
                     <h3>{product.name}</h3>
-                    <span className="price">{product.price}</span>
+                    <span className="price">₹{product.price}</span>
                 </div>
             </Link>
         </div>

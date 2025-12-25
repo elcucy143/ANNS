@@ -97,6 +97,7 @@
 .product-description {
     color: var(--color-text-light);
     line-height: 1.6;
+    white-space: pre-line;
 }
 
 .product-option h3 {

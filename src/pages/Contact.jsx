@@ -59,18 +59,18 @@ const Contact = () => {
                     <p>We'd love to hear from you. Visit our store or give us a call.</p>
 
                     <div className="info-item">
-                        <h3>Address</h3>
-                        <p>123 Gachibowli<br />Hyderabad, Telangana 500090</p>
+                        <h3>annsonline.shop </h3>
+                        <p>Plot no.24/25, Sri Sai Nilaya,<br />Kukatpally, Hyderabad, TG, INDIA.</p>
                     </div>
 
                     <div className="info-item">
                         <h3>Email</h3>
-                        <p>hello@anns.com</p>
+                        <p>sales@annsonline.shop</p>
                     </div>
 
                     <div className="info-item">
                         <h3>Phone</h3>
-                        <p>+91 99XXXXXXX</p>
+                        <p>+91 9849792562</p>
                     </div>
                 </div>
             </div>

@@ -1,2529 +1,4128 @@
 {
-    "Womens Wear": [
-        {
-            "id": "ww001",
-            "name": "Green Anarkali dress",
-            "description": "Traditional Indian green Anarkali dress",
-            "available": "In Stock",
-            "price": "₹2,000",
-            "discount": "10% off",
-            "image": "/src/assets/img/ww001-green-dress.jpg",
-            "otherImages": [
-                "/src/assets/img/ww001-green-dress2.jpg"
-            ],
-            "color": "green",
-            "sizes": [
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets"
-            ],
-            "stock": "10",
-            "similarProducts": [
-                "ww002"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": [
-                ""
-            ]
-        },
-        {
-            "id": "ww002",
-            "name": "White long salwar suite dress",
-            "description": "Traditional Indian ",
-            "available": "In Stock",
-            "price": "₹1,500",
-            "discount": "10% off",
-            "image": "/src/assets/img/ww002-white-salwar-dress.jpg",
-            "otherImages": [
-                "/src/assets/img/ww002-white-salwar-dress2.jpg",
-                "/src/assets/img/ww002-white-salwar-dress3.jpg"
-            ],
-            "color": "white",
-            "sizes": [
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets",
-                "Anarkalis"
-            ],
-            "stock": "15",
-            "similarProducts": [
-                "ww001"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002",
-                "rev003",
-                "rev004"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": []
-        },
-        {
-            "id": "ww003",
-            "name": "Green Salwar suit dress",
-            "description": "Traditional Indian green Salwar suit dress",
-            "available": "",
-            "price": "₹1,800",
-            "discount": "",
-            "image": "/src/assets/img/ww003-thick-green-dress.jpg",
-            "otherImages": [
-                "/src/assets/img/ww003-thick-green-dress2.jpg"
-            ],
-            "color": "dark green",
-            "sizes": [
-                "S",
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets",
-                "Anarkalis"
-            ],
-            "stock": "10",
-            "similarProducts": [
-                "ww002",
-                "ww001"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002",
-                "rev003",
-                "rev004",
-                "rev005"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": [
-                "NewArrivals"
-            ]
-        },
-        {
-            "id": "ww004",
-            "name": "Maroon Anarkali dress",
-            "description": "Traditional Indian maroon Anarkali dress",
-            "available": "In Stock",
-            "price": "₹1,500",
-            "discount": "10% off",
-            "image": "/src/assets/img/ww004-maroon-dress.jpg",
-            "otherImages": [],
-            "color": "maroon",
-            "sizes": [
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets",
-                "Anarkalis"
-            ],
-            "stock": "5",
-            "similarProducts": [
-                "ww002",
-                "ww001"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": [
-                "NewArrivals"
-            ]
-        },
-        {
-            "id": "ww005",
-            "name": "Red dupatta Anarkali",
-            "description": "Traditional Indian red dupatta anarkali dress",
-            "available": "In Stock",
-            "price": "₹2,200",
-            "discount": "10% off",
-            "image": "/src/assets/img/ww005-red-anarkali-dress.jpg",
-            "otherImages": [],
-            "color": "red",
-            "sizes": [
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets",
-                "Anarkalis"
-            ],
-            "stock": "5",
-            "similarProducts": [
-                "ww002"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": [
-                "NewArrivals"
-            ]
-        },
-        {
-            "id": "ww006",
-            "name": "Maroon dupatta Anarkali dress",
-            "description": "Traditional Indian red dupatta Anarkali dress",
-            "available": "In Stock",
-            "price": "₹1,800",
-            "discount": "",
-            "image": "/src/assets/img/ww006-red-dupatta-dress.jpg",
-            "otherImages": [
-                "/src/assets/img/ww006-red-dupatta-dress2.jpg",
-                "/src/assets/img/ww006-red-dupatta-dress3.jpg",
-                "/src/assets/img/ww006-red-dupatta-dress4.jpg"
-            ],
-            "color": "maroon",
-            "sizes": [
-                "M",
-                "L",
-                "XL"
-            ],
-            "subcategory": [
-                "Three piece sets",
-                "Anarkalis"
-            ],
-            "stock": "5",
-            "similarProducts": [
-                "ww002",
-                "ww004"
-            ],
-            "reviews": [
-                "rev001",
-                "rev002"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "no",
-            "campaign": [
-                "NewArrivals"
-            ]
-        }
-    ],
-    "Gifts": [
-        {
-            "id": "gf001",
-            "name": "Men's gift set",
-            "description": "Men's engraved gift set",
-            "available": "In Stock",
-            "price": "₹2,000",
-            "discount": "10% off",
-            "image": "/src/assets/img/gf001-mens-giftset-kit1.jpg",
-            "otherImages": [],
-            "color": "black",
-            "sizes": [],
-            "subcategory": [
-                "Customized wallets",
-                "Customized bottles & mugs"
-            ],
-            "stock": "10",
-            "similarProducts": [
-                "gf002"
-            ],
-            "reviews": [
-                "rev007",
-                "rev008"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": []
-        },
-        {
-            "id": "gf002",
-            "name": "Men's Gift set kit",
-            "description": "Custom men's Gift set kit",
-            "available": "In Stock",
-            "price": "₹1,800",
-            "discount": "10% off",
-            "image": "/src/assets/img/gf002-mens-giftset-kit2.jpg",
-            "otherImages": [],
-            "color": "black",
-            "sizes": [],
-            "subcategory": [
-                "Customized hampers",
-                "Combo sets",
-                "Customized wallets",
-                "Customized bottles & mugs"
-            ],
-            "stock": "10",
-            "similarProducts": [
-                "gf001"
-            ],
-            "reviews": [
-                "rev007",
-                "rev008"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "gf003",
-            "name": "Customized men's gift set",
-            "description": "Customized men's gift set: Bottle, Coffe mug, notebook, Wallet",
-            "available": "In Stock",
-            "price": "₹1,800",
-            "discount": "10% off",
-            "image": "/src/assets/img/gf003-mens-giftset-kit3.jpg",
-            "otherImages": [],
-            "color": "black",
-            "sizes": [],
-            "subcategory": [
-                "Customized hampers",
-                "Combo sets",
-                "Customized wallets",
-                "Customized bottles & mugs"
-            ],
-            "stock": "",
-            "similarProducts": [
-                "gf001",
-                "gf002"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days",
-                "Easy Returns"
-            ],
-            "featured": "yes",
-            "campaign": []
-        },
-        {
-            "id": "gf005",
-            "name": "Couple's photo frame with timeline art",
-            "description": "Couple's photo frame with timeline art",
-            "available": "In Stock",
-            "price": "₹800",
-            "discount": "10% off",
-            "image": "/src/assets/img/gf005-couple-photoart.jpg",
-            "otherImages": [],
-            "color": "white",
-            "sizes": [
-                "5X6"
-            ],
-            "subcategory": [
-                "Customized frames"
-            ],
-            "stock": "5",
-            "similarProducts": [],
-            "reviews": [
-                "rev010",
-                "rev011"
-            ],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 3-5 days"
-            ],
-            "featured": "yes",
-            "campaign": []
-        }
-    ],
-    "Jewellery": [
-        {
-            "id": "jwb0001",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0001-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0002"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0002",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0002-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0003"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0003",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0003-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0004"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0004",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0004-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0005"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0005",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0005-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0006"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0006",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹899",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0006-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0007"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0007",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0007-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0008"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0008",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0008-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0009"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0009",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0009-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0010"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0010",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0010-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0011"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0011",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0011-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0012"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0012",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0012-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0013"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0013",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0013-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0014"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0014",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹379",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0014-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0015"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0015",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0015-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0016"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0016",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0016-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0017"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0017",
-            "name": "Black Beads Layered chain",
-            "description": "Multi-layer fashion black beads",
-            "available": "In Stock",
-            "price": "₹599",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0017-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0018"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0018",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹329",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0018-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0019"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0019",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0019-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0020"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0020",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0020-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0021"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0021",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0021-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0022"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0022",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0022-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0023"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0023",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0023-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0024"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0024",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0024-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0025"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0025",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0025-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0026"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0026",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0026-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0027"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0027",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹149",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0027-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0028"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0028",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0028-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0029"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0029",
-            "name": "Black Beads Modern Style Chain",
-            "description": "Trend-driven piece for young fashion lovers.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0029-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0030"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0030",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹449",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0030-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0031"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0031",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹399",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0031-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0032"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0032",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0032-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0033"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0033",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0033-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0034"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0034",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0034-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0035"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0035",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0035-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0036"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0036",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹399",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0036-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0037"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0037",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹629",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0037-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0038"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0038",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0038-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0039"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0039",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0039-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0040"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0040",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹529",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0040-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0041"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0041",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹489",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0041-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0042"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0042",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹649",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0042-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0043"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0043",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹599",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0043-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0044"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0044",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹449",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0044-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0045"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0045",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹599",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0045-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0046"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0046",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹549",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0046-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0047"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0047",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0047-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0048"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0048",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0048-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0049"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0049",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0049-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0050"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0050",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0050-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0051"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0051",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹329",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0051-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0052"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0052",
-            "name": "Black Beads Signature Premium Necklace",
-            "description": "A premium necklace for high-fashion styling.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0052-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0053"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0053",
-            "name": "Black Beads Signature Premium Necklace",
-            "description": "A premium necklace for high-fashion styling.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0053-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0054"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0054",
-            "name": "Black Beads Signature Premium Necklace",
-            "description": "A premium necklace for high-fashion styling.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0054-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0055"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0055",
-            "name": "Black Beads Signature Premium Necklace",
-            "description": "A premium necklace for high-fashion styling.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0055-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0056"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0056",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0056-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0057"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0057",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1099",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0057-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0058"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0058",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0058-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0059"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0059",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1379",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0059-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0060"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0060",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1999",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0060-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0061"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0061",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1259",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0061-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0062"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0062",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1599",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0062-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0063"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0063",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1799",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0063-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0064"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0064",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹2299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0064-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0065"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0065",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1799",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0065-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0066"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0066",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹2499",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0066-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0067"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0067",
-            "name": "Black Beads Traditional Chain",
-            "description": "Perfect for cultural wear, festivals, and everyday traditions.",
-            "available": "In Stock",
-            "price": "₹1099",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0067-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0068"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0068",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹269",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0068-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0069"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0069",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0069-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0070"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0070",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹349",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0070-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0071"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0071",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0071-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0072"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0072",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹449",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0072-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0073"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0073",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹249",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0073-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0074"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0074",
-            "name": "Black Beads Daily wear",
-            "description": "Simple design made for everyday comfort and style.",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0074-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0075"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0075",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹529",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0075-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0076"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0076",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹299",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0076-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0077"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0077",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹399",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0077-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0078"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0078",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹449",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0078-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0079"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0079",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹399",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0079-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0080"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0080",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹569",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0080-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0081"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0081",
-            "name": "Black Beads Modern Style Chain set",
-            "description": "Trend-driven piece for young fashion lovers with earrings",
-            "available": "In Stock",
-            "price": "₹449",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0081-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0082"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0082",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0082-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0083"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        },
-        {
-            "id": "jwb0083",
-            "name": "Classic Black Beads chain",
-            "description": "Timeless black beads crafted for everyday style and comfort.",
-            "available": "In Stock",
-            "price": "₹199",
-            "discount": "",
-            "image": "/src/assets/img/jw/jwb0083-black-beads.jpg",
-            "otherImages": [],
-            "color": "",
-            "sizes": [],
-            "subcategory": [
-                "Black beads sets"
-            ],
-            "stock": 1000,
-            "similarProducts": [
-                "jwb0001"
-            ],
-            "reviews": [],
-            "shipping": [
-                "Pan India Shipping",
-                "Ships in 5 to 7 days"
-            ],
-            "featured": "no",
-            "campaign": []
-        }
-    ]
+  "Gifts": [
+    {
+      "id": "gf001",
+      "name": "Men's gift set",
+      "description": "Men's engraved gift set",
+      "available": "In Stock",
+      "price": "₹2,000",
+      "discount": "10% off",
+      "image": "/src/assets/img/gf001-mens-giftset-kit1.jpg",
+      "otherImages": [],
+      "color": "black",
+      "sizes": [],
+      "subcategory": [
+        "Customized wallets",
+        "Customized bottles & mugs"
+      ],
+      "stock": "10",
+      "similarProducts": [
+        "gf002"
+      ],
+      "reviews": [
+        "rev007",
+        "rev008"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": []
+    },
+    {
+      "id": "gf002",
+      "name": "Men's Gift set kit",
+      "description": "Custom men's Gift set kit",
+      "available": "In Stock",
+      "price": "₹1,800",
+      "discount": "10% off",
+      "image": "/src/assets/img/gf002-mens-giftset-kit2.jpg",
+      "otherImages": [],
+      "color": "black",
+      "sizes": [],
+      "subcategory": [
+        "Customized hampers",
+        "Combo sets",
+        "Customized wallets",
+        "Customized bottles & mugs"
+      ],
+      "stock": "10",
+      "similarProducts": [
+        "gf001"
+      ],
+      "reviews": [
+        "rev007",
+        "rev008"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "gf003",
+      "name": "Customized men's gift set",
+      "description": "Customized men's gift set: Bottle, Coffe mug, notebook, Wallet",
+      "available": "In Stock",
+      "price": "₹1,800",
+      "discount": "10% off",
+      "image": "/src/assets/img/gf003-mens-giftset-kit3.jpg",
+      "otherImages": [],
+      "color": "black",
+      "sizes": [],
+      "subcategory": [
+        "Customized hampers",
+        "Combo sets",
+        "Customized wallets",
+        "Customized bottles & mugs"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "gf001",
+        "gf002"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": []
+    },
+    {
+      "id": "gf005",
+      "name": "Couple's photo frame with timeline art",
+      "description": "Couple's photo frame with timeline art",
+      "available": "In Stock",
+      "price": "₹800",
+      "discount": "10% off",
+      "image": "/src/assets/img/gf005-couple-photoart.jpg",
+      "otherImages": [],
+      "color": "white",
+      "sizes": [
+        "5X6"
+      ],
+      "subcategory": [
+        "Customized frames"
+      ],
+      "stock": "5",
+      "similarProducts": [],
+      "reviews": [
+        "rev010",
+        "rev011"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days"
+      ],
+      "featured": "yes",
+      "campaign": []
+    }
+  ],
+  "Jewellery": [
+    {
+      "id": "jwb0001",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0001-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0002"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0002",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0002-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0003"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0003",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0003-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0004"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0004",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0004-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0005"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0005",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0005-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0006"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0006",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹899",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0006-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0007"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0007",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0007-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0008"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0008",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0008-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0009"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0009",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0009-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0010"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0010",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0010-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0011"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0011",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0011-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0012"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0012",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0012-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0013"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0013",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0013-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0014"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0014",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹379",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0014-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0015"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0015",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0015-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0016"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0016",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0016-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0017"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0017",
+      "name": "Black Beads Layered chain",
+      "description": "Multi-layer fashion black beads",
+      "available": "In Stock",
+      "price": "₹599",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0017-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0018"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0018",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹329",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0018-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0019"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0019",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0019-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0020"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0020",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0020-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0021"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0021",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0021-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0022"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0022",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0022-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0023"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0023",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0023-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0024"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0024",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0024-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0025"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0025",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0025-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0026"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0026",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0026-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0027"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0027",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹149",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0027-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0028"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0028",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0028-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0029"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0029",
+      "name": "Black Beads Modern Style Chain",
+      "description": "Trend-driven piece for young fashion lovers.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0029-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0030"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0030",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹449",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0030-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0031"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0031",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹399",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0031-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0032"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0032",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0032-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0033"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0033",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0033-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0034"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0034",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0034-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0035"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0035",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0035-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0036"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0036",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹399",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0036-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0037"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0037",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹629",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0037-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0038"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0038",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0038-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0039"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0039",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0039-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0040"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0040",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹529",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0040-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0041"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0041",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹489",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0041-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0042"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0042",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹649",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0042-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0043"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0043",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹599",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0043-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0044"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0044",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹449",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0044-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0045"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0045",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹599",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0045-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0046"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0046",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹549",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0046-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0047"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0047",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0047-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0048"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0048",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0048-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0049"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0049",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0049-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0050"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0050",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0050-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0051"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0051",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹329",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0051-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0052"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0052",
+      "name": "Black Beads Signature Premium Necklace",
+      "description": "A premium necklace for high-fashion styling.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0052-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0053"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0053",
+      "name": "Black Beads Signature Premium Necklace",
+      "description": "A premium necklace for high-fashion styling.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0053-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0054"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0054",
+      "name": "Black Beads Signature Premium Necklace",
+      "description": "A premium necklace for high-fashion styling.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0054-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0055"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0055",
+      "name": "Black Beads Signature Premium Necklace",
+      "description": "A premium necklace for high-fashion styling.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0055-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0056"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0056",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0056-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0057"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0057",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1099",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0057-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0058"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0058",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0058-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0059"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0059",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1379",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0059-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0060"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0060",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1999",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0060-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0061"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0061",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1259",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0061-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0062"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0062",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1599",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0062-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0063"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0063",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1799",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0063-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0064"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0064",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹2299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0064-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0065"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0065",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1799",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0065-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0066"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0066",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹2499",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0066-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0067"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0067",
+      "name": "Black Beads Traditional Chain",
+      "description": "Perfect for cultural wear, festivals, and everyday traditions.",
+      "available": "In Stock",
+      "price": "₹1099",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0067-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0068"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0068",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹269",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0068-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0069"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0069",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0069-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0070"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0070",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹349",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0070-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0071"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0071",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0071-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0072"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0072",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹449",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0072-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0073"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0073",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹249",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0073-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0074"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0074",
+      "name": "Black Beads Daily wear",
+      "description": "Simple design made for everyday comfort and style.",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0074-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0075"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0075",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹529",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0075-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0076"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0076",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹299",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0076-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0077"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0077",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹399",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0077-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0078"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0078",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹449",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0078-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0079"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0079",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹399",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0079-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0080"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0080",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹569",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0080-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0081"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0081",
+      "name": "Black Beads Modern Style Chain set",
+      "description": "Trend-driven piece for young fashion lovers with earrings",
+      "available": "In Stock",
+      "price": "₹449",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0081-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0082"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0082",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0082-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0083"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    },
+    {
+      "id": "jwb0083",
+      "name": "Classic Black Beads chain",
+      "description": "Timeless black beads crafted for everyday style and comfort.",
+      "available": "In Stock",
+      "price": "₹199",
+      "discount": "",
+      "image": "/src/assets/img/jw/jwb0083-black-beads.jpg",
+      "otherImages": [],
+      "color": "",
+      "sizes": [],
+      "subcategory": [
+        "Black beads sets"
+      ],
+      "stock": 1000,
+      "similarProducts": [
+        "jwb0001"
+      ],
+      "reviews": [],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 5 to 7 days"
+      ],
+      "featured": "no",
+      "campaign": []
+    }
+  ],
+  "Womens Wear": [
+    {
+      "id": "ww30067",
+      "name": "Pure cotton kurti set ",
+      "description": "*New festival collection*\n💗💗💗💗💗💗💗💗\n\n*Beautiful pure cotton kurti pant dupatta set💗*\n\n*Kurti fabric= cotton*\n*Pant fabric= cotton*\n*Duptta fabric= mul mul*\n\n*Work= ✋ Hand work*🪡 \n\n*Kurti length = 46+ inches*\n*Pant length = 38 inches* \n*Duppta length =2.20 miter*\n\n*Free shipping*\n\n*Ready to dispatch, keep posting*✈️✈️💃💫",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30067",
+      "otherImages": [
+        "ww30067.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30070",
+        "ww30069",
+        "ww30068",
+        "ww30066"
+      ],
+      "reviews": [
+        ""
+      ],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30069",
+      "name": "Pure cotton set",
+      "description": "*New festival collection*\n💗💗💗💗💗💗💗💗\n\n*Beautiful pure cotton kurti pant dupatta set💗*\n\n*Kurti fabric= cotton*\n*Pant fabric= cotton*\n*Duptta fabric= mul mul*\n\n*Work= ✋ Hand work*🪡 \n\n*Kurti length = 46+ inches*\n*Pant length = 38 inches* \n*Duppta length =2.20 miter*\n\n*Free shipping*\n\n*Ready to dispatch, keep posting*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30069",
+      "otherImages": [
+        "ww30069.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30067",
+        "ww30070",
+        "ww30068",
+        "ww30066"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30070",
+      "name": "Pure cotto",
+      "description": "*New festival collection*\n💗💗💗💗💗💗💗💗\n\n*Beautiful pure cotton kurti pant dupatta set💗*\n\n*Kurti fabric= cotton*\n*Pant fabric= cotton*\n*Duptta fabric= mul mul*\n\n*Work= ✋ Hand work*🪡 \n\n*Kurti length = 46+ inches*\n*Pant length = 38 inches* \n*Duppta length =2.20 miter*\n\n*Size available -: 38/40/42/44/46 (M to 3XL)*\n\n*Free shipping*\n\n*Ready to dispatch, keep posting*✈️✈️💃💫",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30070",
+      "otherImages": [
+        "ww30070.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30069",
+        "ww30068",
+        "ww30067",
+        "ww30066"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30039",
+      "name": "Beautiful kurti set",
+      "description": "*Article Details* \n💃 *Beautiful Pure cotton Fabric Moti Hand work on nace on kurta with cotton Printed pant with full Printed dupatta 3 piece sets*💃💃💃\n\n*Note:- Always Best Quality*\n⭐Fabric:  *Cotton 60/60*\n⭐Product: *Kurti + Palazzo+duppatta* \nFree shipping \n\n⭐ *Ready to Dispatch*✈️✈️✈️ \n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "999",
+      "discount": "",
+      "image": "ww30039",
+      "otherImages": [
+        "ww30039.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        ""
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30039",
+        "ww30040",
+        "ww30041",
+        "ww30042"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30040",
+      "name": "Beautiful kurti set ",
+      "description": "*Article Details* \n💃 *Beautiful Pure cotton Fabric Moti Hand work on nace on kurta with cotton Printed pant with full Printed dupatta 3 piece sets*💃💃💃\n\n*Note:- Always Best Quality*\n⭐Fabric:  *Cotton 60/60*\n⭐Product: *Kurti + Palazzo+duppatta* \n\nFree shipping \n\n⭐ *Ready to Dispatch*✈️✈️✈️ \n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "999",
+      "discount": "",
+      "image": "ww30040",
+      "otherImages": [
+        "ww30040.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30039",
+        "ww30041",
+        "ww30042",
+        "ww30043"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30041",
+      "name": "Bea",
+      "description": "*Article Details* \n💃 *Beautiful Pure cotton Fabric Moti Hand work on nace on kurta with cotton Printed pant with full Printed dupatta 3 piece sets*💃💃💃\n\n*Note:- Always Best Quality*\n⭐Fabric:  *Cotton 60/60*\n⭐Product: *Kurti + Palazzo+duppatta* \nFree shipping \n\n⭐ *Ready to Dispatch*✈️✈️✈️ \n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "999",
+      "discount": "",
+      "image": "ww30041",
+      "otherImages": [
+        "ww30041.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30039",
+        "ww30040",
+        "ww30042",
+        "ww30043"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30063",
+      "name": "Pure cotton aari handwork kurti set",
+      "description": "*New Launching ✨ 🤟*\n*We are Launching Cotton suit with Azrakh Duppata in this Festival Session*\n\n*Who make more comfortable and classy look* \n*Perfect collection for Office and Regular wear*\n\n*💗*\n*Colour - Navy Blue*\n\n*Fabric - (Pure Cotton 60 60)*\n *Kurti Length - 46*\n*Pant -38*\n*DUPATTA MULMUL -2.15*\n\n*Work - Beautiful Aari Handwork*\n*Free shipping*\n\n*READY TO DISPATCH KEEP POSTING 😺😺*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30063",
+      "otherImages": [
+        "ww30063.1",
+        "ww30063.2",
+        "ww30062.3"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "ww30062",
+        "ww30054",
+        "ww30049",
+        "ww81"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30108",
+      "name": "Pure cotton kurti set ",
+      "description": "*New arrival*\n\nLook straight out of a dreamy movie set as  you turn around and walk in this elegant flaired suit ! The perfect of traditional wear \n\n🦋🦋🦋🦋🦋🦋🦋🦋\n \n *Material - Cotton*\n\n *Work - full embroidery front  with katha detailing*\n\n\nKurti length - 46-47inches\nPant length - 38 icnhes\nSleeves - 3/4 sleeve  \n\n*Free shipping*\n\n  Ready to dispatch✈️✈️✈️",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30108",
+      "otherImages": [
+        "ww30108.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30109",
+        "ww30110",
+        "ww30086",
+        "ww30083"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30062",
+      "name": "Cotton flaired kurta",
+      "description": "💃New launch 💃💃\n*Introducing the latest addition to our fashion collection the flaired kurta Style made from high-quality cotton, embellished with exquisite colourfull embroidery  work on neck line and paired with matching pant.* \n*To add an extra touch of elegance, we have included a beautifully cotton malmal Printed dupatta Upgrade your wardrobe with this stunning ensemble and step out in style!*\n\n*Fabric Cotton 60, 60*\n*Duppta fabric - cotton Malmal 100-100*\n\n*Pant Length = 38*\n\n*Kurti Length= 44* \n\n*Colour- maroon*\n\n*Free shipping*\n\nFull stock available \n✈️✈️✈️✈️✈️✈️✈️✈️✈️✈️\n\n*Original piece not REPLICA*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30062",
+      "otherImages": [
+        "ww30062.1",
+        "ww30062.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30063",
+        "ww30060",
+        "ww30054",
+        "ww30052"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30055",
+      "name": "Cotton set",
+      "description": "New launch 🫶🫶\n\nUpgrade your office wear wardrobe with this classy  kurti pant  with embroidery  detailing for all day comfort and trendy look🌸🌸\n\n *Kurta length 44* \n *Pant 38*with one side pocket*\n\n *Fabric - Cotton* 60*60\n*Free shipping*\nFull stock available",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30055",
+      "otherImages": [
+        "ww30055.1",
+        "ww30055.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30056",
+        "ww30051",
+        "ww30050",
+        "ww32"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30056",
+      "name": "Cotton kurti set ",
+      "description": "New launch 🫶🫶\n\nUpgrade your office wear wardrobe with this classy  kurti pant  with embroidery  detailing for all day comfort and trendy look🌸🌸\n\n *Kurta length 44* \n *Pant 38*with one side pocket*\n\n *Fabric - Cotton* 60*60\n*Free shipping*\nFull stock available",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30056",
+      "otherImages": [
+        "ww30056.1",
+        "ww30056.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30055",
+        "ww30054",
+        "ww30062",
+        "ww30063"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30073",
+      "name": "Heavy cotton kurti set ",
+      "description": "*We are here to spread some magic to your ethnic Heavy Cotton*\n\n*🌹🌹Pure fine Cotton fabric   Kurti with Afghani Pant with cotton 100-100 Dupatta*🌹🌹Neck Embroidery work \n\nFabric: *Heavy Cotton*\n\nProduct: *Kurti + Pant + Dupatta* \n\nType: *Fully stitched*\n*Free shipping*\n\n\n*⭐ *✈️✈️✈️* \n\n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30073",
+      "otherImages": [
+        "ww30073.1",
+        "ww30073.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30071",
+        "ww30072",
+        "ww30074",
+        "ww30080"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30071",
+      "name": "Heavy cotton set ",
+      "description": "*We are here to spread some magic to your ethnic Heavy Cotton*\n\n*🌹🌹Pure fine Cotton fabric   Kurti with Afghani Pant with cotton 100-100 Dupatta*🌹🌹Neck Embroidery work \n\nFabric: *Heavy Cotton*\n\nProduct: *Kurti + Pant + Dupatta* \n\nType: *Fully stitched*\n\n*Free shipping*\n\n\n*⭐ *✈️✈️✈️* \n\n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30071",
+      "otherImages": [
+        "ww30071.1",
+        "ww30071.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30073",
+        "ww30078",
+        "ww30080",
+        "ww30086"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30003",
+      "name": "Heavy pure cotton set",
+      "description": "New launch \nPremium cotton kurti,pant, dupatta sets \n🏵️🏵️🏵️🏵️\nFabric _ premium cotton slub heavy pure khadi cotton super quality \n🏵️🏵️🏵️🏵️\nKurti _ length 45 straight \nWork _beautiful hand katha cotton thread work \nButtons _ beautiful hand made wooden buttons with moti\nPant _ length 38-39\nDupatta _ fabric chanderi digital flower print full big size 2.3 meter with both sides gotta lase\nFree shipping \n🏵️🏵️🏵️🏵️\nReady to dispatch",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30003",
+      "otherImages": [
+        "ww30003.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30004",
+        "ww30031",
+        "ww30049",
+        "ww30054"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30004",
+      "name": "Pure cotton set",
+      "description": "New launch \nPremium cotton kurti,pant, dupatta sets \n🏵️🏵️🏵️🏵️\nFabric _ premium cotton slub heavy pure khadi cotton super quality \n🏵️🏵️🏵️🏵️\nKurti _ length 45 straight \nWork _beautiful hand katha cotton thread work \nButtons _ beautiful hand made wooden buttons with moti\nPant _ length 38-39\nDupatta _ fabric chanderi digital flower print full big size 2.3 meter with both sides gotta lase\nFree shipping \n🏵️🏵️🏵️🏵️\nReady to dispatch",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30004",
+      "otherImages": [
+        "ww30004.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30003",
+        "ww30014",
+        "ww30018",
+        "ww30005"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30005",
+      "name": "Premium cotton kurti set ",
+      "description": "*This Festive we have launch A Beautiful  Embroidered Cotton suit set for Gorgeous ladies👗💃*\n\n *New to our smart premium cotton  3 pcs set that's perfect for work to vacation.*\n\n*Length Kurti-44*\n*Pant-38*\n\n*Beautiful Embroidery detail work panel  on kurti with embroidered pant and matching dupatta* \n\n*Crosia lace work on kurti*\n\n *Fabric: (Cotton )*\n\n*WORK - Heavy Flower Embroidery 🪡 🪡 Work*\n\n*Free shipping*\n\n*READY TO DISPATCH KEEP POSTING ✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30005",
+      "otherImages": [
+        "ww30005.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30006",
+        "ww30007",
+        "ww30008",
+        "ww30009",
+        "ww30010"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30006",
+      "name": "Pure cotton kurti set ",
+      "description": "*This Festive we have launch A Beautiful  Embroidered Cotton suit set for Gorgeous ladies👗💃*\n\n *New to our smart premium cotton  3 pcs set that's perfect for work to vacation.*\n\n*Length Kurti-44*\n*Pant-38*\n\n*Beautiful Embroidery detail work panel  on kurti with embroidered pant and matching dupatta* \n\n*Crosia lace work on kurti*\n\n *Fabric: (Cotton )*\n\n*WORK - Heavy Flower Embroidery 🪡 🪡 Work*\n*Free shipping*\n\n*READY TO DISPATCH KEEP POSTING ✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30006",
+      "otherImages": [
+        "ww30006.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30005",
+        "ww30007",
+        "ww30008",
+        "ww30009"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30006",
+      "name": "Pure cotton kurti set ",
+      "description": "*This Festive we have launch A Beautiful  Embroidered Cotton suit set for Gorgeous ladies👗💃*\n\n *New to our smart premium cotton  3 pcs set that's perfect for work to vacation.*\n\n*Length Kurti-44*\n*Pant-38*\n\n*Beautiful Embroidery detail work panel  on kurti with embroidered pant and matching dupatta* \n\n*Crosia lace work on kurti*\n\n *📏 Size available -: M/38, L/40, And XL/42, XXL 44*\n\n *Fabric: (Cotton )*\n\n*WORK - Heavy Flower Embroidery 🪡 🪡 Work*\n\n*READY TO DISPATCH KEEP POSTING ✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30006",
+      "otherImages": [
+        "ww30006.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "ww30005",
+        "ww30007",
+        "ww30008",
+        "ww30009"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30007",
+      "name": "Roman silk suit set",
+      "description": "*New Launch*\n\n*Featuring Fully Elegant Roman silk Suit Set Which is Beautifully Decorated With Beautiful floral embroidery on neck It Is Paired With Matching Pants And Printed Dupatta*\n\n*Kurti & Pant Fabric- Roman silk*\n\n*Dupatta fabric -Digital Print organza dupatta with jacquard work*\n\n*Pattern - Embroidery work*\n\n*Inclusive: Top, Bottom & Dupatta*\n*Free shipping*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30007",
+      "otherImages": [
+        "ww30007.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30005",
+        "ww30006",
+        "ww30008",
+        "ww30009",
+        "ww30010"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30008",
+      "name": "Roman silk suit set ",
+      "description": "*New Launch*\n\n*Featuring Fully Elegant Roman silk Suit Set Which is Beautifully Decorated With Beautiful floral embroidery on neck It Is Paired With Matching Pants And Printed Dupatta*\n\n*Kurti & Pant Fabric- Roman silk*\n\n*Dupatta fabric -Digital Print organza dupatta with jacquard work*\n\n*Pattern - Embroidery work*\n\n*Inclusive: Top, Bottom & Dupatta*\n*Free shipping*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30008",
+      "otherImages": [
+        "ww30008.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30005",
+        "ww30006",
+        "ww30007",
+        "ww30009"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30009",
+      "name": "Beautiful cotton kurti set ",
+      "description": "Beautiful pure cotton 60-60 super dying embroidery suit set.paired up with cotton pant and malmal cotton dupatta with tusels.\n\nKurti length 44+ inch\nPant length 38. Inch\nDuppttaa 2.25 mtr.\nBest quality \nStock ready",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30009",
+      "otherImages": [
+        "ww30009.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30008",
+        "ww30010",
+        "ww30011",
+        "ww30012"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30010",
+      "name": "Beautiful kurti set ",
+      "description": "Beautiful pure cotton 60-60 super dying embroidery suit set.paired up with cotton pant and malmal cotton dupatta with tusels.\n\nKurti length 44+ inch\nPant length 38. Inch\nDuppttaa 2.25 mtr.\n\nFree shipping \nBest quality \nStock ready",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30010",
+      "otherImages": [
+        "ww30010.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30005",
+        "ww30006",
+        "ww30007",
+        "ww30008"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30010",
+      "name": "Beautiful kurti set ",
+      "description": "Beautiful pure cotton 60-60 super dying embroidery suit set.paired up with cotton pant and malmal cotton dupatta with tusels.\n\nKurti length 44+ inch\nPant length 38. Inch\nDuppttaa 2.25 mtr.\n\nFree shipping \nBest quality \nStock ready",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30010",
+      "otherImages": [
+        "ww30010.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30005",
+        "ww30006",
+        "ww30007",
+        "ww30008"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30011",
+      "name": "Beautiful kurti set ",
+      "description": "Beautiful pure cotton 60-60 super dying embroidery suit set.paired up with cotton pant and malmal cotton dupatta with tusels.\n\n\nKurti length 44+ inch\nPant length 38. Inch\nDuppttaa 2.25 mtr.\nFree shipping \nBest quality \nStock ready",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30011",
+      "otherImages": [
+        "ww30011.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "ww30005",
+        "ww30006",
+        "ww30010",
+        "ww30007"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30050",
+      "name": "Pure cotton kurti set ",
+      "description": "🌷 *NEW Launch*🌷\n\n*New launching voluminous beautiful cotton rust and black color kurti suit set*\n*Beautiful thread embroidery work yog and less work pattern and dupatta less work*\n\n*Work - thread embroidery work*\n\n*Kurta* *length*: *46*\n*Pattern- A-Line pattern*\n*Plazo* *length*: *38*\n\n*Fabric*: *pure* *Cotton* \n\n*Dupatta fabric - cotton malmal 100-100*\n\n⭐ *Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*\n\n🎋🎋🎋🎋🎋🎋🎋🎋\n---",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30050",
+      "otherImages": [
+        "ww30050.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30051",
+        "ww30052",
+        "ww30056",
+        "ww30055"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30051",
+      "name": "Pure cotton kurti set ",
+      "description": "🌷 *NEW Launch*🌷\n\n*New launching voluminous beautiful cotton rust and black color kurti suit set*\n*Beautiful thread embroidery work yog and less work pattern and dupatta less work*\n\n*Work - thread embroidery work*\n\n\n*Kurta* *length*: *46*\n*Pattern- A-Line pattern*\n*Plazo* *length*: *38*\n\n*Fabric*: *pure* *Cotton* \n\n*Dupatta fabric - cotton malmal 100-100*\n\n⭐ *Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*\n\n🎋🎋🎋🎋🎋🎋🎋🎋\n---",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30051",
+      "otherImages": [
+        "ww30051.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30050",
+        "ww30052",
+        "ww30054",
+        "ww30056",
+        "ww30055"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30052",
+      "name": "Pure cotton set ",
+      "description": "🌷 *NEW Launch*🌷\n\n*New launching voluminous beautiful cotton rust and black color kurti suit set*\n*Beautiful thread embroidery work yog and less work pattern and dupatta less work*\n\n*Work - thread embroidery work*\n\n*Kurta* *length*: *46*\n*Pattern- A-Line pattern*\n*Plazo* *length*: *38*\n\n*Fabric*: *pure* *Cotton* \n\n*Dupatta fabric - cotton malmal 100-100*\n\n⭐ *Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*\n\n🎋🎋🎋🎋🎋🎋🎋🎋\n---",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30052",
+      "otherImages": [
+        "ww30052.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30051",
+        "ww30050",
+        "ww30056",
+        "ww30055"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30033",
+      "name": "Azrak cotton suit ",
+      "description": "*😍New launch😍*Premium Rich Azrak Cotton Suit*🥳🥳\n\nBeautiful kurti pant dupatta set in *Premium Rich Cotton* with heavy Sequin and thread detailing in yoke paired with fine Cotton dupatta with tussels\n\n*KURTI LENGTH-47INCH* \n*PANT LENGTH-39INCH* \n*Dupatta length -2.10mtr*\n*Free shipping*\n\n*Ready to Dispatch* 🥰🥰",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30033",
+      "otherImages": [
+        "ww30033.1",
+        "ww30033.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30030",
+        "ww30029",
+        "ww30039",
+        "ww30040"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30058",
+      "name": "Azrak cotton set",
+      "description": "*😍New launch😍 *Designer Azrak Floral Print Cotton Suit* \n\nDesigner Suit in  Mughal/Kalamkari Fusion Azrak bagru print kurti pant dupatta set *Premium fine cotton* with handcrafted work on yoke paired with fine cotton dupatta .... \n\n *Kurti length-47inch* \n*PANT length-39inch* \n*Dupatta length -2.10 mtr* \n*Free shipping*\n\n* *Ready to Dispatch * 🥰🥰\n* *We believe quality and customer satisfaction*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30058",
+      "otherImages": [
+        "ww30058.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30061",
+        "ww30065",
+        "ww30066",
+        "ww30067"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30061",
+      "name": "Azrak cotton kurti set ",
+      "description": "*😍New launch😍 *Designer Azrak Floral Print Cotton Suit* \n\nDesigner Suit in  Mughal/Kalamkari Fusion Azrak bagru print kurti pant dupatta set *Premium fine cotton* with handcrafted work on yoke paired with fine cotton dupatta .... \n\n *Kurti length-47inch* \n*PANT length-39inch* \n*Dupatta length -2.10 mtr* \n\n* *Ready to Dispatch * 🥰🥰\n* *We believe quality and customer satisfaction*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30061",
+      "otherImages": [
+        "ww30061.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30058",
+        "ww30065",
+        "ww30068",
+        "ww30062"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30015",
+      "name": "A line embroidery kurta set ",
+      "description": "NEW LAUNCH 🆕 \n\n\n  🌼  A-LINE EMBROIDERY \nKURTA PANT WITH DUPPATA SET \n\n🌼 Designer embroidery Cotton Suit  ➡️\n🌼 Designer embroidered work kurti & pent with pritned duppata set \" Premium Fine Cotton 60#60\" with heavy embroidery work all over kurti with handwork & embroidery lace on neck .\nCotton mulmul printed dupatta giving elegance boutique concept...💃🏼\n \n kurti Pent with beautiful handwork on neck and embroidery work with beautiful embroidery lace work all over kurti \n\nKurta and Pant (double lace work) Fabric Cotton \n Dupatta Fabric - printed Mulmul Cotton \n\nKurti length:- 46\"+\nPent:- 39\"+\nDuppata:- 2.25 mtr. above \n*Free shipping*\n\n\n*Best quality 💯*\nReady to Dispatch ✈️✈️",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30015",
+      "otherImages": [
+        "ww30015.1",
+        "ww30015.2",
+        "ww30015.3"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1150",
+      "similarProducts": [
+        "ww30016",
+        "ww30017",
+        "ww30014",
+        "ww30014"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30025",
+      "name": "Cotton set ",
+      "description": "*New Launch 🥰🥰*\n\n*White Love.......*\n💗🤍💗🤍💗🤍💗🤍💗🤍\n*This Kurti,pant& dupatta set is perfect for the summer season with its vibrant floral print and confident . Plus, the included matching dupatta completes the look and adds an extra touch of style.*\n\n*Work= Embroidery& hand work*\n\nFabric:-cotton(hand block print)\n\nKurta length-49\nPant length-38\n*Free shipping*\n\n*Ready to dispatch keep posting*✈️✈️✈️✈️✈️",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30025",
+      "otherImages": [
+        "ww30025.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30026",
+        "ww30027",
+        "ww30028",
+        "ww30029"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30026",
+      "name": "Cotton set ",
+      "description": "*New Launch 🥰🥰*\n\n*White Love.......*\n💗🤍💗🤍💗🤍💗🤍💗🤍\n*This Kurti,pant& dupatta set is perfect for the summer season with its vibrant floral print and confident . Plus, the included matching dupatta completes the look and adds an extra touch of style.*\n\n*Work= Embroidery& hand work*\n\nFabric:-cotton(hand block print)\n\nKurta length-49\nPant length-38\n\n\n*Ready to dispatch keep posting*✈️✈️✈️✈️✈️",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30026",
+      "otherImages": [
+        "ww30026.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30025",
+        "ww30027",
+        "ww30028",
+        "ww30029"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30027",
+      "name": "Cotton set",
+      "description": "*New Launch 🥰🥰*\n\n*White Love.......*\n💗🤍💗🤍💗🤍💗🤍💗🤍\n*This Kurti,pant& dupatta set is perfect for the summer season with its vibrant floral print and confident . Plus, the included matching dupatta completes the look and adds an extra touch of style.*\n\n*Work= Embroidery& hand work*\n\nFabric:-cotton(hand block print)\n\nKurta length-49\nPant length-38\n\n*Ready to dispatch keep posting*✈️✈️✈️✈️✈️",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30027",
+      "otherImages": [
+        "ww30027.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30025",
+        "ww30026",
+        "ww30028",
+        "ww30029"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30081",
+      "name": "Pure cotton kurti set",
+      "description": "*New Launching Upcoming festival special ✌️ 🖤❤️❤️🖤*\n\n*A line embroidered kurta with embroidered pockets and pants with printed cotton tassel kurta*\n\n *Febric -PURE COTTON 60/60*\n\n*WORK-  Heavy Embodery work on Yoke and Pocket*\n\n*Both side pocket Embroidery*\n\n*Kurti Length -46*\n*Pant -38*\n*Duptta - 2 Mitar Mul Cotton*\n\n*Colour- Black 🖤 and ♥️ Red*\n\n*Inclusive: Top, Bottom & Dupatta[3 piece]*\n*Free shipping*\n*Ready to Dispatch ✈️✈️✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30081",
+      "otherImages": [
+        "ww30081.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30082",
+        "ww30084",
+        "ww30083",
+        "ww30089"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30082",
+      "name": "Cotton set",
+      "description": "*New Launching Upcoming festival special ✌️ 🖤❤️❤️🖤*\n\n*A line embroidered kurta with embroidered pockets and pants with printed cotton tassel kurta*\n\n *Febric -PURE COTTON 60/60*\n\n*WORK-  Heavy Embodery work on Yoke and Pocket*\n\n*Both side pocket Embroidery*\n\n*Kurti Length -46*\n*Pant -38*\n*Duptta - 2 Mitar Mul Cotton*\n\n*Inclusive: Top, Bottom & Dupatta[3 piece]*\n*Free shipping*\n*Ready to Dispatch ✈️✈️✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30082",
+      "otherImages": [
+        "ww30082.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30081",
+        "ww30078",
+        "ww30079",
+        "ww30080"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30054",
+      "name": "Khadi cotton suit",
+      "description": "*New design launch🥰🥰*\n\n  *Experience the perfect blend of comfort and style with our khadi cotton suits🧶👗*\n\nKhadi cotton cross stitched embroidered kurti paired with khadi cotton pant and khadi slik digital print baatik dupatta to complete the looks💕😍\n\n    *Ready to dispatch keep posting✈️✈️✈️✈️✈️✈️*",
+      "available": "1000",
+      "price": "1100",
+      "discount": "",
+      "image": "ww30054",
+      "otherImages": [
+        "ww30054.1",
+        "ww30054.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30050",
+        "ww30037",
+        "ww30071",
+        "ww30076",
+        "ww30077"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30018",
+      "name": "Handloom kurti ",
+      "description": "*\n\n*ELEVATE UR STYLE IN OUR CLASSY HANDLOOM A LINE KURTI IN TRENDY HALTER NECK STYLE PAIRED WITH PURE LINEN DUPATTA PERFECT FOR ALL OCCASIONS*\n\n*PURE HANDLOOM straight KURTI WITH BOTH SIDES POCKETS*\n\n*TRENDY SLEEVELESS STYLE WITH \n\n*HAMDLOOM  COTTON PALAZZO PANTS*\n\n*PURE cotton mulmul FULL SIZE 2.4 mtr DUPATTA*\nEmbroidery work on kurta\nFree shipping",
+      "available": "1000",
+      "price": "1099",
+      "discount": "",
+      "image": "ww30018",
+      "otherImages": [
+        "ww30018.1",
+        "ww30018.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30020",
+        "ww30021",
+        "ww30025",
+        "ww30031"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "no",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30110",
+      "name": "Pure cotton suit set",
+      "description": "🥰 *New Launch* 🥰\n 🥰🥰☺️\n*Cotton Suit Set With Thread Work, Highlighting On The Kurta.*\n*Product Color May Slightly Vary Due To Photographic Lighting Sources.*\n\n*Fabric: Cotton*\n\n💃💃💃💃\n*Fabric:* *Pure Cotton 60*60*    \n\n*Work:- *Full Embroidered work*+ *dupatta embroidery work*\nProduct: *Kurti + Pant+dupata*\n \n*Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30110",
+      "otherImages": [
+        "ww30110.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30101",
+        "ww30090",
+        "ww30098",
+        "ww30062"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30101",
+      "name": "Pure cotton set",
+      "description": "🥰 *New Launch* 🥰\n 🥰🥰☺️\n*Cotton Suit Set With Thread Work, Highlighting On The Kurta.*\n*Product Color May Slightly Vary Due To Photographic Lighting Sources.*\n\n*Fabric: Cotton*\n\n💃💃💃💃\n*Fabric:* *Pure Cotton 60*60*    \n*Work:- *Full Embroidered work*+ *dupatta embroidery work*\nProduct: *Kurti + Pant+dupata*\n \n*Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30101",
+      "otherImages": [
+        "ww30101.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30110",
+        "ww30090",
+        "ww30083",
+        "ww30062"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30090",
+      "name": "Pure cotton set",
+      "description": "🥰 *New Launch* 🥰\n 🥰🥰☺️\n*Cotton Suit Set With Thread Work, Highlighting On The Kurta.*\n*Product Color May Slightly Vary Due To Photographic Lighting Sources.*\n\n*Fabric: Cotton*\n\n💃💃💃💃\n*Fabric:* *Pure Cotton 60*60*    \n*Work:- *Full Embroidered work*+ *dupatta embroidery work*\nProduct: *Kurti + Pant+dupata*\n \n*Ready to Dispatch* ✈️✈️✈️\n *(100% Quality products guarantee)*",
+      "available": "1000",
+      "price": "1050",
+      "discount": "",
+      "image": "ww30090",
+      "otherImages": [
+        "ww30090.1"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        "XXXL-46"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "1000",
+      "similarProducts": [
+        "ww30101",
+        "ww30110",
+        "ww30098",
+        "ww30062"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30016",
+      "name": "Cotton embroidery kurti set ",
+      "description": "*Article Details* \n💃 *Beautiful Cotton Fabric Heavy Embroidered  Work + Hand Work With Sequence + Moti Work On Kurti & Me Embroidered Sleeves Painted With Pant And Chanderi Silk Golden Line Dupatta*💃💃💃\n\n*Note:- Always Best Quality*\n⭐Fabric:  *Pure Cotton 60x60*\n⭐Product: *Kurti + Palazzo + Dupatta* \n⭐Work: *Embroidered + Hand Work*\n⭐Type: *Fully stitched*\n\n⭐ *Ready to Dispatch*✈️✈️✈️ \n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30016",
+      "otherImages": [
+        "ww30016.1",
+        "ww30016.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "ww30017",
+        "ww30015",
+        "ww30014",
+        "ww30013"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww30017",
+      "name": "Pure cotton kurti set",
+      "description": "*Article Details* \n💃 *Beautiful Cotton Fabric Heavy Embroidered  Work + Hand Work With Sequence + Moti Work On Kurti & Me Embroidered Sleeves Painted With Pant And Chanderi Silk Golden Line Dupatta*💃💃💃\n\n*Note:- Always Best Quality*\n⭐Fabric:  *Pure Cotton 60x60*\n⭐Product: *Kurti + Palazzo + Dupatta* \n⭐Work: *Embroidered + Hand Work*\n⭐Type: *Fully stitched*\n\n⭐ *Ready to Dispatch*✈️✈️✈️ \n*(100% quality products guarantee)*",
+      "available": "1000",
+      "price": "1150",
+      "discount": "",
+      "image": "ww30017",
+      "otherImages": [
+        "ww30017.1",
+        "ww30017.2"
+      ],
+      "color": "",
+      "sizes": [
+        "M-38",
+        "L-40",
+        "XL-42",
+        "XXL-44",
+        ""
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "",
+      "similarProducts": [
+        "ww30016",
+        "ww30015",
+        "ww30014",
+        "ww30013"
+      ],
+      "reviews": [],
+      "shipping": [],
+      "featured": "yes",
+      "campaign": [
+        "Pan india shipping",
+        "Free shipping"
+      ]
+    },
+    {
+      "id": "ww001",
+      "name": "Green Anarkali dress",
+      "description": "Traditional Indian green Anarkali dress",
+      "available": "In Stock",
+      "price": "₹2,000",
+      "discount": "10% off",
+      "image": "/src/assets/img/ww001-green-dress.jpg",
+      "otherImages": [
+        "/src/assets/img/ww001-green-dress2.jpg"
+      ],
+      "color": "green",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets"
+      ],
+      "stock": "10",
+      "similarProducts": [
+        "ww002"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": [
+        ""
+      ]
+    },
+    {
+      "id": "ww002",
+      "name": "White long salwar suite dress",
+      "description": "Traditional Indian ",
+      "available": "In Stock",
+      "price": "₹1,500",
+      "discount": "10% off",
+      "image": "/src/assets/img/ww002-white-salwar-dress.jpg",
+      "otherImages": [
+        "/src/assets/img/ww002-white-salwar-dress2.jpg",
+        "/src/assets/img/ww002-white-salwar-dress3.jpg"
+      ],
+      "color": "white",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets",
+        "Anarkalis"
+      ],
+      "stock": "15",
+      "similarProducts": [
+        "ww001"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002",
+        "rev003",
+        "rev004"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": []
+    },
+    {
+      "id": "ww003",
+      "name": "Green Salwar suit dress",
+      "description": "Traditional Indian green Salwar suit dress",
+      "available": "",
+      "price": "₹1,800",
+      "discount": "",
+      "image": "/src/assets/img/ww003-thick-green-dress.jpg",
+      "otherImages": [
+        "/src/assets/img/ww003-thick-green-dress2.jpg"
+      ],
+      "color": "dark green",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets",
+        "Anarkalis"
+      ],
+      "stock": "10",
+      "similarProducts": [
+        "ww002",
+        "ww001"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002",
+        "rev003",
+        "rev004",
+        "rev005"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": [
+        "NewArrivals"
+      ]
+    },
+    {
+      "id": "ww004",
+      "name": "Maroon Anarkali dress",
+      "description": "Traditional Indian maroon Anarkali dress",
+      "available": "In Stock",
+      "price": "₹1,500",
+      "discount": "10% off",
+      "image": "/src/assets/img/ww004-maroon-dress.jpg",
+      "otherImages": [],
+      "color": "maroon",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets",
+        "Anarkalis"
+      ],
+      "stock": "5",
+      "similarProducts": [
+        "ww002",
+        "ww001"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": [
+        "NewArrivals"
+      ]
+    },
+    {
+      "id": "ww005",
+      "name": "Red dupatta Anarkali",
+      "description": "Traditional Indian red dupatta anarkali dress",
+      "available": "In Stock",
+      "price": "₹2,200",
+      "discount": "10% off",
+      "image": "/src/assets/img/ww005-red-anarkali-dress.jpg",
+      "otherImages": [],
+      "color": "red",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets",
+        "Anarkalis"
+      ],
+      "stock": "5",
+      "similarProducts": [
+        "ww002"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "yes",
+      "campaign": [
+        "NewArrivals"
+      ]
+    },
+    {
+      "id": "ww006",
+      "name": "Maroon dupatta Anarkali dress",
+      "description": "Traditional Indian red dupatta Anarkali dress",
+      "available": "In Stock",
+      "price": "₹1,800",
+      "discount": "",
+      "image": "/src/assets/img/ww006-red-dupatta-dress.jpg",
+      "otherImages": [
+        "/src/assets/img/ww006-red-dupatta-dress2.jpg",
+        "/src/assets/img/ww006-red-dupatta-dress3.jpg",
+        "/src/assets/img/ww006-red-dupatta-dress4.jpg"
+      ],
+      "color": "maroon",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "subcategory": [
+        "Three piece sets",
+        "Anarkalis"
+      ],
+      "stock": "5",
+      "similarProducts": [
+        "ww002",
+        "ww004"
+      ],
+      "reviews": [
+        "rev001",
+        "rev002"
+      ],
+      "shipping": [
+        "Pan India Shipping",
+        "Ships in 3-5 days",
+        "Easy Returns"
+      ],
+      "featured": "no",
+      "campaign": [
+        "NewArrivals"
+      ]
+    }
+  ]
 }
