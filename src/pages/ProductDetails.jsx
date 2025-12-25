@@ -112,7 +112,7 @@ const ProductDetails = () => {
                         </div>
                         <a href="#" className="review-link">({product.reviews} Reviews)</a>
                     </div>
-                    <p className="product-price">{product.price}</p>
+                    <p className="product-price">₹{product.price}</p>
                     <p className="product-description">{product.description}</p>
 
                     {/* Colors */}

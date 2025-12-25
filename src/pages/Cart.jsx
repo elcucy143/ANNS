@@ -37,7 +37,7 @@ const Cart = () => {
                                 <div className="cart-item-details">
                                     <h3>{item.name}</h3>
                                     <p className="item-variant">Size: {item.size} | Color: {item.color}</p>
-                                    <p className="item-price">{item.price}</p>
+                                    <p className="item-price">₹{item.price}</p>
                                 </div>
                                 <div className="cart-item-actions">
                                     <div className="quantity-selector small">
