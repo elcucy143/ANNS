@@ -82,18 +82,6 @@ import jwb0081_black_beads from './img/jw/jwb0081-black-beads.jpg';
 import jwb0082_black_beads from './img/jw/jwb0082-black-beads.jpg';
 import jwb0083_black_beads from './img/jw/jwb0083-black-beads.jpg';
 
-import gf001_mens_giftset_kit1 from './img/gf001-mens-giftset-kit1.jpg';
-import gf002_mens_giftset_kit2 from './img/gf002-mens-giftset-kit2.jpg';
-import gf003_mens_giftset_kit3 from './img/gf003-mens-giftset-kit3.jpg';
-import gf004_hbd_photo_frame from './img/gf004-hbd-photo-frame.jpg';
-import gf005_couple_photoart from './img/gf005-couple-photoart.jpg';
-
-import jw006_nakshi_bangles from './img/jw006-nakshi-bangles.jpg';
-import jw007_nakshi_waist_chain from './img/jw007-nakshi-waist-chain.jpg';
-import jw008_swan_ear_rings from './img/jw008-swan-ear-rings.jpg';
-import jw009_necklace_red_set2 from './img/jw009-necklace-red-set2.jpg';
-import jw010_necklace_set1 from './img/jw010-necklace-set1.jpg';
-
 import ww30001_1 from './img/ww/ww30001.1.jpg';
 import ww30001_2 from './img/ww/ww30001.2.jpg';
 import ww30001 from './img/ww/ww30001.jpg';

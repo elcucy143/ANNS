@@ -7,18 +7,19 @@ import productsData from '../assets/json/products.json';
 
 import images from '../assets/images';
 
-// Flatten products from all categories and pick a few for the carousel
-const getAllProducts = () => {
-    let allProducts = [];
+// Flatten products from all categories and filter those marked as featured
+const getFeaturedProducts = () => {
+    let featuredProducts = [];
     Object.values(productsData).forEach(categoryProducts => {
-        allProducts = [...allProducts, ...categoryProducts];
+        const filtered = categoryProducts.filter(p => p.featured === "yes");
+        featuredProducts = [...featuredProducts, ...filtered];
     });
-    return allProducts.slice(0, 5); // Display first 5 products
+    return featuredProducts;
 };
 
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
     // Use input products if provided, otherwise fetch default featured products
-    const products = inputProducts || getAllProducts();
+    const products = inputProducts || getFeaturedProducts();
 
     return (
         <section className="product-carousel-section">
