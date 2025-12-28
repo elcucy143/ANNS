@@ -8,6 +8,10 @@ import ProductDetails from './pages/ProductDetails';
 import ProductManager from './pages/ProductManager';
 import Cart from './pages/Cart';
 import SearchResults from './pages/SearchResults';
+import ReturnPolicy from './pages/ReturnPolicy';
+import ShippingPolicy from './pages/ShippingPolicy';
+import TermsConditions from './pages/TermsConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 import { CartProvider } from './context/CartContext';
 
@@ -26,6 +30,10 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/return-policy" element={<ReturnPolicy />} />
+            <Route path="/shipping-policy" element={<ShippingPolicy />} />
+            <Route path="/terms-conditions" element={<TermsConditions />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/product-manager" element={<ProductManager />} />
           </Routes>
         </Layout>
