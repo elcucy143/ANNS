@@ -10,6 +10,9 @@ export const CartProvider = ({ children }) => {
         return localData ? JSON.parse(localData) : [];
     });
 
+    const [lastAddedItem, setLastAddedItem] = useState(null);
+    const [isPopupVisible, setIsPopupVisible] = useState(false);
+
     useEffect(() => {
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
     }, [cartItems]);
@@ -20,13 +23,18 @@ export const CartProvider = ({ children }) => {
                 item => item.id === product.id && item.size === size && item.color === color
             );
 
+            let newItems;
             if (existingItemIndex > -1) {
-                const newItems = [...prevItems];
+                newItems = [...prevItems];
                 newItems[existingItemIndex].quantity += quantity;
-                return newItems;
             } else {
-                return [...prevItems, { ...product, quantity, size, color }];
+                newItems = [...prevItems, { ...product, quantity, size, color }];
             }
+
+            setLastAddedItem({ ...product, quantity, size, color });
+            setIsPopupVisible(true);
+
+            return newItems;
         });
     };
 
@@ -74,7 +82,10 @@ export const CartProvider = ({ children }) => {
             updateQuantity,
             clearCart,
             getCartTotal,
-            getCartCount
+            getCartCount,
+            lastAddedItem,
+            isPopupVisible,
+            setIsPopupVisible
         }}>
             {children}
         </CartContext.Provider>

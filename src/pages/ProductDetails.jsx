@@ -15,14 +15,9 @@ const ProductDetails = () => {
     const { id } = useParams();
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
-    const [selectedSize, setSelectedSize] = useState('M');
+    const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState('Red');
     const [selectedImage, setSelectedImage] = useState(null);
-
-    // Reset selected image when product changes
-    React.useEffect(() => {
-        setSelectedImage(null);
-    }, [id]);
 
     // Find product by ID across all categories and get category name
     const findProductAndCategory = (id) => {
@@ -34,6 +29,16 @@ const ProductDetails = () => {
     };
 
     const { product: productData, category } = findProductAndCategory(id);
+
+    // Reset selected image and size when product changes
+    React.useEffect(() => {
+        setSelectedImage(null);
+        if (productData && productData.sizes && productData.sizes.length > 0) {
+            setSelectedSize(productData.sizes[0]);
+        } else {
+            setSelectedSize(null);
+        }
+    }, [id, productData]);
 
     if (!productData) {
         return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>Product not found</div>;
@@ -78,15 +83,44 @@ const ProductDetails = () => {
                 <div className="product-gallery">
                     <div
                         className="main-image"
+                        onMouseEnter={(e) => {
+                            const { width, height } = e.currentTarget.getBoundingClientRect();
+                            e.currentTarget.style.setProperty('--img-width', `${width}px`);
+                            e.currentTarget.style.setProperty('--img-height', `${height}px`);
+                        }}
                         onMouseMove={(e) => {
                             const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-                            const x = ((e.clientX - left) / width) * 100;
-                            const y = ((e.clientY - top) / height) * 100;
-                            e.currentTarget.style.setProperty('--x', `${x}%`);
-                            e.currentTarget.style.setProperty('--y', `${y}%`);
+                            const x = e.clientX - left;
+                            const y = e.clientY - top;
+
+                            // Clamp lens position
+                            const lensSize = 150; // Match CSS
+                            let lensX = x - lensSize / 2;
+                            let lensY = y - lensSize / 2;
+
+                            if (lensX < 0) lensX = 0;
+                            if (lensX > width - lensSize) lensX = width - lensSize;
+                            if (lensY < 0) lensY = 0;
+                            if (lensY > height - lensSize) lensY = height - lensSize;
+
+                            e.currentTarget.style.setProperty('--lens-x', `${lensX}px`);
+                            e.currentTarget.style.setProperty('--lens-y', `${lensY}px`);
+
+                            // Calculate background position for zoom window
+                            const bgX = (lensX / (width - lensSize)) * 100;
+                            const bgY = (lensY / (height - lensSize)) * 100;
+                            e.currentTarget.style.setProperty('--bg-x', `${bgX}%`);
+                            e.currentTarget.style.setProperty('--bg-y', `${bgY}%`);
                         }}
                     >
                         <img src={getImageSrc(selectedImage || product.images[0])} alt={product.name} />
+                        <div className="magnifier-lens"></div>
+                        <div
+                            className="zoom-window"
+                            style={{
+                                backgroundImage: `url(${getImageSrc(selectedImage || product.images[0])})`
+                            }}
+                        ></div>
                     </div>
                     <div className="thumbnail-list">
                         {product.images.map((img, index) => (
