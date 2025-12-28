@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Mail, MapPin, Phone } from 'lucide-react';
 import './Footer.css';
 import logo from '../assets/logo-f.jpg';
@@ -15,20 +15,20 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4>Quick Links</h4>
                     <ul>
-                        <li><a href="/womens-wear">Women's Wear</a></li>
-                        <li><a href="/gifts">Gifts</a></li>
-                        <li><a href="/jewellery">Jewellery</a></li>
-                        <li><a href="/sale">Sale</a></li>
+                        <li><Link to="/womens-wear">Women's Wear</Link></li>
+                        <li><Link to="/gifts">Gifts</Link></li>
+                        <li><Link to="/jewellery">Jewellery</Link></li>
+                        <li><Link to="/sale">Sale</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-section">
                     <h4>Policies</h4>
                     <ul>
-                        <li><a href="/return-policy">Return & Cancellation policy</a></li>
-                        <li><a href="/shopping-policy">Shopping policy</a></li>
-                        <li><a href="/privacy-policy">Privacy policy</a></li>
-                        <li><a href="/terms-conditions">Terms & Conditions</a></li>
+                        <li><Link to="/return-policy">Return & Cancellation policy</Link></li>
+                        <li><Link to="/shipping-policy">Shipping & Delivery policy</Link></li>
+                        <li><Link to="/privacy-policy">Privacy policy</Link></li>
+                        <li><Link to="/terms-conditions">Terms & Conditions</Link></li>
                     </ul>
                 </div>
 
