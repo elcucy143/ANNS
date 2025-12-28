@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import './CategoryPage.css';
@@ -39,12 +39,37 @@ const CategoryPage = ({ title }) => {
         { label: displayTitle, path: `/${displayTitle.toLowerCase().replace(/ /g, '-')}` }
     ];
 
+    useEffect(() => {
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                }
+            });
+        }, observerOptions);
+
+        const cards = document.querySelectorAll('.product-card');
+        cards.forEach(card => observer.observe(card));
+
+        return () => {
+            cards.forEach(card => observer.unobserve(card));
+        };
+    }, [products]); // Re-run when products list changes due to category or subcategory filter
+
     return (
         <div className="category-page container">
             <Breadcrumbs items={breadcrumbItems} />
             <header className="category-header">
                 <h1 className="section-title">{displayTitle}</h1>
-                <p>Explore our latest collection of {displayTitle}.</p>
+                {displayTitle === "Women's Wear" ? (
+                    <p>Discover our latest Women’s Wear collection—where modern trends meet timeless elegance. From everyday essentials to standout styles, find pieces designed to elevate your wardrobe with confidence and comfort.</p>
+                ) : (
+                    <p>Explore our latest collection of {displayTitle}.</p>
+                )}
             </header>
 
             <div className="products-list">
