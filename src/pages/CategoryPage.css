@@ -14,9 +14,21 @@
 
 .products-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
     margin-top: 30px;
+}
+
+/* Scroll reveal animation styles */
+.products-list .product-card {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.products-list .product-card.reveal {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .subsection-title {
