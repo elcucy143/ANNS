@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import productsData from '../assets/json/products.json';
@@ -7,13 +7,8 @@ import './SearchResults.css';
 const SearchResults = () => {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
-    const [results, setResults] = useState([]);
-
-    useEffect(() => {
-        if (!query) {
-            setResults([]);
-            return;
-        }
+    const results = useMemo(() => {
+        if (!query) return [];
 
         const lowerQuery = query.toLowerCase();
         const allProducts = [];
@@ -23,13 +18,11 @@ const SearchResults = () => {
             allProducts.push(...categoryProducts);
         });
 
-        const filtered = allProducts.filter(product =>
+        return allProducts.filter(product =>
             product.name.toLowerCase().includes(lowerQuery) ||
             product.description.toLowerCase().includes(lowerQuery) ||
             (product.category && product.category.toLowerCase().includes(lowerQuery))
         );
-
-        setResults(filtered);
     }, [query]);
 
     return (

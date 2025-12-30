@@ -54,10 +54,9 @@ const CategoryPage = ({ title }) => {
         };
     }, [categoryProducts]);
 
-    // Initialize maxPrice filter when category changes
-    useEffect(() => {
-        setFilters(prev => ({ ...prev, maxPrice: filterOptions.maxPrice }));
-    }, [filterOptions.maxPrice]);
+    // Price filter state - null means "default to max"
+    const [maxPriceOverride, setMaxPriceOverride] = useState(null);
+    const effectiveMaxPrice = maxPriceOverride !== null ? maxPriceOverride : filterOptions.maxPrice;
 
     // Filtering and Sorting Logic
     const products = useMemo(() => {
@@ -83,7 +82,7 @@ const CategoryPage = ({ title }) => {
         // 3. Price filter
         result = result.filter(p => {
             const price = parseFloat(p.price?.toString().replace(/[^0-9.]/g, '') || 0);
-            return price <= filters.maxPrice;
+            return price <= effectiveMaxPrice;
         });
 
         // 4. Color filter
@@ -127,7 +126,7 @@ const CategoryPage = ({ title }) => {
         }
 
         return result;
-    }, [categoryProducts, subcategoryFilter, filters, sortBy]);
+    }, [categoryProducts, subcategoryFilter, filters, sortBy, effectiveMaxPrice]);
 
     const handleFilterChange = (type, value) => {
         setFilters(prev => {
@@ -212,13 +211,13 @@ const CategoryPage = ({ title }) => {
                     </div>
 
                     <div className="filter-group">
-                        <h4>Price (Up to ₹{filters.maxPrice})</h4>
+                        <h4>Price (Up to ₹{effectiveMaxPrice})</h4>
                         <input
                             type="range"
                             min="0"
                             max={filterOptions.maxPrice}
-                            value={filters.maxPrice}
-                            onChange={(e) => handleFilterChange('maxPrice', parseInt(e.target.value))}
+                            value={effectiveMaxPrice}
+                            onChange={(e) => setMaxPriceOverride(parseInt(e.target.value))}
                         />
                     </div>
 

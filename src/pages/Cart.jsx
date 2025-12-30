@@ -7,7 +7,7 @@ import './Cart.css';
 import images from '../assets/images';
 
 const Cart = () => {
-    const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
 
     if (cartItems.length === 0) {
         return (
