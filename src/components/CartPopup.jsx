@@ -10,6 +10,15 @@ const CartPopup = () => {
     const [shouldRender, setShouldRender] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsPopupVisible(false);
+            setShouldRender(false);
+            setIsClosing(false);
+        }, 1000); // Matching the slow close animation duration
+    };
+
     useEffect(() => {
         let timer;
         if (isPopupVisible) {
@@ -21,15 +30,6 @@ const CartPopup = () => {
         }
         return () => clearTimeout(timer);
     }, [isPopupVisible]);
-
-    const handleClose = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            setIsPopupVisible(false);
-            setShouldRender(false);
-            setIsClosing(false);
-        }, 1000); // Matching the slow close animation duration
-    };
 
     if (!shouldRender || !lastAddedItem) return null;
 

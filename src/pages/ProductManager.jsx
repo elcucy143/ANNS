@@ -36,10 +36,6 @@ const ProductManager = () => {
         }
     };
 
-    if (!productsData || Object.keys(productsData).length === 0) {
-        return <div className="container" style={{ padding: '50px' }}>Loading products or no data available...</div>;
-    }
-
     function getInitialFormData() {
         return {
             id: '',
@@ -63,6 +59,8 @@ const ProductManager = () => {
     }
 
     useEffect(() => {
+        if (!productsData || Object.keys(productsData).length === 0) return;
+
         if (selectedProductId === 'new') {
             setFormData(getInitialFormData());
         } else {
@@ -82,6 +80,10 @@ const ProductManager = () => {
             }
         }
     }, [selectedProductId, selectedCategory, products]);
+
+    if (!productsData || Object.keys(productsData).length === 0) {
+        return <div className="container" style={{ padding: '50px' }}>Loading products or no data available...</div>;
+    }
 
     if (!isAuthenticated) {
         return (
