@@ -1,0 +1,29 @@
+.terms-conditions-page {
+    padding: 60px 0;
+    max-width: 900px;
+}
+
+.policy-content {
+    background-color: var(--color-white);
+    line-height: 1.8;
+}
+
+.policy-section {
+    margin-bottom: 2.5rem;
+}
+
+.policy-section p {
+    margin-bottom: 1.2rem;
+    color: var(--color-text);
+    text-align: justify;
+}
+
+@media (max-width: 768px) {
+    .terms-conditions-page {
+        padding: 40px 20px;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+}

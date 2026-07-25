@@ -1,0 +1,47 @@
+.privacy-policy-page {
+    padding: 60px 0;
+    max-width: 900px;
+}
+
+.policy-content {
+    background-color: var(--color-white);
+    line-height: 1.8;
+}
+
+.policy-section {
+    margin-bottom: 3rem;
+}
+
+.policy-section h2 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--color-primary);
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid var(--color-secondary);
+    padding-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.policy-section p {
+    margin-bottom: 1.2rem;
+    color: var(--color-text);
+}
+
+.legal-agreement {
+    background-color: var(--color-secondary);
+    padding: 2rem;
+    border-left: 4px solid var(--color-accent);
+    margin-top: 2rem;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .privacy-policy-page {
+        padding: 40px 20px;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+}
