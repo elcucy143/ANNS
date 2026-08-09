@@ -1,415 +1,905 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+    AlertTriangle,
+    Boxes,
+    CheckCircle2,
+    ChevronRight,
+    Download,
+    Edit3,
+    FileJson,
+    FileSpreadsheet,
+    LayoutDashboard,
+    LogOut,
+    Package,
+    Plus,
+    Save,
+    Search,
+    ShoppingBag,
+    Sparkles,
+    UserCheck,
+    Users,
+    Mail,
+    Phone,
+    ReceiptText,
+    RefreshCw,
+    UploadCloud,
+    XCircle,
+} from 'lucide-react';
 import productsData from '../assets/json/products.json';
 import categoriesData from '../assets/json/categories.json';
+import { isCustomerActive, readCustomers, readOrders } from '../services/customerStore';
+import {
+    clearAdminKey,
+    getCustomersFromDatabase,
+    getOrdersFromDatabase,
+    getProductsFromDatabase,
+    hasAdminKey,
+    saveProductsToDatabase,
+    verifyAdminKey,
+} from '../services/apiClient';
 import './ProductManager.css';
 
-const ProductManager = () => {
-    const [products, setProducts] = useState(productsData);
-    const [selectedCategory, setSelectedCategory] = useState(Object.keys(productsData).length > 0 ? Object.keys(productsData)[0] : '');
-    const [selectedProductId, setSelectedProductId] = useState('new');
-    const [formData, setFormData] = useState(getInitialFormData());
-    const [notification, setNotification] = useState('');
+const ADMIN_SESSION_KEY = 'pm_auth';
+const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
+const PROTECTED_PASS_HASH = 'YW5uc2FkbWluMjAyNQ==';
+const LOW_STOCK_LIMIT = 10;
 
-    // Auth State
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+const getInitialFormData = () => ({
+    id: '',
+    name: '',
+    description: '',
+    available: 'In Stock',
+    price: '',
+    discount: '',
+    image: '',
+    otherImages: [],
+    color: '',
+    sizes: [],
+    subcategory: [],
+    stock: 0,
+    sold: 0,
+    similarProducts: [],
+    reviews: [],
+    shipping: [],
+    featured: 'no',
+    campaign: [],
+});
+
+const readProductDraft = () => {
+    try {
+        const draft = JSON.parse(localStorage.getItem(PRODUCT_DRAFT_KEY));
+        return draft && typeof draft === 'object' ? draft : productsData;
+    } catch {
+        return productsData;
+    }
+};
+
+const toNumber = (value, fallback = 0) => {
+    const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const getStock = (product) => {
+    if (product.stock !== '' && product.stock !== undefined) return Math.max(0, toNumber(product.stock));
+    return Math.max(0, toNumber(product.available));
+};
+
+const getSold = (product) => Math.max(0, toNumber(product.sold));
+const getRemaining = (product) => Math.max(0, getStock(product) - getSold(product));
+
+const normalizeName = (name = '') => name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const parseList = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean).map(String);
+    if (value === undefined || value === null || value === '') return [];
+    return String(value).split(/[,|;]/).map((item) => item.trim()).filter(Boolean);
+};
+
+const normalizeCategory = (value = '') => {
+    const normalized = String(value).trim().toLowerCase().replace(/[’']/g, '');
+    const match = Object.keys(productsData).find((category) => (
+        category.toLowerCase().replace(/[’']/g, '') === normalized
+    ));
+    if (match) return match;
+    if (normalized === 'womens wear') return 'Womens Wear';
+    return String(value).trim();
+};
+
+const normalizeHeaders = (row) => Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+        key.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        value,
+    ]),
+);
+
+const valueFrom = (row, ...aliases) => {
+    for (const alias of aliases) {
+        const value = row[alias.toLowerCase().replace(/[^a-z0-9]/g, '')];
+        if (value !== undefined && value !== null && value !== '') return value;
+    }
+    return '';
+};
+
+const flattenProducts = (products) => Object.entries(products).flatMap(([category, items]) => (
+    items.map((product) => ({
+        ...product,
+        category,
+        stockValue: getStock(product),
+        soldValue: getSold(product),
+        remainingValue: getRemaining(product),
+    }))
+));
+
+const groupDatabaseProducts = (items) => {
+    const grouped = Object.fromEntries(Object.keys(productsData).map((category) => [category, []]));
+    items.forEach(({ category, ...product }) => {
+        const normalizedCategory = normalizeCategory(category);
+        if (!grouped[normalizedCategory]) grouped[normalizedCategory] = [];
+        grouped[normalizedCategory].push(product);
+    });
+    return grouped;
+};
+
+const productsForDatabase = (products) => Object.entries(products).flatMap(([category, items]) => (
+    items.map((product) => ({ ...product, category }))
+));
+
+const formatCurrency = (value) => `₹${toNumber(value).toLocaleString('en-IN')}`;
+
+const ProductManager = () => {
+    const [products, setProducts] = useState(readProductDraft);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true');
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
+    const [activeView, setActiveView] = useState('overview');
+    const [notification, setNotification] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [stockFilter, setStockFilter] = useState('all');
+    const [selectedCategory, setSelectedCategory] = useState(Object.keys(productsData)[0] || 'Gifts');
+    const [selectedProductId, setSelectedProductId] = useState('new');
+    const [formData, setFormData] = useState(getInitialFormData);
+    const [importRows, setImportRows] = useState([]);
+    const [importFileName, setImportFileName] = useState('');
+    const [importError, setImportError] = useState('');
+    const [customers, setCustomers] = useState(readCustomers);
+    const [orders, setOrders] = useState(readOrders);
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [selectedCustomerId, setSelectedCustomerId] = useState('');
+    const [databaseStatus, setDatabaseStatus] = useState(hasAdminKey() ? 'connecting' : 'local');
+    const fileInputRef = useRef(null);
 
-    const PROTECTED_PASS_HASH = "YW5uc2FkbWluMjAyNQ=="; // annsadmin2025
+    const allProducts = useMemo(() => flattenProducts(products), [products]);
 
-    useEffect(() => {
-        const isAuth = sessionStorage.getItem('pm_auth');
-        if (isAuth === 'true') {
-            setIsAuthenticated(true);
-        }
-    }, []);
+    const duplicateGroups = useMemo(() => {
+        const groups = new Map();
+        allProducts.forEach((product) => {
+            const key = normalizeName(product.name);
+            if (!key) return;
+            groups.set(key, [...(groups.get(key) || []), product]);
+        });
+        return [...groups.values()]
+            .filter((group) => group.length > 1)
+            .sort((first, second) => second.length - first.length);
+    }, [allProducts]);
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        // Simple base64 encode check
-        if (btoa(passwordInput) === PROTECTED_PASS_HASH) {
-            setIsAuthenticated(true);
-            sessionStorage.setItem('pm_auth', 'true');
-            setLoginError('');
-        } else {
-            setLoginError('Invalid Password');
-        }
-    };
+    const inventoryStats = useMemo(() => ({
+        productCount: allProducts.length,
+        stockUnits: allProducts.reduce((total, product) => total + product.stockValue, 0),
+        soldUnits: allProducts.reduce((total, product) => total + product.soldValue, 0),
+        remainingUnits: allProducts.reduce((total, product) => total + product.remainingValue, 0),
+        lowStock: allProducts.filter((product) => product.remainingValue > 0 && product.remainingValue <= LOW_STOCK_LIMIT).length,
+        outOfStock: allProducts.filter((product) => product.remainingValue === 0).length,
+    }), [allProducts]);
 
-    function getInitialFormData() {
+    const customerInsights = useMemo(() => {
+        const ordersByCustomer = new Map();
+        orders.forEach((order) => {
+            ordersByCustomer.set(order.customerId, [...(ordersByCustomer.get(order.customerId) || []), order]);
+        });
+        const enrichedCustomers = customers.map((customer) => {
+            const customerOrders = ordersByCustomer.get(customer.id) || [];
+            return {
+                ...customer,
+                active: isCustomerActive(customer),
+                orders: customerOrders,
+                totalSpent: customerOrders.reduce((total, order) => total + toNumber(order.total), 0),
+            };
+        });
         return {
-            id: '',
-            name: '',
-            description: '',
-            available: '',
-            price: '',
-            discount: '',
-            image: '',
-            otherImages: [],
-            color: '',
-            sizes: [],
-            subcategory: [],
-            stock: '',
-            similarProducts: [],
-            reviews: [],
-            shipping: [],
-            featured: 'no',
-            campaign: []
+            customers: enrichedCustomers,
+            activeCount: enrichedCustomers.filter((customer) => customer.active).length,
+            orderCount: orders.length,
+            revenue: orders.reduce((total, order) => total + toNumber(order.total), 0),
         };
-    }
+    }, [customers, orders]);
 
-    useEffect(() => {
-        if (!productsData || Object.keys(productsData).length === 0) return;
+    const filteredCustomers = useMemo(() => {
+        const query = customerSearch.trim().toLowerCase();
+        return customerInsights.customers.filter((customer) => (
+            !query || [customer.name, customer.email, customer.phone, customer.id]
+                .join(' ').toLowerCase().includes(query)
+        ));
+    }, [customerInsights.customers, customerSearch]);
 
-        if (selectedProductId === 'new') {
-            setFormData(getInitialFormData());
-        } else {
-            const product = products[selectedCategory].find(p => p.id === selectedProductId);
-            if (product) {
-                // Normalize data types to ensure arrays are arrays
-                setFormData({
-                    ...product,
-                    sizes: Array.isArray(product.sizes) ? product.sizes : [],
-                    otherImages: Array.isArray(product.otherImages) ? product.otherImages : [],
-                    subcategory: Array.isArray(product.subcategory) ? product.subcategory : [],
-                    similarProducts: Array.isArray(product.similarProducts) ? product.similarProducts : [],
-                    reviews: Array.isArray(product.reviews) ? product.reviews : [],
-                    shipping: Array.isArray(product.shipping) ? product.shipping : [],
-                    campaign: Array.isArray(product.campaign) ? product.campaign : []
-                });
-            }
+    const selectedCustomer = customerInsights.customers.find((customer) => customer.id === selectedCustomerId);
+
+    const refreshCustomerData = async () => {
+        try {
+            const [databaseCustomers, databaseOrders] = await Promise.all([
+                getCustomersFromDatabase(),
+                getOrdersFromDatabase(),
+            ]);
+            setCustomers(databaseCustomers);
+            setOrders(databaseOrders);
+            setDatabaseStatus('connected');
+            setNotification('Customer activity loaded from MongoDB Atlas.');
+        } catch {
+            setCustomers(readCustomers());
+            setOrders(readOrders());
+            setDatabaseStatus('local');
+            setNotification('Database unavailable—showing this browser’s local data.');
         }
-    }, [selectedProductId, selectedCategory, products]);
-
-    if (!productsData || Object.keys(productsData).length === 0) {
-        return <div className="container" style={{ padding: '50px' }}>Loading products or no data available...</div>;
-    }
-
-    if (!isAuthenticated) {
-        return (
-            <div className="login-container container">
-                <form onSubmit={handleLogin} className="login-form">
-                    <h2>Restricted Access</h2>
-                    <p>Please enter password to continue</p>
-                    {loginError && <p className="error-msg">{loginError}</p>}
-                    <input
-                        type="password"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        placeholder="Password"
-                        autoFocus
-                    />
-                    <button type="submit">Login</button>
-                </form>
-            </div>
-        );
-    }
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        window.setTimeout(() => setNotification(''), 3000);
     };
 
-    const handleArrayChange = (e, field) => {
-        const value = e.target.value.split(',').map(item => item.trim());
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+    const refreshProductsFromDatabase = async () => {
+        try {
+            const databaseProducts = await getProductsFromDatabase();
+            if (databaseProducts.length) {
+                const groupedProducts = groupDatabaseProducts(databaseProducts);
+                setProducts(groupedProducts);
+                localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(groupedProducts));
+            }
+            setDatabaseStatus('connected');
+        } catch {
+            setDatabaseStatus('local');
+        }
+    };
+
+    const filteredProducts = useMemo(() => {
+        const query = searchQuery.trim().toLowerCase();
+        return allProducts.filter((product) => {
+            const matchesQuery = !query || [product.name, product.id, product.category, ...(product.subcategory || [])]
+                .join(' ').toLowerCase().includes(query);
+            const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+            const matchesStock = stockFilter === 'all'
+                || (stockFilter === 'available' && product.remainingValue > LOW_STOCK_LIMIT)
+                || (stockFilter === 'low' && product.remainingValue > 0 && product.remainingValue <= LOW_STOCK_LIMIT)
+                || (stockFilter === 'out' && product.remainingValue === 0)
+                || (stockFilter === 'sold' && product.soldValue > 0);
+            return matchesQuery && matchesCategory && matchesStock;
+        });
+    }, [allProducts, searchQuery, categoryFilter, stockFilter]);
+
+    const saveProducts = (nextProducts, message) => {
+        setProducts(nextProducts);
+        localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
+        setNotification(message);
+        if (hasAdminKey()) {
+            saveProductsToDatabase(productsForDatabase(nextProducts))
+                .then(() => {
+                    setDatabaseStatus('connected');
+                    setNotification(`${message} Synced to MongoDB Atlas.`);
+                })
+                .catch(() => {
+                    setDatabaseStatus('local');
+                    setNotification(`${message} Database sync is pending.`);
+                });
+        }
+        window.setTimeout(() => setNotification(''), 3500);
+    };
+
+    const handleLogin = async (event) => {
+        event.preventDefault();
+        try {
+            await verifyAdminKey(passwordInput);
+            sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+            setIsAuthenticated(true);
+            setLoginError('');
+            setDatabaseStatus('connected');
+            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData()]);
+        } catch {
+            if (import.meta.env.DEV && btoa(passwordInput) === PROTECTED_PASS_HASH) {
+                sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+                setIsAuthenticated(true);
+                setLoginError('');
+                setDatabaseStatus('local');
+                return;
+            }
+            setLoginError('Incorrect admin password.');
+        }
+    };
+
+    const handleLogout = () => {
+        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+        clearAdminKey();
+        setIsAuthenticated(false);
+        setPasswordInput('');
+    };
+
+    const openNewProduct = () => {
+        setSelectedProductId('new');
+        setFormData(getInitialFormData());
+        setActiveView('editor');
+    };
+
+    const openProduct = (product) => {
+        setSelectedCategory(product.category);
+        setSelectedProductId(product.id);
+        setFormData({
+            ...getInitialFormData(),
+            ...product,
+            stock: product.stockValue,
+            sold: product.soldValue,
+            sizes: parseList(product.sizes),
+            otherImages: parseList(product.otherImages),
+            subcategory: parseList(product.subcategory),
+            similarProducts: parseList(product.similarProducts),
+            reviews: parseList(product.reviews),
+            shipping: parseList(product.shipping),
+            campaign: parseList(product.campaign),
+        });
+        setActiveView('editor');
+    };
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData((current) => ({ ...current, [name]: value }));
+    };
+
+    const handleArrayChange = (event, field) => {
+        setFormData((current) => ({ ...current, [field]: parseList(event.target.value) }));
     };
 
     const getSubcategories = () => {
-        // Map product category keys to categories.json names if needed
-        const categoryMap = {
-            "Womens Wear": "Women's Wear"
-        };
-        const searchName = categoryMap[selectedCategory] || selectedCategory;
-        const category = categoriesData.categories.find(c => c.name === searchName);
-        return category ? category.subCategories : [];
+        const displayName = selectedCategory === 'Womens Wear' ? "Women's Wear" : selectedCategory;
+        return categoriesData.categories.find((category) => category.name === displayName)?.subCategories || [];
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const editorSuggestions = useMemo(() => {
+        const targetName = normalizeName(formData.name);
+        const targetSubcategories = new Set(parseList(formData.subcategory));
+        if (!targetName && targetSubcategories.size === 0) return [];
+        return allProducts
+            .filter((product) => product.id !== selectedProductId)
+            .map((product) => {
+                const sameName = targetName && normalizeName(product.name) === targetName;
+                const sharedSubcategory = parseList(product.subcategory).some((subcategory) => targetSubcategories.has(subcategory));
+                return { ...product, similarityScore: (sameName ? 2 : 0) + (sharedSubcategory ? 1 : 0) };
+            })
+            .filter((product) => product.similarityScore > 0)
+            .sort((first, second) => second.similarityScore - first.similarityScore)
+            .slice(0, 5);
+    }, [allProducts, formData.name, formData.subcategory, selectedProductId]);
 
-        const updatedProducts = { ...products };
-        const categoryProducts = [...updatedProducts[selectedCategory]];
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        const categoryProducts = [...(products[selectedCategory] || [])];
+        const normalizedProduct = {
+            ...getInitialFormData(),
+            ...formData,
+            id: formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`,
+            stock: Math.max(0, toNumber(formData.stock)),
+            sold: Math.max(0, toNumber(formData.sold)),
+            available: getRemaining(formData) > 0 ? 'In Stock' : 'Out of Stock',
+        };
 
         if (selectedProductId === 'new') {
-            // Create new
-            const newId = formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`;
-            const newProduct = { ...formData, id: newId };
-            categoryProducts.push(newProduct);
-            setNotification(`Product ${newProduct.name} created!`);
+            categoryProducts.push(normalizedProduct);
         } else {
-            // Update existing
-            const index = categoryProducts.findIndex(p => p.id === selectedProductId);
-            if (index !== -1) {
-                categoryProducts[index] = { ...formData };
-                setNotification(`Product ${formData.name} updated!`);
-            }
+            const index = categoryProducts.findIndex((product) => product.id === selectedProductId);
+            if (index >= 0) categoryProducts[index] = normalizedProduct;
         }
 
-        updatedProducts[selectedCategory] = categoryProducts;
-        setProducts(updatedProducts);
+        saveProducts(
+            { ...products, [selectedCategory]: categoryProducts },
+            `${normalizedProduct.name} ${selectedProductId === 'new' ? 'created' : 'updated'} in your local draft.`,
+        );
+        setSelectedProductId(normalizedProduct.id);
+    };
 
-        // In a real app, we would send this to a backend. 
-        // Here we'll just log it and maybe offer a download.
-        console.log('Updated Data:', updatedProducts);
+    const mapImportedRow = (rawRow, index) => {
+        const row = normalizeHeaders(rawRow);
+        const category = normalizeCategory(valueFrom(row, 'category'));
+        const name = String(valueFrom(row, 'name', 'productname')).trim();
+        const price = valueFrom(row, 'price', 'sellingprice');
+        const id = String(valueFrom(row, 'id', 'sku', 'productid')).trim();
+        const errors = [];
+        if (!Object.keys(products).includes(category)) errors.push('Unknown category');
+        if (!name) errors.push('Name is required');
+        const numericPrice = toNumber(price, NaN);
+        if (price === '' || !Number.isFinite(numericPrice) || numericPrice < 0) errors.push('Valid price is required');
+
+        return {
+            rowNumber: index + 2,
+            valid: errors.length === 0,
+            errors,
+            category,
+            product: {
+                id,
+                name,
+                description: String(valueFrom(row, 'description')).trim(),
+                price: String(price),
+                discount: String(valueFrom(row, 'discount')).trim(),
+                stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
+                sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
+                image: String(valueFrom(row, 'image', 'imageurl')).trim(),
+                otherImages: parseList(valueFrom(row, 'otherimages', 'otherimageurls')),
+                color: String(valueFrom(row, 'color')).trim(),
+                sizes: parseList(valueFrom(row, 'sizes', 'size')),
+                subcategory: parseList(valueFrom(row, 'subcategory', 'subcategories')),
+                featured: String(valueFrom(row, 'featured')).trim().toLowerCase() === 'yes' ? 'yes' : 'no',
+                similarProducts: parseList(valueFrom(row, 'similarproducts', 'similarproductids')),
+                shipping: parseList(valueFrom(row, 'shipping', 'shippinginfo')),
+                campaign: parseList(valueFrom(row, 'campaign')),
+            },
+        };
+    };
+
+    const handleImportFile = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setImportError('');
+        setImportRows([]);
+        setImportFileName(file.name);
+
+        try {
+            let rows;
+            if (file.name.toLowerCase().endsWith('.json')) {
+                const parsed = JSON.parse(await file.text());
+                rows = Array.isArray(parsed) ? parsed : flattenProducts(parsed);
+            } else {
+                const { read, utils } = await import('xlsx');
+                const workbook = read(await file.arrayBuffer());
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                rows = utils.sheet_to_json(firstSheet, { defval: '', raw: false });
+            }
+            if (!rows.length) throw new Error('The selected file does not contain product rows.');
+            setImportRows(rows.map(mapImportedRow));
+        } catch (error) {
+            setImportError(error.message || 'The file could not be read.');
+        }
+    };
+
+    const applyImport = () => {
+        const validRows = importRows.filter((row) => row.valid);
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, [...items]]));
+
+        validRows.forEach(({ category, product }, index) => {
+            const generatedId = product.id || `${category.substring(0, 2).toLowerCase()}${Date.now()}${index}`;
+            const existingIndex = nextProducts[category].findIndex((item) => item.id === generatedId);
+            const existingProduct = existingIndex >= 0 ? nextProducts[category][existingIndex] : getInitialFormData();
+            const importedProduct = {
+                ...existingProduct,
+                ...product,
+                id: generatedId,
+                available: Math.max(0, product.stock - product.sold) > 0 ? 'In Stock' : 'Out of Stock',
+            };
+            if (existingIndex >= 0) nextProducts[category][existingIndex] = importedProduct;
+            else nextProducts[category].push(importedProduct);
+        });
+
+        saveProducts(nextProducts, `${validRows.length} products imported into your local draft.`);
+        setImportRows([]);
+        setImportFileName('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setActiveView('inventory');
+    };
+
+    const downloadTemplate = async () => {
+        const { utils, writeFileXLSX } = await import('xlsx');
+        const templateRows = [{
+            category: 'Jewellery',
+            id: 'sample-001',
+            name: 'Sample product',
+            description: 'Product description',
+            price: 499,
+            discount: 0,
+            stock: 25,
+            sold: 5,
+            image: '/src/assets/img/example.jpg',
+            otherImages: 'image-2.jpg, image-3.jpg',
+            color: 'Gold',
+            sizes: 'S, M, L',
+            subcategory: 'Black beads sets',
+            featured: 'no',
+            similarProducts: 'sample-002, sample-003',
+            shipping: 'Pan India Shipping, Ships in 5 to 7 days',
+            campaign: '',
+        }];
+        const worksheet = utils.json_to_sheet(templateRows);
+        worksheet['!cols'] = Object.keys(templateRows[0]).map((key) => ({ wch: Math.max(key.length + 2, 15) }));
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'Products');
+        writeFileXLSX(workbook, 'ANNS-product-import-template.xlsx');
+    };
+
+    const exportInventory = async () => {
+        const { utils, writeFileXLSX } = await import('xlsx');
+        const exportRows = allProducts.map((product) => ({
+            category: product.category,
+            id: product.id,
+            name: product.name,
+            price: toNumber(product.price),
+            stock: product.stockValue,
+            sold: product.soldValue,
+            remaining: product.remainingValue,
+            status: product.remainingValue === 0 ? 'Out of stock' : product.remainingValue <= LOW_STOCK_LIMIT ? 'Low stock' : 'Available',
+            subcategory: parseList(product.subcategory).join(', '),
+            featured: product.featured,
+        }));
+        const worksheet = utils.json_to_sheet(exportRows);
+        worksheet['!cols'] = [16, 15, 34, 12, 12, 12, 12, 16, 28, 12].map((wch) => ({ wch }));
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        writeFileXLSX(workbook, 'ANNS-inventory.xlsx');
     };
 
     const downloadJson = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(products, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "products.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        const url = URL.createObjectURL(new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'products.json';
+        anchor.click();
+        URL.revokeObjectURL(url);
     };
 
+    if (!isAuthenticated) {
+        return (
+            <section className="admin-login-page">
+                <div className="admin-login-card">
+                    <div className="admin-login-mark"><Package size={26} /></div>
+                    <p className="admin-kicker">ANNS ADMIN</p>
+                    <h1>Inventory workspace</h1>
+                    <p>Sign in to manage products, stock and bulk imports.</p>
+                    <form onSubmit={handleLogin}>
+                        <label htmlFor="admin-password">Admin password</label>
+                        <input
+                            id="admin-password"
+                            type="password"
+                            value={passwordInput}
+                            onChange={(event) => setPasswordInput(event.target.value)}
+                            placeholder="Enter password"
+                            autoFocus
+                        />
+                        {loginError && <p className="admin-error" role="alert">{loginError}</p>}
+                        <button type="submit">Open dashboard <ChevronRight size={18} /></button>
+                    </form>
+                </div>
+            </section>
+        );
+    }
+
+    const navigation = [
+        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'inventory', label: 'Inventory', icon: Boxes },
+        { id: 'customers', label: 'Customers', icon: Users },
+        { id: 'import', label: 'Bulk import', icon: UploadCloud },
+        { id: 'editor', label: selectedProductId === 'new' ? 'Add product' : 'Edit product', icon: Edit3 },
+    ];
+
+    const handleNavigation = (view) => {
+        setActiveView(view);
+        if (view === 'customers') refreshCustomerData();
+        if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
+    };
+
+    const statCards = [
+        { label: 'Products', value: inventoryStats.productCount.toLocaleString('en-IN'), note: 'Across all categories', icon: Package, tone: 'neutral' },
+        { label: 'Total stock', value: inventoryStats.stockUnits.toLocaleString('en-IN'), note: 'Units entered', icon: Boxes, tone: 'blue' },
+        { label: 'Units sold', value: inventoryStats.soldUnits.toLocaleString('en-IN'), note: inventoryStats.soldUnits ? 'Recorded sales' : 'Add sold values to begin', icon: ShoppingBag, tone: 'green' },
+        { label: 'Remaining', value: inventoryStats.remainingUnits.toLocaleString('en-IN'), note: `${inventoryStats.lowStock} low · ${inventoryStats.outOfStock} out`, icon: AlertTriangle, tone: 'amber' },
+        { label: 'Active users', value: customerInsights.activeCount.toLocaleString('en-IN'), note: `${customers.length} registered contacts`, icon: UserCheck, tone: 'purple' },
+    ];
+
     return (
-        <div className="product-manager container">
-            <h1>Product Manager</h1>
-
-            {notification && <div className="notification">{notification}</div>}
-
-            <div className="controls">
-                <div className="control-group">
-                    <label>Category:</label>
-                    <select
-                        value={selectedCategory}
-                        onChange={(e) => {
-                            setSelectedCategory(e.target.value);
-                            setSelectedProductId('new');
-                        }}
-                    >
-                        {Object.keys(products).map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
+        <section className="admin-dashboard-page">
+            <aside className="admin-sidebar">
+                <div>
+                    <p className="admin-kicker">ANNS ADMIN</p>
+                    <h2>Product Studio</h2>
                 </div>
-
-                <div className="control-group">
-                    <label>Product:</label>
-                    <select
-                        value={selectedProductId}
-                        onChange={(e) => setSelectedProductId(e.target.value)}
-                    >
-                        <option value="new">+ Create New Product</option>
-                        {products[selectedCategory].map(p => (
-                            <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-                        ))}
-                    </select>
+                <nav aria-label="Admin navigation">
+                    {navigation.map((item) => (
+                        <button key={item.id} type="button" className={activeView === item.id ? 'active' : ''} onClick={() => handleNavigation(item.id)}>
+                            {React.createElement(item.icon, { size: 19 })} {item.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="admin-sidebar-foot">
+                    <button type="button" onClick={downloadJson}><FileJson size={18} /> Export JSON</button>
+                    <button type="button" onClick={handleLogout}><LogOut size={18} /> Sign out</button>
                 </div>
-            </div>
+            </aside>
 
-            <form onSubmit={handleSubmit} className="product-form">
-                <div className="form-row">
-                    <div className="form-group">
-                        <label>ID:</label>
-                        <input
-                            type="text"
-                            name="id"
-                            value={formData.id}
-                            onChange={handleInputChange}
-                            placeholder="Auto-generated if empty"
-                            disabled={selectedProductId !== 'new'}
-                        />
+            <main className="admin-main">
+                <header className="admin-topbar">
+                    <div>
+                        <p className="admin-kicker">CATALOG MANAGEMENT</p>
+                        <h1>{navigation.find((item) => item.id === activeView)?.label}</h1>
                     </div>
-                    <div className="form-group">
-                        <label>Name:</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required
-                        />
+                    <div className="admin-top-actions">
+                        <span className={`database-status ${databaseStatus}`}><i /> {databaseStatus === 'connected' ? 'Atlas connected' : databaseStatus === 'connecting' ? 'Connecting' : 'Local mode'}</span>
+                        <button type="button" className="admin-secondary-button" onClick={() => handleNavigation('import')}><UploadCloud size={18} /> Import</button>
+                        <button type="button" className="admin-primary-button" onClick={openNewProduct}><Plus size={18} /> Add product</button>
                     </div>
-                </div>
+                </header>
 
-                <div className="form-group">
-                    <label>Description:</label>
-                    <textarea
-                        name="description"
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows="3"
-                    />
-                </div>
+                {notification && <div className="admin-notification"><CheckCircle2 size={18} /> {notification}</div>}
 
-                <div className="form-group">
-                    <label>Available (e.g., In Stock):</label>
-                    <input
-                        type="text"
-                        name="available"
-                        value={formData.available}
-                        onChange={handleInputChange}
-                    />
-                </div>
+                {activeView === 'overview' && (
+                    <div className="admin-view-stack">
+                        <section className="admin-stat-grid">
+                            {statCards.map((card) => (
+                                <article className={`admin-stat-card ${card.tone}`} key={card.label}>
+                                    <div className="admin-stat-icon">{React.createElement(card.icon, { size: 21 })}</div>
+                                    <p>{card.label}</p>
+                                    <strong>{card.value}</strong>
+                                    <span>{card.note}</span>
+                                </article>
+                            ))}
+                        </section>
 
-                <div className="form-row">
-                    <div className="form-group">
-                        <label>Price:</label>
-                        <input
-                            type="text"
-                            name="price"
-                            value={formData.price}
-                            onChange={handleInputChange}
-                            required
-                        />
+                        <section className="admin-overview-grid">
+                            <article className="admin-panel">
+                                <div className="admin-panel-heading">
+                                    <div><p className="admin-kicker">INVENTORY HEALTH</p><h2>Needs attention</h2></div>
+                                    <button type="button" onClick={() => { setStockFilter('low'); setActiveView('inventory'); }}>View inventory</button>
+                                </div>
+                                <div className="admin-health-list">
+                                    <button type="button" onClick={() => { setStockFilter('out'); setActiveView('inventory'); }}>
+                                        <span className="health-dot red" /><div><strong>{inventoryStats.outOfStock} out of stock</strong><small>Products with no remaining units</small></div><ChevronRight size={18} />
+                                    </button>
+                                    <button type="button" onClick={() => { setStockFilter('low'); setActiveView('inventory'); }}>
+                                        <span className="health-dot amber" /><div><strong>{inventoryStats.lowStock} low stock</strong><small>Products with {LOW_STOCK_LIMIT} units or fewer</small></div><ChevronRight size={18} />
+                                    </button>
+                                    <button type="button" onClick={() => { setSearchQuery(duplicateGroups[0]?.[0]?.name || ''); setStockFilter('all'); setActiveView('inventory'); }}>
+                                        <span className="health-dot blue" /><div><strong>{duplicateGroups.length} similar groups</strong><small>Repeated names that may need review</small></div><Sparkles size={18} />
+                                    </button>
+                                </div>
+                            </article>
+
+                            <article className="admin-panel">
+                                <div className="admin-panel-heading">
+                                    <div><p className="admin-kicker">CATEGORY MIX</p><h2>Catalog breakdown</h2></div>
+                                </div>
+                                <div className="category-breakdown">
+                                    {Object.entries(products).map(([category, items]) => {
+                                        const percentage = allProducts.length ? (items.length / allProducts.length) * 100 : 0;
+                                        return (
+                                            <div key={category}>
+                                                <span><strong>{category}</strong><small>{items.length} products</small></span>
+                                                <div className="category-bar"><i style={{ width: `${percentage}%` }} /></div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </article>
+                        </section>
+
+                        <section className="admin-panel">
+                            <div className="admin-panel-heading">
+                                <div><p className="admin-kicker">SIMILARITY CHECK</p><h2>Repeated product names</h2></div>
+                                <span className="admin-count-badge">{duplicateGroups.length} groups</span>
+                            </div>
+                            {duplicateGroups.length ? (
+                                <div className="similar-group-grid">
+                                    {duplicateGroups.slice(0, 6).map((group) => (
+                                        <button type="button" key={normalizeName(group[0].name)} onClick={() => openProduct(group[0])}>
+                                            <span>{group.length}</span>
+                                            <div><strong>{group[0].name.trim()}</strong><small>{group.slice(0, 3).map((product) => product.id).join(' · ')}</small></div>
+                                            <ChevronRight size={17} />
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : <div className="admin-empty-state"><CheckCircle2 size={28} /><p>No duplicate product names found.</p></div>}
+                        </section>
                     </div>
-                    <div className="form-group">
-                        <label>Discount:</label>
-                        <input
-                            type="text"
-                            name="discount"
-                            value={formData.discount}
-                            onChange={handleInputChange}
-                        />
-                    </div>
-                </div>
+                )}
 
-                <div className="form-group">
-                    <label>Image URL:</label>
-                    <input
-                        type="text"
-                        name="image"
-                        value={formData.image}
-                        onChange={handleInputChange}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Other Images (comma separated URLs):</label>
-                    <textarea
-                        name="otherImages"
-                        value={formData.otherImages?.join(', ') || ''}
-                        onChange={(e) => handleArrayChange(e, 'otherImages')}
-                        rows="2"
-                    />
-                </div>
-
-                <div className="form-row">
-                    <div className="form-group">
-                        <label>Color:</label>
-                        <input
-                            type="text"
-                            name="color"
-                            value={formData.color}
-                            onChange={handleInputChange}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Sizes (comma separated):</label>
-                        <input
-                            type="text"
-                            name="sizes"
-                            value={formData.sizes?.join(', ') || ''}
-                            onChange={(e) => handleArrayChange(e, 'sizes')}
-                        />
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label>Subcategory:</label>
-                    <div className="subcategory-options">
-                        {getSubcategories().length > 0 ? (
-                            <select
-                                multiple
-                                value={formData.subcategory}
-                                onChange={(e) => {
-                                    const options = [...e.target.selectedOptions];
-                                    const values = options.map(option => option.value);
-                                    setFormData(prev => ({ ...prev, subcategory: values }));
-                                }}
-                                style={{ height: '100px' }}
-                            >
-                                {getSubcategories().map(sub => (
-                                    <option key={sub} value={sub}>{sub}</option>
-                                ))}
+                {activeView === 'inventory' && (
+                    <section className="admin-panel inventory-panel">
+                        <div className="inventory-toolbar">
+                            <div className="admin-search"><Search size={18} /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search by name, ID or subcategory" /></div>
+                            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category">
+                                <option value="all">All categories</option>
+                                {Object.keys(products).map((category) => <option key={category} value={category}>{category}</option>)}
                             </select>
-                        ) : (
-                            <input
-                                type="text"
-                                placeholder="No predefined subcategories. Type manually (comma separated)"
-                                value={formData.subcategory?.join(', ') || ''}
-                                onChange={(e) => handleArrayChange(e, 'subcategory')}
-                            />
+                            <select value={stockFilter} onChange={(event) => setStockFilter(event.target.value)} aria-label="Filter by stock status">
+                                <option value="all">All stock</option>
+                                <option value="available">Available</option>
+                                <option value="low">Low stock</option>
+                                <option value="out">Out of stock</option>
+                                <option value="sold">Has sales</option>
+                            </select>
+                            <button type="button" className="admin-icon-button" onClick={exportInventory} title="Export inventory to Excel"><Download size={18} /></button>
+                        </div>
+                        <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
+                        <div className="admin-table-wrap">
+                            <table className="admin-table">
+                                <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+                                <tbody>
+                                    {filteredProducts.map((product) => {
+                                        const status = product.remainingValue === 0 ? 'out' : product.remainingValue <= LOW_STOCK_LIMIT ? 'low' : 'available';
+                                        return (
+                                            <tr key={`${product.category}-${product.id}`}>
+                                                <td><strong>{product.name}</strong><small>{product.id}</small></td>
+                                                <td>{product.category}</td>
+                                                <td>{formatCurrency(product.price)}</td>
+                                                <td>{product.stockValue.toLocaleString('en-IN')}</td>
+                                                <td>{product.soldValue.toLocaleString('en-IN')}</td>
+                                                <td><strong>{product.remainingValue.toLocaleString('en-IN')}</strong></td>
+                                                <td><span className={`stock-status ${status}`}>{status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'Available'}</span></td>
+                                                <td><button type="button" className="table-edit-button" onClick={() => openProduct(product)} aria-label={`Edit ${product.name}`}><Edit3 size={16} /></button></td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        {!filteredProducts.length && <div className="admin-empty-state"><Search size={27} /><p>No products match these filters.</p></div>}
+                    </section>
+                )}
+
+                {activeView === 'customers' && (
+                    <div className="admin-view-stack">
+                        <section className="customer-stat-grid">
+                            <article className="customer-stat"><UserCheck size={21} /><div><span>Active users</span><strong>{customerInsights.activeCount}</strong><small>Signed in within 30 minutes</small></div></article>
+                            <article className="customer-stat"><Users size={21} /><div><span>Registered contacts</span><strong>{customers.length}</strong><small>Email and mobile registrations</small></div></article>
+                            <article className="customer-stat"><ReceiptText size={21} /><div><span>Orders recorded</span><strong>{customerInsights.orderCount}</strong><small>Across all customers</small></div></article>
+                            <article className="customer-stat"><ShoppingBag size={21} /><div><span>Customer revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>From recorded orders</small></div></article>
+                        </section>
+
+                        <section className="admin-panel customer-panel">
+                            <div className="customer-toolbar">
+                                <div className="admin-search"><Search size={18} /><input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} placeholder="Search name, email or mobile" /></div>
+                                <button type="button" className="admin-secondary-button" onClick={refreshCustomerData}><RefreshCw size={17} /> Refresh activity</button>
+                            </div>
+                            <div className="admin-table-wrap">
+                                <table className="admin-table customer-table">
+                                    <thead><tr><th>Customer</th><th>Contact</th><th>Sign-in</th><th>Activity</th><th>Orders</th><th>Total spent</th><th aria-label="Purchase history" /></tr></thead>
+                                    <tbody>
+                                        {filteredCustomers.map((customer) => (
+                                            <tr key={customer.id}>
+                                                <td><div className="customer-name-cell">{customer.picture ? <img src={customer.picture} alt="" /> : <span>{customer.name?.charAt(0)?.toUpperCase() || 'A'}</span>}<div><strong>{customer.name}</strong><small>Joined {new Date(customer.createdAt).toLocaleDateString('en-IN')}</small></div></div></td>
+                                                <td><div className="customer-contact">{customer.email && <span><Mail size={14} /> {customer.email}</span>}{customer.phone && <span><Phone size={14} /> +91 {customer.phone}</span>}{!customer.email && !customer.phone && <small>No contact recorded</small>}</div></td>
+                                                <td><span className="provider-badge">{customer.provider}</span></td>
+                                                <td><span className={`activity-badge ${customer.active ? 'active' : 'inactive'}`}><i /> {customer.active ? 'Active now' : 'Inactive'}</span><small>{customer.lastSeenAt ? new Date(customer.lastSeenAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'No activity'}</small></td>
+                                                <td>{customer.orders.length}</td>
+                                                <td><strong>{formatCurrency(customer.totalSpent)}</strong></td>
+                                                <td><button type="button" className="history-button" onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> History</button></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {!filteredCustomers.length && <div className="admin-empty-state"><Users size={28} /><p>No registered customers yet. New Google, email and mobile sign-ins will appear here.</p></div>}
+                        </section>
+
+                        {selectedCustomer && (
+                            <section className="admin-panel purchase-history-panel">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2></div><span className="admin-count-badge">{selectedCustomer.orders.length} orders</span></div>
+                                {selectedCustomer.orders.length ? (
+                                    <div className="order-history-list">{selectedCustomer.orders.map((order) => (
+                                        <article key={order.id}>
+                                            <div><strong>Order {order.id}</strong><small>{new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></div>
+                                            <span className="order-status">{order.status || 'Placed'}</span>
+                                            <div><strong>{order.items?.reduce((total, item) => total + toNumber(item.quantity, 1), 0) || 0} items</strong><small>{(order.items || []).map((item) => item.name).join(', ')}</small></div>
+                                            <strong>{formatCurrency(order.total)}</strong>
+                                        </article>
+                                    ))}</div>
+                                ) : <div className="admin-empty-state"><ReceiptText size={28} /><p>No purchases recorded for this customer.</p></div>}
+                            </section>
                         )}
-                        <small>Hold Ctrl/Cmd to select multiple</small>
+
+                        <section className="admin-panel customer-data-note"><AlertTriangle size={21} /><div><strong>Local analytics mode</strong><p>This dashboard currently reads customer sessions and orders from this browser. Production-wide active users, contacts and purchase history require a shared backend database.</p></div></section>
                     </div>
-                </div>
+                )}
 
-                <div className="form-row">
-                    <div className="form-group">
-                        <label>Stock:</label>
-                        <input
-                            type="text"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleInputChange}
-                        />
+                {activeView === 'import' && (
+                    <div className="admin-view-stack">
+                        <section className="admin-panel import-intro">
+                            <div>
+                                <p className="admin-kicker">BULK PRODUCT UPLOAD</p>
+                                <h2>Import a spreadsheet</h2>
+                                <p>Upload Excel, CSV or JSON. The file is checked before anything is added to your local catalog draft.</p>
+                            </div>
+                            <button type="button" className="admin-secondary-button" onClick={downloadTemplate}><FileSpreadsheet size={18} /> Download Excel template</button>
+                        </section>
+                        <section className="admin-panel">
+                            <input ref={fileInputRef} className="visually-hidden" type="file" accept=".xlsx,.xls,.csv,.json" onChange={handleImportFile} />
+                            <button type="button" className="import-dropzone" onClick={() => fileInputRef.current?.click()}>
+                                <span><UploadCloud size={27} /></span>
+                                <strong>{importFileName || 'Choose an Excel, CSV or JSON file'}</strong>
+                                <small>Required columns: category, name and price · Maximum quality comes from using the template</small>
+                            </button>
+                            {importError && <div className="import-error"><XCircle size={18} /> {importError}</div>}
+                        </section>
+                        {importRows.length > 0 && (
+                            <section className="admin-panel">
+                                <div className="admin-panel-heading">
+                                    <div><p className="admin-kicker">IMPORT PREVIEW</p><h2>{importRows.length} rows detected</h2></div>
+                                    <div className="import-validation-summary"><span className="valid"><CheckCircle2 size={16} /> {importRows.filter((row) => row.valid).length} ready</span><span className="invalid"><XCircle size={16} /> {importRows.filter((row) => !row.valid).length} issues</span></div>
+                                </div>
+                                <div className="admin-table-wrap import-preview-table">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Row</th><th>Status</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Sold</th></tr></thead>
+                                        <tbody>{importRows.slice(0, 50).map((row) => (
+                                            <tr key={row.rowNumber}>
+                                                <td>{row.rowNumber}</td>
+                                                <td>{row.valid ? <span className="import-row-valid"><CheckCircle2 size={15} /> Ready</span> : <span className="import-row-invalid" title={row.errors.join(', ')}><XCircle size={15} /> {row.errors.join(', ')}</span>}</td>
+                                                <td><strong>{row.product.name || 'Missing name'}</strong><small>{row.product.id || 'ID will be generated'}</small></td>
+                                                <td>{row.category || '—'}</td>
+                                                <td>{row.product.price === '' ? '—' : formatCurrency(row.product.price)}</td>
+                                                <td>{row.product.stock}</td><td>{row.product.sold}</td>
+                                            </tr>
+                                        ))}</tbody>
+                                    </table>
+                                </div>
+                                <div className="import-actions">
+                                    <p>Existing IDs will be updated; new IDs will be added.</p>
+                                    <button type="button" className="admin-primary-button" disabled={!importRows.some((row) => row.valid)} onClick={applyImport}><CheckCircle2 size={18} /> Import {importRows.filter((row) => row.valid).length} valid rows</button>
+                                </div>
+                            </section>
+                        )}
                     </div>
-                    <div className="form-group">
-                        <label>Featured:</label>
-                        <select name="featured" value={formData.featured} onChange={handleInputChange}>
-                            <option value="yes">Yes</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                </div>
+                )}
 
-                <div className="form-group">
-                    <label>Campaign (comma separated):</label>
-                    <input
-                        type="text"
-                        name="campaign"
-                        value={formData.campaign?.join(', ') || ''}
-                        onChange={(e) => handleArrayChange(e, 'campaign')}
-                        placeholder="e.g., Pan India Shipping, Easy Returns"
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Shipping Info (comma separated):</label>
-                    <input
-                        type="text"
-                        name="shipping"
-                        value={formData.shipping?.join(', ') || ''}
-                        onChange={(e) => handleArrayChange(e, 'shipping')}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Reviews (IDs comma separated):</label>
-                    <input
-                        type="text"
-                        name="reviews"
-                        value={formData.reviews?.join(', ') || ''}
-                        onChange={(e) => handleArrayChange(e, 'reviews')}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Similar Products (IDs comma separated):</label>
-                    <input
-                        type="text"
-                        name="similarProducts"
-                        value={formData.similarProducts?.join(', ') || ''}
-                        onChange={(e) => handleArrayChange(e, 'similarProducts')}
-                    />
-                </div>
-
-                <div className="form-actions">
-                    <button type="submit" className="btn-save">Save Changes</button>
-                    <button type="button" onClick={downloadJson} className="btn-export">Export JSON</button>
-                </div>
-            </form>
-        </div>
+                {activeView === 'editor' && (
+                    <form onSubmit={handleSubmit} className="admin-editor-grid">
+                        <div className="admin-view-stack">
+                            <section className="admin-panel editor-section">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">BASIC DETAILS</p><h2>{selectedProductId === 'new' ? 'New product' : formData.name}</h2></div></div>
+                                <div className="editor-form-grid">
+                                    <label>Category<select value={selectedCategory} onChange={(event) => { setSelectedCategory(event.target.value); setSelectedProductId('new'); }} disabled={selectedProductId !== 'new'}>{Object.keys(products).map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+                                    <label>Product ID<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Generated if empty" disabled={selectedProductId !== 'new'} /></label>
+                                    <label className="full-width">Product name<input name="name" value={formData.name} onChange={handleInputChange} required /></label>
+                                    <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
+                                    <label>Price (₹)<input name="price" type="number" min="0" value={formData.price} onChange={handleInputChange} required /></label>
+                                    <label>Discount<input name="discount" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /></label>
+                                </div>
+                            </section>
+                            <section className="admin-panel editor-section">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">INVENTORY</p><h2>Stock and sales</h2></div></div>
+                                <div className="editor-form-grid">
+                                    <label>Total stock<input name="stock" type="number" min="0" value={formData.stock} onChange={handleInputChange} /></label>
+                                    <label>Units sold<input name="sold" type="number" min="0" value={formData.sold} onChange={handleInputChange} /></label>
+                                    <div className="editor-inventory-result full-width"><span>Remaining stock</span><strong>{Math.max(0, toNumber(formData.stock) - toNumber(formData.sold)).toLocaleString('en-IN')}</strong><small>Calculated automatically</small></div>
+                                    <label>Featured<select name="featured" value={formData.featured} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes</option></select></label>
+                                    <label>Color<input name="color" value={formData.color} onChange={handleInputChange} /></label>
+                                </div>
+                            </section>
+                            <section className="admin-panel editor-section">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
+                                <div className="editor-form-grid">
+                                    <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} /></label>
+                                    <label className="full-width">Other image URLs<textarea value={formData.otherImages.join(', ')} onChange={(event) => handleArrayChange(event, 'otherImages')} rows="2" placeholder="Comma separated" /></label>
+                                    <label>Sizes<input value={formData.sizes.join(', ')} onChange={(event) => handleArrayChange(event, 'sizes')} placeholder="S, M, L" /></label>
+                                    <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
+                                    <label className="full-width">Shipping information<input value={formData.shipping.join(', ')} onChange={(event) => handleArrayChange(event, 'shipping')} placeholder="Comma separated" /></label>
+                                    <label className="full-width">Campaign labels<input value={formData.campaign.join(', ')} onChange={(event) => handleArrayChange(event, 'campaign')} placeholder="Comma separated" /></label>
+                                    <label className="full-width">Similar product IDs<input value={formData.similarProducts.join(', ')} onChange={(event) => handleArrayChange(event, 'similarProducts')} placeholder="Comma separated IDs" /></label>
+                                </div>
+                            </section>
+                            <div className="editor-save-bar"><p>Changes are saved as a browser draft. Export JSON when ready to deploy.</p><button type="submit" className="admin-primary-button"><Save size={18} /> Save product</button></div>
+                        </div>
+                        <aside className="editor-aside">
+                            <section className="admin-panel">
+                                <p className="admin-kicker">SIMILAR PRODUCTS</p>
+                                <h3>Automatic suggestions</h3>
+                                <p>Based on matching names and subcategories.</p>
+                                {editorSuggestions.length ? <div className="editor-suggestion-list">{editorSuggestions.map((product) => <button type="button" key={product.id} onClick={() => openProduct(product)}><div><strong>{product.name}</strong><small>{product.id} · {product.category}</small></div><ChevronRight size={16} /></button>)}</div> : <div className="admin-empty-state compact"><Sparkles size={23} /><p>Add a name or subcategory to see matches.</p></div>}
+                            </section>
+                            <section className="admin-panel admin-draft-note"><FileJson size={22} /><div><strong>Local draft mode</strong><p>This static site cannot write back to GitHub by itself. Export the updated JSON to publish catalog changes.</p></div></section>
+                        </aside>
+                    </form>
+                )}
+            </main>
+        </section>
     );
 };
 

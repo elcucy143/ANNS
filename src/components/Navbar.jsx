@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 import logo from '../assets/logo.jpg';
 
@@ -13,6 +14,7 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { getCartCount } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const toggleMenu = () => {
@@ -54,6 +56,10 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons mobile-only">
+          <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'}>
+            <User size={24} />
+            {user && <span className="signed-in-dot" />}
+          </Link>
           <Link to="/cart" className="cart-icon-link">
             <ShoppingBag size={24} />
             {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
@@ -129,7 +135,10 @@ const Navbar = () => {
           ) : (
             <Search size={24} className="icon" onClick={toggleSearch} />
           )}
-          <User size={24} className="icon" />
+          <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'} title={user ? `Account: ${user.name}` : 'Sign in or register'}>
+            <User size={24} className="icon" />
+            {user && <span className="signed-in-dot" />}
+          </Link>
           <Link to="/cart" className="cart-icon-link">
             <ShoppingBag size={24} className="icon" />
             {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
