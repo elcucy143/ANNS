@@ -5,6 +5,10 @@
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "MONGODB_URI": "mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority",
     "MONGODB_DB_NAME": "anns",
-    "ADMIN_API_KEY": "replace-with-a-long-random-admin-secret"
+    "ADMIN_API_KEY": "replace-with-a-long-random-admin-secret",
+    "RAZORPAY_KEY_ID": "rzp_test_replace_me",
+    "RAZORPAY_KEY_SECRET": "replace-with-test-key-secret",
+    "RAZORPAY_CREDENTIALS_FILE": "optional-local-path-to-test-key-csv",
+    "RAZORPAY_WEBHOOK_SECRET": "replace-after-deploying-the-webhook"
   }
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,31 +7,27 @@ import images from '../assets/images';
 
 const CartPopup = () => {
     const { isPopupVisible, setIsPopupVisible, lastAddedItem, getCartTotal, cartItems } = useCart();
-    const [shouldRender, setShouldRender] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         setIsClosing(true);
         setTimeout(() => {
             setIsPopupVisible(false);
-            setShouldRender(false);
             setIsClosing(false);
         }, 1000); // Matching the slow close animation duration
-    };
+    }, [setIsPopupVisible]);
 
     useEffect(() => {
         let timer;
         if (isPopupVisible) {
-            setShouldRender(true);
-            setIsClosing(false);
             timer = setTimeout(() => {
                 handleClose();
             }, 5000);
         }
         return () => clearTimeout(timer);
-    }, [isPopupVisible]);
+    }, [handleClose, isPopupVisible]);
 
-    if (!shouldRender || !lastAddedItem) return null;
+    if (!isPopupVisible || !lastAddedItem) return null;
 
     const filename = lastAddedItem.image ? lastAddedItem.image.split('/').pop() : '';
 
@@ -64,7 +60,7 @@ const CartPopup = () => {
                 </div>
                 <div className="popup-actions">
                     <Link to="/cart" className="view-cart-btn" onClick={handleClose}>View Cart</Link>
-                    <button className="checkout-btn-small" onClick={handleClose}>Checkout</button>
+                    <Link to="/checkout" className="checkout-btn-small" onClick={handleClose}>Checkout</Link>
                 </div>
             </div>
         </div>

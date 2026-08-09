@@ -52,3 +52,13 @@ export const saveOrderToDatabase = (order) => request('orders', {
   method: 'POST',
   body: JSON.stringify(order),
 });
+
+export const createRazorpayOrder = (checkout) => request('payments/razorpay/create-order', {
+  method: 'POST',
+  body: JSON.stringify(checkout),
+});
+
+export const verifyRazorpayPayment = (payment) => request('payments/razorpay/verify', {
+  method: 'POST',
+  body: JSON.stringify(payment),
+});

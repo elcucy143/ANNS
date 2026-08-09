@@ -7,12 +7,14 @@
     "node": ">=20 <23"
   },
   "scripts": {
-    "start": "func start",
+    "start": "node src/server.js",
+    "start:azure": "func start",
     "seed": "node scripts/seed-products.js",
-    "check": "node --check src/index.js && node --check src/lib/db.js && node --check src/functions/data.js"
+    "check": "node --check src/index.js && node --check src/server.js && node --check src/lib/db.js && node --check src/lib/razorpay.js && node --check src/functions/data.js"
   },
   "dependencies": {
     "@azure/functions": "^4.7.2",
+    "express": "^5.1.0",
     "mongodb": "^6.20.0"
   }
 }

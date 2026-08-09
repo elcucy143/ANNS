@@ -44,15 +44,15 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4>Follow Us</h4>
                     <div className="social-icons">
-                        <a target="_blank" href="https://www.instagram.com/anns_attire?igsh=b3lxb3pnaDN5ZWdp"><Instagram size={20} /></a>
-                        <a target="_blank" href="https://www.facebook.com/share/1DtVBiVhwX/"><Facebook size={20} /></a>
-                        <a target="_blank" href="https://www.youtube.com/@a.s.trendsgifts"><Youtube size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href="https://www.instagram.com/anns_attire?igsh=b3lxb3pnaDN5ZWdp"><Instagram size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href="https://www.facebook.com/share/1DtVBiVhwX/"><Facebook size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href="https://www.youtube.com/@a.s.trendsgifts"><Youtube size={20} /></a>
                     </div>
                 </div>
             </div>
             <div className="footer-bottom">
                 <p>
-                    &copy; {new Date().getFullYear()} ANNS. All rights reserved. | Secure Payments: Visa  Mastercard  PayPal
+                    &copy; {new Date().getFullYear()} ANNS. All rights reserved. | Secure Payments: UPI · Visa · Mastercard · Razorpay
                 </p>
             </div>
         </footer>

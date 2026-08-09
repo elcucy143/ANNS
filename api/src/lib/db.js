@@ -33,6 +33,8 @@ const ensureIndexes = async (db) => {
       db.collection('customers').createIndex({ id: 1 }, { unique: true }),
       db.collection('customers').createIndex({ lastSeenAt: -1 }),
       db.collection('orders').createIndex({ id: 1 }, { unique: true }),
+      db.collection('orders').createIndex({ razorpayOrderId: 1 }, { unique: true, sparse: true }),
+      db.collection('orders').createIndex({ razorpayPaymentId: 1 }, { unique: true, sparse: true }),
       db.collection('orders').createIndex({ customerId: 1, createdAt: -1 }),
     ]).catch((error) => {
       indexesPromise = undefined;
