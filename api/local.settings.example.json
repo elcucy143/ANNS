@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "MONGODB_URI": "mongodb+srv://<username>:<password>@<cluster-host>/?retryWrites=true&w=majority",
+    "MONGODB_DB_NAME": "anns",
+    "ADMIN_API_KEY": "replace-with-a-long-random-admin-secret"
+  }
+}

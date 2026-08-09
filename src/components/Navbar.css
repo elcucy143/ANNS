@@ -147,6 +147,24 @@
     color: inherit;
 }
 
+.account-icon-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: inherit;
+}
+
+.signed-in-dot {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--color-white);
+    border-radius: 50%;
+    background: #4f7c5c;
+}
+
 .cart-count {
     position: absolute;
     top: -8px;

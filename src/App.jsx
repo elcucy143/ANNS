@@ -12,33 +12,38 @@ import ReturnPolicy from './pages/ReturnPolicy';
 import ShippingPolicy from './pages/ShippingPolicy';
 import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Account from './pages/Account';
 
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <CartProvider>
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/womens-wear" element={<CategoryPage title="Women's Wear" />} />
-            <Route path="/gifts" element={<CategoryPage title="Gifts" />} />
-            <Route path="/jewellery" element={<CategoryPage title="Jewellery" />} />
-            <Route path="/sale" element={<CategoryPage title="Sale" />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/return-policy" element={<ReturnPolicy />} />
-            <Route path="/shipping-policy" element={<ShippingPolicy />} />
-            <Route path="/terms-conditions" element={<TermsConditions />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/product-manager" element={<ProductManager />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/womens-wear" element={<CategoryPage title="Women's Wear" />} />
+              <Route path="/gifts" element={<CategoryPage title="Gifts" />} />
+              <Route path="/jewellery" element={<CategoryPage title="Jewellery" />} />
+              <Route path="/sale" element={<CategoryPage title="Sale" />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/return-policy" element={<ReturnPolicy />} />
+              <Route path="/shipping-policy" element={<ShippingPolicy />} />
+              <Route path="/terms-conditions" element={<TermsConditions />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/product-manager" element={<ProductManager />} />
+              <Route path="/account" element={<Account />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
