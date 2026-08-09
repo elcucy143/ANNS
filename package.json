@@ -7,7 +7,7 @@
     "node": ">=20 <25"
   },
   "scripts": {
-    "dev": "concurrently -k -n web,api \"vite\" \"npm --prefix api start\"",
+    "dev": "concurrently -k -n web,api \"vite\" \"PORT=7071 npm --prefix api start\"",
     "dev:web": "vite",
     "build": "vite build",
     "lint": "eslint .",

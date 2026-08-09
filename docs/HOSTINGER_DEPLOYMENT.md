@@ -12,6 +12,7 @@ built Vite storefront and all `/api` routes from the same domain.
 - Start command: `npm start`
 - Entry file, if requested: `api/src/server.js`
 - Output directory, if requested: `dist`
+- Runtime port: `3000` (the app also respects Hostinger's `PORT` variable)
 
 ## Production environment variables
 

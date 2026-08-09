@@ -63,6 +63,6 @@ if (fs.existsSync(storefrontRoot)) {
   });
 }
 
-const port = Number(process.env.PORT || 7071);
+const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
 server.listen(port, host, () => console.log(`ANNS web app listening on ${host}:${port}`));
