@@ -52,5 +52,17 @@ for (const route of registeredRoutes) {
   }
 }
 
+const storefrontRoot = path.resolve(apiRoot, '..', 'dist');
+if (fs.existsSync(storefrontRoot)) {
+  server.use(express.static(storefrontRoot));
+  server.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+      return res.sendFile(path.join(storefrontRoot, 'index.html'));
+    }
+    return next();
+  });
+}
+
 const port = Number(process.env.PORT || 7071);
-server.listen(port, '127.0.0.1', () => console.log(`ANNS API listening on http://127.0.0.1:${port}`));
+const host = process.env.HOST || '0.0.0.0';
+server.listen(port, host, () => console.log(`ANNS web app listening on ${host}:${port}`));

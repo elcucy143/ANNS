@@ -3,12 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20 <25"
+  },
   "scripts": {
     "dev": "concurrently -k -n web,api \"vite\" \"npm --prefix api start\"",
     "dev:web": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "npm --prefix api ci --omit=dev",
+    "start": "npm --prefix api start"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
