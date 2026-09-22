@@ -1,63 +1,58 @@
-import React, { createContext, useContext, useState } from 'react';
-import { getCustomerId, markCustomerInactive, upsertCustomer } from '../services/customerStore';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import {
+  AUTH_SESSION_STORAGE,
+  authenticateWithGoogle,
+  closeAuthSession,
+  getAuthSession,
+} from '../services/apiClient';
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = 'anns-user';
-
-const readStoredUser = () => {
+const readStoredSession = () => {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
+    const session = JSON.parse(localStorage.getItem(AUTH_SESSION_STORAGE));
+    return session?.user && session?.token ? session : null;
   } catch {
     return null;
   }
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const restoredUser = readStoredUser();
-    if (restoredUser) upsertCustomer(restoredUser);
-    return restoredUser;
-  });
+  const [session, setSession] = useState(readStoredSession);
+  const user = session?.user || null;
+  const sessionToken = session?.token;
 
-  const saveUser = (nextUser) => {
-    const customerUser = { ...nextUser, id: getCustomerId(nextUser) };
-    upsertCustomer(customerUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customerUser));
-    setUser(customerUser);
-    return customerUser;
+  useEffect(() => {
+    if (!sessionToken) return;
+    getAuthSession()
+      .then(({ user: verifiedUser }) => {
+        setSession((currentSession) => {
+          const verifiedSession = { ...currentSession, user: verifiedUser };
+          localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(verifiedSession));
+          return verifiedSession;
+        });
+      })
+      .catch(() => {
+        localStorage.removeItem(AUTH_SESSION_STORAGE);
+        setSession(null);
+      });
+  }, [sessionToken]);
+
+  const signInWithGoogle = async (credential) => {
+    const authenticatedSession = await authenticateWithGoogle(credential);
+    localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(authenticatedSession));
+    setSession(authenticatedSession);
+    return authenticatedSession.user;
   };
-
-  const signInWithEmail = ({ email, name }) => saveUser({
-    name: name || email.split('@')[0],
-    email,
-    provider: 'email',
-  });
-
-  const signInWithPhone = ({ phone, name }) => saveUser({
-    name: name || 'ANNS Customer',
-    phone,
-    provider: 'phone',
-  });
-
-  const signInWithGoogle = (profile) => saveUser({
-    id: profile.sub,
-    name: profile.name,
-    email: profile.email,
-    picture: profile.picture,
-    provider: 'google',
-  });
 
   const signOut = () => {
     window.google?.accounts?.id?.disableAutoSelect();
-    if (user) markCustomerInactive(user);
-    localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
+    if (session?.token) closeAuthSession().catch(() => {});
+    localStorage.removeItem(AUTH_SESSION_STORAGE);
+    setSession(null);
   };
 
   const value = {
     user,
-    signInWithEmail,
-    signInWithPhone,
     signInWithGoogle,
     signOut,
   };

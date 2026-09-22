@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const { verifyAdminSession } = require('./auth');
 
 const json = (body, status = 200) => ({
   status,
@@ -15,11 +16,13 @@ const safeEqual = (first, second) => {
   return firstBuffer.length === secondBuffer.length && crypto.timingSafeEqual(firstBuffer, secondBuffer);
 };
 
-const isAdminRequest = (request) => {
+const isAdminKeyRequest = (request) => {
   const configuredKey = process.env.ADMIN_API_KEY;
   const suppliedKey = request.headers.get('x-admin-key');
   return Boolean(configuredKey && suppliedKey && safeEqual(configuredKey, suppliedKey));
 };
+
+const isAdminRequest = (request) => verifyAdminSession(request.headers.get('x-admin-session'));
 
 const requireAdmin = (request) => (
   isAdminRequest(request) ? null : json({ error: 'Admin authorization required' }, 401)
@@ -41,4 +44,4 @@ const handleError = (context, error) => {
   }, configurationError ? 503 : 500);
 };
 
-module.exports = { handleError, isAdminRequest, json, parseJson, requireAdmin };
+module.exports = { handleError, isAdminKeyRequest, isAdminRequest, json, parseJson, requireAdmin };

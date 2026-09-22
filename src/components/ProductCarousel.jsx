@@ -33,7 +33,7 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                                 <div key={product.id} className="carousel-card">
                                     <Link to={`/product/${product.id}`} className="carousel-product-link">
                                         <div className="product-image">
-                                            <img src={images[filename] || product.image} alt={product.name} />
+                                            <img src={images[filename] || product.image} alt={product.name} loading="lazy" decoding="async" />
                                             <button
                                                 className="add-to-cart-btn"
                                                 onClick={(e) => {

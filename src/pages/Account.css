@@ -136,6 +136,7 @@
 .google-auth-container > div,
 .google-auth-container iframe { max-width: 100%; }
 .google-auth-error { margin-top: 10px; }
+.account-security-note { display: flex; align-items: center; gap: 8px; margin: 22px 0 0; color: #716961; font-size: 0.78rem; line-height: 1.5; }
 
 .account-divider {
   display: flex;

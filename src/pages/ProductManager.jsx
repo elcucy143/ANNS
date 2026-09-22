@@ -41,7 +41,6 @@ import './ProductManager.css';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
 const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
-const PROTECTED_PASS_HASH = 'YW5uc2FkbWluMjAyNQ==';
 const LOW_STOCK_LIMIT = 10;
 
 const getInitialFormData = () => ({
@@ -151,7 +150,9 @@ const formatCurrency = (value) => `₹${toNumber(value).toLocaleString('en-IN')}
 
 const ProductManager = () => {
     const [products, setProducts] = useState(readProductDraft);
-    const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true');
+    const [isAuthenticated, setIsAuthenticated] = useState(() => (
+        sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true' && hasAdminKey()
+    ));
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const [activeView, setActiveView] = useState('overview');
@@ -303,13 +304,6 @@ const ProductManager = () => {
             setDatabaseStatus('connected');
             await Promise.all([refreshProductsFromDatabase(), refreshCustomerData()]);
         } catch {
-            if (import.meta.env.DEV && btoa(passwordInput) === PROTECTED_PASS_HASH) {
-                sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
-                setIsAuthenticated(true);
-                setLoginError('');
-                setDatabaseStatus('local');
-                return;
-            }
             setLoginError('Incorrect admin password.');
         }
     };
@@ -796,7 +790,7 @@ const ProductManager = () => {
                             </section>
                         )}
 
-                        <section className="admin-panel customer-data-note"><AlertTriangle size={21} /><div><strong>Local analytics mode</strong><p>This dashboard currently reads customer sessions and orders from this browser. Production-wide active users, contacts and purchase history require a shared backend database.</p></div></section>
+                        <section className="admin-panel customer-data-note"><AlertTriangle size={21} /><div><strong>{databaseStatus === 'connected' ? 'MongoDB analytics' : 'Offline fallback'}</strong><p>{databaseStatus === 'connected' ? 'Customer sessions, contacts and paid-order history are loaded from the shared MongoDB database.' : 'The database is unavailable, so this browser’s cached data is shown until the connection recovers.'}</p></div></section>
                     </div>
                 )}
 

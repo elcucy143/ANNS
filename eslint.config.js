@@ -10,7 +10,7 @@ export default defineConfig([
     files: ['api/**/*.js'],
     extends: [js.configs.recommended],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 'latest',
       globals: globals.node,
       sourceType: 'commonjs',
     },

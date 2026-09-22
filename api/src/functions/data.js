@@ -1,7 +1,9 @@
 const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
-const { getDb } = require('../lib/db');
-const { handleError, isAdminRequest, json, parseJson, requireAdmin } = require('../lib/http');
+const { getClient, getDb } = require('../lib/db');
+const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
+const { authenticateRequest, signAdminSession, signSession, verifyGoogleCredential } = require('../lib/auth');
+const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const {
   captureRazorpayPayment,
   createRazorpayOrder,
@@ -10,6 +12,8 @@ const {
   verifyPaymentSignature,
   verifyWebhookSignature,
 } = require('../lib/razorpay');
+
+assertProductionConfig();
 
 const cleanDocument = (document) => {
   const cleaned = { ...document };
@@ -34,26 +38,66 @@ const paymentError = (context, error) => {
 
 const finalizeCapturedOrder = async (db, order, payment) => {
   const orders = db.collection('orders');
-  const update = await orders.updateOne(
-    { id: order.id, paymentStatus: { $ne: 'captured' } },
-    {
-      $set: {
-        razorpayPaymentId: payment.id,
-        paymentStatus: 'captured',
-        status: 'Paid',
-        paidAt: nowIso(),
-        updatedAt: nowIso(),
-      },
-    },
-  );
+  const client = await getClient();
+  const session = client.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const currentOrder = await orders.findOne({ id: order.id }, { session });
+      if (currentOrder?.paymentStatus === 'captured') return;
 
-  if (update.modifiedCount) {
-    await db.collection('products').bulkWrite(order.items.map((item) => ({
-      updateOne: {
-        filter: { id: item.id },
-        update: { $inc: { stock: -item.quantity, sold: item.quantity }, $set: { updatedAt: nowIso() } },
+      for (const item of order.items) {
+        const inventoryUpdate = await db.collection('products').updateOne(
+          {
+            id: item.id,
+            $expr: {
+              $gte: [
+                { $subtract: [{ $ifNull: ['$stock', 0] }, { $ifNull: ['$sold', 0] }] },
+                item.quantity,
+              ],
+            },
+          },
+          { $inc: { sold: item.quantity }, $set: { updatedAt: nowIso() } },
+          { session },
+        );
+        if (inventoryUpdate.modifiedCount !== 1) {
+          const inventoryError = new Error(`Inventory changed for ${item.name}`);
+          inventoryError.code = 'INVENTORY_CONFLICT';
+          throw inventoryError;
+        }
+      }
+
+      await orders.updateOne(
+        { id: order.id, paymentStatus: { $ne: 'captured' } },
+        {
+          $set: {
+            razorpayPaymentId: payment.id,
+            paymentStatus: 'captured',
+            inventoryStatus: 'committed',
+            status: 'Paid',
+            paidAt: nowIso(),
+            updatedAt: nowIso(),
+          },
+        },
+        { session },
+      );
+    });
+  } catch (error) {
+    if (error.code !== 'INVENTORY_CONFLICT') throw error;
+    await orders.updateOne(
+      { id: order.id },
+      {
+        $set: {
+          razorpayPaymentId: payment.id,
+          paymentStatus: 'captured',
+          inventoryStatus: 'review_required',
+          status: 'Paid — inventory review required',
+          paidAt: nowIso(),
+          updatedAt: nowIso(),
+        },
       },
-    })), { ordered: false });
+    );
+  } finally {
+    await session.endSession();
   }
 
   return orders.findOne({ id: order.id });
@@ -74,12 +118,90 @@ registerHttp('health', {
   },
 });
 
+registerHttp('readiness', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'readiness',
+  handler: async (request, context) => {
+    if (!isAdminKeyRequest(request)) {
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+    }
+    const problems = configurationProblems();
+    try {
+      const db = await getDb();
+      await db.command({ ping: 1 });
+      return json({ ready: problems.length === 0, database: true, missing: problems }, problems.length ? 503 : 200);
+    } catch (error) {
+      context.error(error);
+      return json({ ready: false, database: false, missing: problems }, 503);
+    }
+  },
+});
+
+registerHttp('google-auth', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/google',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      const user = await verifyGoogleCredential(body?.credential);
+      const operationTime = nowIso();
+      const db = await getDb();
+      await db.collection('customers').updateOne(
+        { id: user.id },
+        {
+          $set: { ...user, sessionActive: true, lastSeenAt: operationTime, updatedAt: operationTime },
+          $setOnInsert: { createdAt: operationTime },
+        },
+        { upsert: true },
+      );
+      return json({ user, token: signSession(user) });
+    } catch (error) {
+      const status = Number.isInteger(error.status) ? error.status : 401;
+      if (status >= 500) context.error(error);
+      return json({ error: status === 503 ? error.message : 'Google authentication failed' }, status);
+    }
+  },
+});
+
+registerHttp('customer-session', {
+  methods: ['GET', 'DELETE'],
+  authLevel: 'anonymous',
+  route: 'auth/session',
+  handler: async (request, context) => {
+    try {
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Authentication required' }, 401);
+      const user = {
+        id: session.sub,
+        name: session.name,
+        email: session.email,
+        picture: session.picture,
+        provider: 'google',
+      };
+      const operationTime = nowIso();
+      const db = await getDb();
+      await db.collection('customers').updateOne(
+        { id: user.id },
+        { $set: { sessionActive: request.method !== 'DELETE', lastSeenAt: operationTime, updatedAt: operationTime } },
+      );
+      return json(request.method === 'DELETE' ? { ok: true } : { user });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('admin-login', {
   methods: ['POST'],
   authLevel: 'anonymous',
   route: 'admin-login',
   handler: async (request) => (
-    isAdminRequest(request) ? json({ ok: true }) : json({ error: 'Invalid admin credentials' }, 401)
+    isAdminKeyRequest(request)
+      ? json({ ok: true, token: signAdminSession() })
+      : json({ error: 'Invalid admin credentials' }, 401)
   ),
 });
 
@@ -138,16 +260,17 @@ registerHttp('customers', {
         return json(customers.map(cleanDocument));
       }
 
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Authentication required' }, 401);
       const body = await parseJson(request);
-      if (!body?.id) return json({ error: 'Customer id is required' }, 400);
-      const existing = await collection.findOne({ id: String(body.id) });
+      const existing = await collection.findOne({ id: session.sub });
       const customer = {
-        id: String(body.id),
-        name: String(body.name || existing?.name || 'ANNS Customer').slice(0, 120),
-        email: String(body.email || existing?.email || '').slice(0, 254),
+        id: session.sub,
+        name: String(session.name || existing?.name || 'ANNS Customer').slice(0, 120),
+        email: String(session.email || existing?.email || '').slice(0, 254),
         phone: String(body.phone || existing?.phone || '').slice(0, 30),
-        picture: String(body.picture || existing?.picture || '').slice(0, 1000),
-        provider: String(body.provider || existing?.provider || 'email').slice(0, 30),
+        picture: String(session.picture || existing?.picture || '').slice(0, 1000),
+        provider: 'google',
         sessionActive: body.sessionActive !== false,
         lastSeenAt: nowIso(),
         updatedAt: nowIso(),
@@ -174,7 +297,9 @@ registerHttp('razorpay-create-order', {
       const requestedItems = Array.isArray(body?.items) ? body.items.slice(0, 50) : [];
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
-      if (!customer.id || !requestedItems.length) return json({ error: 'Customer and cart items are required' }, 400);
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Please sign in before checkout' }, 401);
+      if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
       if (!shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postalCode) {
         return json({ error: 'Complete shipping address is required' }, 400);
       }
@@ -193,7 +318,8 @@ registerHttp('razorpay-create-order', {
           error.status = 400;
           throw error;
         }
-        if (Number.isFinite(Number(product.stock)) && Number(product.stock) < quantity) {
+        const remainingStock = Number(product.stock) - Number(product.sold || 0);
+        if (Number.isFinite(remainingStock) && remainingStock < quantity) {
           const error = new Error(`${product.name} does not have enough stock`);
           error.status = 409;
           throw error;
@@ -221,17 +347,17 @@ registerHttp('razorpay-create-order', {
         receipt: localOrderId.slice(0, 40),
         notes: {
           local_order_id: localOrderId,
-          customer_id: cleanText(customer.id, 100),
+          customer_id: session.sub,
         },
       });
 
       const operationTime = nowIso();
       const order = {
         id: localOrderId,
-        customerId: cleanText(customer.id, 100),
+        customerId: session.sub,
         customer: {
-          name: cleanText(customer.name, 120),
-          email: cleanText(customer.email, 254),
+          name: cleanText(session.name || customer.name, 120),
+          email: cleanText(session.email, 254),
           phone: cleanText(customer.phone, 30),
         },
         shippingAddress: {
@@ -362,6 +488,8 @@ registerHttp('orders', {
         return json(orders.map(cleanDocument));
       }
 
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
       const body = await parseJson(request);
       if (!body?.id || !body?.customerId || !Array.isArray(body.items)) return json({ error: 'Order id, customer id and items are required' }, 400);
       const order = {

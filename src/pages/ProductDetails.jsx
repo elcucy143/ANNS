@@ -113,7 +113,7 @@ const ProductDetails = () => {
                             e.currentTarget.style.setProperty('--bg-y', `${bgY}%`);
                         }}
                     >
-                        <img src={getImageSrc(selectedImage || product.images[0])} alt={product.name} />
+                        <img src={getImageSrc(selectedImage || product.images[0])} alt={product.name} decoding="async" />
                         <div className="magnifier-lens"></div>
                         <div
                             className="zoom-window"
@@ -128,6 +128,8 @@ const ProductDetails = () => {
                                 key={index}
                                 src={getImageSrc(img)}
                                 alt={`View ${index + 1}`}
+                                loading="lazy"
+                                decoding="async"
                                 className={`thumbnail ${selectedImage === img || (!selectedImage && index === 0) ? 'active' : ''}`}
                                 onClick={() => setSelectedImage(img)}
                             />

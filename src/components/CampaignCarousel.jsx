@@ -89,7 +89,7 @@ const CampaignCarousel = () => {
                                 className={`campaign-card ${index === currentIndex ? 'active' : ''}`}
                             >
                                 <div className="campaign-image">
-                                    <img src={campaign.image} alt={campaign.title} />
+                                    <img src={campaign.image} alt={campaign.title} loading={index === currentIndex ? 'eager' : 'lazy'} decoding="async" />
                                 </div>
                                 <div className="campaign-content">
                                     <h3>{campaign.title}</h3>

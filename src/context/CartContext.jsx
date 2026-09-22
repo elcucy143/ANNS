@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const CartContext = createContext();
 
+// Provider and hook intentionally share this module.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {

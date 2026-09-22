@@ -7,6 +7,13 @@ import './CategoryPage.css';
 import productsData from '../assets/json/products.json';
 import Breadcrumbs from '../components/Breadcrumbs';
 
+const EMPTY_PRODUCTS = [];
+const getCategoryKey = (title) => {
+    if (title === "Women's Wear") return "Womens Wear";
+    if (title === "Men's Wear") return "Mens Wear";
+    return title;
+};
+
 const CategoryPage = ({ title }) => {
     const { category } = useParams();
     const [searchParams] = useSearchParams();
@@ -24,15 +31,8 @@ const CategoryPage = ({ title }) => {
         sizes: []
     });
 
-    // Helper to map display title to JSON key
-    const getCategoryKey = (title) => {
-        if (title === "Women's Wear") return "Womens Wear";
-        if (title === "Men's Wear") return "Mens Wear";
-        return title;
-    };
-
     const categoryKey = getCategoryKey(displayTitle);
-    const categoryProducts = useMemo(() => productsData[categoryKey] || [], [categoryKey]);
+    const categoryProducts = productsData[categoryKey] || EMPTY_PRODUCTS;
 
     // Derive available options from category products
     const filterOptions = useMemo(() => {
@@ -269,4 +269,3 @@ const CategoryPage = ({ title }) => {
 };
 
 export default CategoryPage;
-

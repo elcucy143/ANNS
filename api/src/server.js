@@ -1,6 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 
 const apiRoot = path.resolve(__dirname, '..');
 
@@ -28,6 +30,37 @@ const { registeredRoutes } = require('./functions/data');
 
 const server = express();
 server.disable('x-powered-by');
+if (process.env.TRUST_PROXY) server.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
+server.use(helmet({
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://checkout.razorpay.com', 'https://www.googletagmanager.com'],
+      frameSrc: ["'self'", 'https://accounts.google.com', 'https://api.razorpay.com', 'https://*.razorpay.com'],
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://*.razorpay.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
+      fontSrc: ["'self'", 'data:', 'https:'],
+    },
+  },
+}));
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again shortly.' },
+});
+const sensitiveLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Please wait before trying again.' },
+});
+server.use('/api', apiLimiter);
+server.use(['/api/admin-login', '/api/auth/google', '/api/payments/razorpay/create-order'], sensitiveLimiter);
 server.use(express.raw({ type: '*/*', limit: '2mb' }));
 
 for (const route of registeredRoutes) {
@@ -51,6 +84,8 @@ for (const route of registeredRoutes) {
     });
   }
 }
+
+server.use('/api', (_req, res) => res.status(404).json({ error: 'API endpoint not found' }));
 
 const storefrontRoot = path.resolve(apiRoot, '..', 'dist');
 if (fs.existsSync(storefrontRoot)) {

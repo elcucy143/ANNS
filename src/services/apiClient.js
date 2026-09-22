@@ -1,11 +1,21 @@
-const ADMIN_KEY_STORAGE = 'anns-admin-api-key';
+const ADMIN_SESSION_STORAGE = 'anns-admin-session';
+export const AUTH_SESSION_STORAGE = 'anns-auth-session';
+
+const readAuthToken = () => {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_STORAGE))?.token || '';
+  } catch {
+    return '';
+  }
+};
 
 const request = async (path, options = {}) => {
   const response = await fetch(`/api/${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.admin ? { 'x-admin-key': sessionStorage.getItem(ADMIN_KEY_STORAGE) || '' } : {}),
+      ...(options.admin ? { 'x-admin-session': sessionStorage.getItem(ADMIN_SESSION_STORAGE) || '' } : {}),
+      ...(options.auth ? { Authorization: `Bearer ${readAuthToken()}` } : {}),
       ...options.headers,
     },
   });
@@ -24,18 +34,28 @@ export const verifyAdminKey = async (key) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
   });
-  if (!response.ok) throw new Error('Invalid admin password');
-  sessionStorage.setItem(ADMIN_KEY_STORAGE, key);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.token) throw new Error('Invalid admin password');
+  sessionStorage.setItem(ADMIN_SESSION_STORAGE, body.token);
   return true;
 };
 
-export const clearAdminKey = () => sessionStorage.removeItem(ADMIN_KEY_STORAGE);
-export const hasAdminKey = () => Boolean(sessionStorage.getItem(ADMIN_KEY_STORAGE));
+export const clearAdminKey = () => sessionStorage.removeItem(ADMIN_SESSION_STORAGE);
+export const hasAdminKey = () => Boolean(sessionStorage.getItem(ADMIN_SESSION_STORAGE));
 
 export const getDatabaseHealth = () => request('health');
 export const getProductsFromDatabase = () => request('products');
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
+
+export const authenticateWithGoogle = (credential) => request('auth/google', {
+  method: 'POST',
+  body: JSON.stringify({ credential }),
+});
+
+export const getAuthSession = () => request('auth/session', { auth: true });
+
+export const closeAuthSession = () => request('auth/session', { method: 'DELETE', auth: true });
 
 export const saveProductsToDatabase = (products) => request('products', {
   method: 'POST',
@@ -45,6 +65,7 @@ export const saveProductsToDatabase = (products) => request('products', {
 
 export const syncCustomerToDatabase = (customer) => request('customers', {
   method: 'POST',
+  auth: true,
   body: JSON.stringify(customer),
 });
 
@@ -55,6 +76,7 @@ export const saveOrderToDatabase = (order) => request('orders', {
 
 export const createRazorpayOrder = (checkout) => request('payments/razorpay/create-order', {
   method: 'POST',
+  auth: true,
   body: JSON.stringify(checkout),
 });
 

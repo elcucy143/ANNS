@@ -51,4 +51,4 @@ const getDb = async () => {
   return db;
 };
 
-module.exports = { getDb };
+module.exports = { getClient, getDb };

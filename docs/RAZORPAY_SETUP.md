@@ -1,6 +1,6 @@
 # Razorpay checkout setup
 
-ANNS uses Razorpay Standard Checkout. The browser never receives the Key Secret. Product prices are recalculated from MongoDB before a Razorpay order is created, and stock is reduced only after the backend verifies and captures the payment.
+ANNS uses Razorpay Standard Checkout. The browser never receives the Key Secret. Product prices are recalculated from MongoDB before a Razorpay order is created. Checkout requires a backend-verified customer session, and inventory is committed in a MongoDB transaction only after the backend verifies and captures the payment.
 
 ## Required environment variables
 
@@ -51,3 +51,5 @@ Use a strong, separate webhook secret and add the same value as `RAZORPAY_WEBHOO
 4. Add the live keys only as hosting environment variables.
 5. Configure and test the signed webhook.
 6. Run a low-value live payment and confirm the order, stock and customer history in MongoDB.
+7. Confirm the order has `inventoryStatus: committed`. If it says
+   `review_required`, fulfill or refund it manually before processing more orders.
