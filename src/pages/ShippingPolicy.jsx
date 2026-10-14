@@ -49,7 +49,7 @@ const ShippingPolicy = () => {
 
                     <div className="qa-item">
                         <h3>Can I change my shipping address after my order has been placed?</h3>
-                        <p>If there is an error in the shipping address you specified at the time of checkout, please email us at <strong>sales@annsonline.shop</strong> or call us immediately. We are unable to change a shipping address or redirect orders once items have been dispatched.</p>
+                        <p>If there is an error in the shipping address you specified at the time of checkout, please email us at <strong>astrendsandgifts@gmail.com</strong> or WhatsApp us immediately. We are unable to change a shipping address or redirect orders once items have been dispatched.</p>
                     </div>
 
                     <div className="qa-item">
@@ -59,7 +59,7 @@ const ShippingPolicy = () => {
                 </section>
 
                 <div className="contact-note">
-                    <p>*If you have any additional shipping relating queries, feel free to email us at <strong>sales@annsonline.shop</strong> or call customer care at <strong>+91 9849792562</strong> or WhatsApp for outside India from Monday-Saturday (11 am-07 pm IST)*.</p>
+                    <p>*If you have any additional shipping-related queries, email us at <strong>astrendsandgifts@gmail.com</strong> or WhatsApp <strong>+91 9849792562</strong> from Monday–Saturday (11 am–7 pm IST).*</p>
                 </div>
             </div>
         </div>

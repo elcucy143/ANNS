@@ -12,13 +12,13 @@ const ReturnPolicy = () => {
             <h1 className="section-title">Refund & Returns Policy</h1>
 
             <div className="policy-intro">
-                <p>This policy applies exclusively to orders placed on our website. At Annsonline we believe in keeping our customers happy...always. We offer hassle-free returns. If any product that you receive does not meet your expectations do write to us at <strong>sales@annsonline.shop</strong> and we’ll surely assist you.</p>
+                <p>This policy applies exclusively to orders placed on our website. At Annsonline we believe in keeping our customers happy...always. We offer hassle-free returns. If any product that you receive does not meet your expectations do write to us at <strong>astrendsandgifts@gmail.com</strong> and we’ll surely assist you.</p>
             </div>
 
             <div className="policy-content">
                 <section className="policy-section">
                     <h2>Returns Policy</h2>
-                    <p>At Annsonline, we believe in keeping our customers happy...always. We offer hassle-free returns. If any product that you receive does not meet your expectations, write to us at sales@annsonline.shop and we’ll surely assist you.</p>
+                    <p>At Annsonline, we believe in keeping our customers happy...always. We offer hassle-free returns. If any product that you receive does not meet your expectations, write to us at astrendsandgifts@gmail.com and we’ll surely assist you.</p>
                 </section>
 
                 <section className="policy-section">
@@ -26,9 +26,9 @@ const ReturnPolicy = () => {
                     <p>If the outer packing is damaged or tampered with, we advise the customer to check the quality/quantity of the product against the invoice, before accepting the package from the courier agency.</p>
                     <ul>
                         <li>In case of any discrepancy, please leave a suitable remark at the time of receipt.</li>
-                        <li>In case the product is damaged or with a manufacturing defect or a wrong product has been sent, kindly contact us at <strong>sales@annsonline.shop</strong></li>
+                        <li>In case the product is damaged or with a manufacturing defect or a wrong product has been sent, kindly contact us at <strong>astrendsandgifts@gmail.com</strong></li>
                         <li>Kindly retain all packaging materials and product/s until a set of instructions from us regarding the same is received.</li>
-                        <li>In case of any other complaints regarding the delivered package, email us at <strong>sales@annsonline.shop</strong> within 24 hours of receiving the product.</li>
+                        <li>In case of any other complaints regarding the delivered package, email us at <strong>astrendsandgifts@gmail.com</strong> within 24 hours of receiving the product.</li>
                         <li>Do not return any product(s) before receiving a confirmation email from Annsonline for the same. In case you wish to return a product, write to us within 24 hours of receiving the product.</li>
                         <li>Once we verify the damage or manufacturing defect, our customer care team will email you with details on how to return the said product.</li>
                         <li>All shipping costs of returning the defective products to Annsonline, over and above such amount paid by customers towards shipping charges while receiving the same from Annsonline are to be borne by the customer entirely.</li>

@@ -25,7 +25,7 @@ const TermsConditions = () => {
                 </section>
 
                 <section className="policy-section">
-                    <p>Annsonline.shop (Hyderabad) shall take due care at the time of delivery to deliver the product to the correct person at the address on the order form, but disclaims any responsibility for claims, damages, and/or compensation.</p>
+                    <p>Annsonline.shop shall take due care at the time of delivery to deliver the product to the correct person at the address on the order form, but disclaims any responsibility for claims, damages, and/or compensation.</p>
                 </section>
 
                 <section className="policy-section">

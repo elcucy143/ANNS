@@ -138,6 +138,77 @@
     white-space: pre-line;
 }
 
+.gift-customization {
+    display: grid;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid #eadfd4;
+    border-radius: 10px;
+    background: #fffaf6;
+}
+
+.gift-customization-heading {
+    display: flex;
+    gap: 11px;
+    color: #855c40;
+}
+
+.gift-customization-heading h2 {
+    margin: 0 0 4px;
+    color: var(--color-primary);
+    font-size: 1.05rem;
+}
+
+.gift-customization-heading p {
+    margin: 0;
+    color: var(--color-text-light);
+    font-size: .83rem;
+    line-height: 1.5;
+}
+
+.gift-customization label {
+    display: grid;
+    gap: 6px;
+    color: #554b44;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.gift-customization input,
+.gift-customization textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #dcd2ca;
+    border-radius: 6px;
+    background: #fff;
+    color: #29231f;
+    font: .86rem var(--font-main);
+    resize: vertical;
+}
+
+.gift-customization input:focus,
+.gift-customization textarea:focus {
+    border-color: #9a6847;
+    outline: 3px solid rgba(154, 104, 71, .1);
+}
+
+.whatsapp-customize-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 6px;
+    color: #fff;
+    background: #217a4a;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.whatsapp-customize-btn:hover { background: #19613a; }
+.gift-customization small { color: #776e68; line-height: 1.5; }
+
 .product-option h3 {
     font-size: 1rem;
     margin-bottom: 10px;

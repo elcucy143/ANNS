@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Youtube, Mail, MapPin, Phone } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, MapPin, MessageCircle } from 'lucide-react';
 import './Footer.css';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo-corrected.jpg';
+import { businessContact } from '../config/contact';
 
 const Footer = () => {
     return (
@@ -35,16 +36,16 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4>Contact Us</h4>
                     <ul className="contact-info">
-                        <li><MapPin size={16} /> Plot no.24/25, Sri Sai Nilaya, Kukatpally, Hyderabad, TG, INDIA</li>
-                        <li><Phone size={16} /> +91 9849792562</li>
-                        <li><Mail size={16} /> sales@annsonline.shop</li>
+                        <li><MapPin size={16} /> <span>{businessContact.addressLines[0]}<br />{businessContact.addressLines[1]}</span></li>
+                        <li><MessageCircle size={16} /> <a href={`https://wa.me/${businessContact.whatsappNumber}`} target="_blank" rel="noreferrer">WhatsApp {businessContact.whatsappDisplay}</a></li>
+                        <li><Mail size={16} /> <a href={`mailto:${businessContact.email}`}>{businessContact.email}</a></li>
                     </ul>
                 </div>
 
                 <div className="footer-section">
                     <h4>Follow Us</h4>
                     <div className="social-icons">
-                        <a target="_blank" rel="noreferrer" href="https://www.instagram.com/anns_attire?igsh=b3lxb3pnaDN5ZWdp"><Instagram size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href={businessContact.instagram} aria-label="Instagram"><Instagram size={20} /></a>
                         <a target="_blank" rel="noreferrer" href="https://www.facebook.com/share/1DtVBiVhwX/"><Facebook size={20} /></a>
                         <a target="_blank" rel="noreferrer" href="https://www.youtube.com/@a.s.trendsgifts"><Youtube size={20} /></a>
                     </div>

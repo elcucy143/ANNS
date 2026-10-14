@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Star, Truck, RefreshCw, Clock, Minus, Plus } from 'lucide-react';
+import { Star, Truck, RefreshCw, Clock, Minus, Plus, MessageCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
 
@@ -10,6 +10,7 @@ import images from '../assets/images';
 import ProductCarousel from '../components/ProductCarousel';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { normalizeSizeList } from '../utils/productOptions';
+import { businessContact } from '../config/contact';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -19,6 +20,7 @@ const ProductDetails = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState('Red');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [customization, setCustomization] = useState({ nameOrText: '', instructions: '' });
     const { products: catalogProducts, loading } = useProductCatalog();
 
     // Find product by ID across all categories and get category name
@@ -73,6 +75,19 @@ const ProductDetails = () => {
     const handleAddToCart = () => {
         addToCart(product, quantity, selectedSize, selectedColor);
         navigate('/cart');
+    };
+
+    const openCustomizationChat = () => {
+        const message = [
+            'Hello A.S. Trends & Gifts, I would like to customise this gift:',
+            `Product: ${product.name}`,
+            `Product ID: ${product.id}`,
+            customization.nameOrText && `Name/text: ${customization.nameOrText}`,
+            customization.instructions && `Instructions: ${customization.instructions}`,
+            'I will attach my reference photos in this WhatsApp chat.',
+        ].filter(Boolean).join('\n');
+
+        window.open(`https://wa.me/${businessContact.whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     };
 
     const getImageSrc = (path) => {
@@ -156,6 +171,42 @@ const ProductDetails = () => {
                     </div>
                     <p className="product-price">₹{product.price}</p>
                     <p className="product-description">{product.description}</p>
+
+                    {category === 'Gifts' && (
+                        <section className="gift-customization" aria-labelledby="gift-customization-title">
+                            <div className="gift-customization-heading">
+                                <MessageCircle size={22} />
+                                <div>
+                                    <h2 id="gift-customization-title">Customise this gift</h2>
+                                    <p>Add a name, message or special request. Final details and reference photos can be shared securely on WhatsApp.</p>
+                                </div>
+                            </div>
+                            <label>
+                                Name or text to add
+                                <input
+                                    type="text"
+                                    maxLength="120"
+                                    value={customization.nameOrText}
+                                    onChange={(event) => setCustomization((current) => ({ ...current, nameOrText: event.target.value }))}
+                                    placeholder="For example: Happy Birthday Ananya"
+                                />
+                            </label>
+                            <label>
+                                Customization instructions
+                                <textarea
+                                    rows="3"
+                                    maxLength="500"
+                                    value={customization.instructions}
+                                    onChange={(event) => setCustomization((current) => ({ ...current, instructions: event.target.value }))}
+                                    placeholder="Describe colours, placement, occasion or other requirements"
+                                />
+                            </label>
+                            <button type="button" className="whatsapp-customize-btn" onClick={openCustomizationChat}>
+                                <MessageCircle size={18} /> Continue on WhatsApp
+                            </button>
+                            <small>WhatsApp: {businessContact.whatsappDisplay}. Attach any photos after the chat opens. Customization availability and final price will be confirmed before processing.</small>
+                        </section>
+                    )}
 
                     {/* Colors */}
                     {product.color && (

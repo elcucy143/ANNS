@@ -4,7 +4,7 @@ import { Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
-import logo from '../assets/logo.jpg';
+import logo from '../assets/logo-corrected.jpg';
 
 import categoriesData from '../assets/json/categories.json';
 

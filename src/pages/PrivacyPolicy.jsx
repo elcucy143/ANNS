@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
 
                 <section className="policy-section">
                     <h2>Customer Reviews and Testimonials</h2>
-                    <p>We will use all the testimonials and reviews given by customers on our web site which may contain personally identifiable information. If you would like to have your testimonial or review removed from our site, you have to mail us at <strong>sales@annsonline.shop</strong></p>
+                    <p>We will use all the testimonials and reviews given by customers on our web site which may contain personally identifiable information. If you would like to have your testimonial or review removed from our site, you have to mail us at <strong>astrendsandgifts@gmail.com</strong></p>
                 </section>
 
                 <section className="policy-section">
@@ -36,7 +36,7 @@ const PrivacyPolicy = () => {
 
                 <section className="policy-section">
                     <h2>Announcements regarding services of Annsonline</h2>
-                    <p>We will mail / SMS for site updates to our customers using our database. We ask for a user’s email address for the purposes of providing this information. If personally identifiable information changes or If you don’t want to receive any updates from us, you can email us at <strong>sales@annsonline.shop</strong>. Alternatively, you can deactivate your account.</p>
+                    <p>We will mail / SMS for site updates to our customers using our database. We ask for a user’s email address for the purposes of providing this information. If personally identifiable information changes or If you don’t want to receive any updates from us, you can email us at <strong>astrendsandgifts@gmail.com</strong>. Alternatively, you can deactivate your account.</p>
                 </section>
 
                 <section className="policy-section">

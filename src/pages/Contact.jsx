@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import emailjs from '@emailjs/browser';
 import './Contact.css';
+import { businessContact } from '../config/contact';
 
 const Contact = () => {
     const form = useRef();
@@ -56,21 +57,26 @@ const Contact = () => {
 
                 <div className="contact-info-container">
                     <h2>Get in Touch</h2>
-                    <p>We'd love to hear from you. Visit our store or give us a call.</p>
+                    <p>We'd love to hear from you. Visit our store or message us on WhatsApp.</p>
 
                     <div className="info-item">
-                        <h3>annsonline.shop </h3>
-                        <p>Plot no.24/25, Sri Sai Nilaya,<br />Kukatpally, Hyderabad, TG, INDIA.</p>
+                        <h3>{businessContact.name}</h3>
+                        <p>{businessContact.addressLines[0]}<br />{businessContact.addressLines[1]}</p>
                     </div>
 
                     <div className="info-item">
                         <h3>Email</h3>
-                        <p>sales@annsonline.shop</p>
+                        <p><a href={`mailto:${businessContact.email}`}>{businessContact.email}</a></p>
                     </div>
 
                     <div className="info-item">
-                        <h3>Phone</h3>
-                        <p>+91 9849792562</p>
+                        <h3>WhatsApp</h3>
+                        <p><a href={`https://wa.me/${businessContact.whatsappNumber}`} target="_blank" rel="noreferrer">{businessContact.whatsappDisplay}</a></p>
+                    </div>
+
+                    <div className="info-item">
+                        <h3>Instagram</h3>
+                        <p><a href={businessContact.instagram} target="_blank" rel="noreferrer">@a.s.trends_gifts</a></p>
                     </div>
                 </div>
             </div>
