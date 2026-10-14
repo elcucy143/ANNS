@@ -206,7 +206,7 @@ registerHttp('admin-login', {
 });
 
 registerHttp('products', {
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',
   route: 'products',
   handler: async (request, context) => {
@@ -222,6 +222,14 @@ registerHttp('products', {
       const unauthorized = requireAdmin(request);
       if (unauthorized) return unauthorized;
       const body = await parseJson(request);
+
+      if (request.method === 'DELETE') {
+        const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 100)).filter(Boolean) : [];
+        if (!ids.length) return json({ error: 'At least one product ID is required' }, 400);
+        const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        return json({ ok: true, deleted: result.deletedCount });
+      }
+
       const productList = Array.isArray(body) ? body : body?.products;
       if (!Array.isArray(productList) || !productList.length) return json({ error: 'Products array is required' }, 400);
 
@@ -338,7 +346,9 @@ registerHttp('razorpay-create-order', {
 
       const total = Number(items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
       const amount = Math.round(total * 100);
-      if (!amount) return json({ error: 'Order total must be greater than zero' }, 400);
+      if (!Number.isSafeInteger(amount) || amount < 100) {
+        return json({ error: 'Order total must be at least ₹1.00' }, 400);
+      }
 
       const localOrderId = `ANNS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
       const razorpayOrder = await createRazorpayOrder({
@@ -416,9 +426,12 @@ registerHttp('razorpay-verify-payment', {
       if (!body?.razorpay_order_id || !body?.razorpay_payment_id || !body?.razorpay_signature) {
         return json({ error: 'Payment verification details are required' }, 400);
       }
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Please sign in before payment verification' }, 401);
       const db = await getDb();
       const order = await db.collection('orders').findOne({ razorpayOrderId: cleanText(body.razorpay_order_id, 100) });
       if (!order) return json({ error: 'Order was not found' }, 404);
+      if (order.customerId !== session.sub) return json({ error: 'Order does not belong to this customer' }, 403);
       const signatureValid = verifyPaymentSignature({
         orderId: order.razorpayOrderId,
         paymentId: cleanText(body.razorpay_payment_id, 100),

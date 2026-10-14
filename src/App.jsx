@@ -17,10 +17,12 @@ import Checkout from './pages/Checkout';
 
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { ProductCatalogProvider } from './context/ProductCatalogContext';
 
 function App() {
   return (
     <AuthProvider>
+      <ProductCatalogProvider>
       <CartProvider>
         <Router>
           <Layout>
@@ -45,6 +47,7 @@ function App() {
           </Layout>
         </Router>
       </CartProvider>
+      </ProductCatalogProvider>
     </AuthProvider>
   );
 }

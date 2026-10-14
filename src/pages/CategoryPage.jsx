@@ -4,8 +4,8 @@ import { Filter, ChevronDown, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import './CategoryPage.css';
 
-import productsData from '../assets/json/products.json';
 import Breadcrumbs from '../components/Breadcrumbs';
+import { useProductCatalog } from '../context/ProductCatalogContext';
 
 const EMPTY_PRODUCTS = [];
 const getCategoryKey = (title) => {
@@ -32,7 +32,10 @@ const CategoryPage = ({ title }) => {
     });
 
     const categoryKey = getCategoryKey(displayTitle);
-    const categoryProducts = productsData[categoryKey] || EMPTY_PRODUCTS;
+    const { products: catalogProducts, loading, error } = useProductCatalog();
+    const categoryProducts = categoryKey === 'Sale'
+        ? catalogProducts.filter((product) => product.discount || product.campaign?.includes('sale'))
+        : catalogProducts.filter((product) => product.category === categoryKey && product.showOnCategory !== false);
 
     // Derive available options from category products
     const filterOptions = useMemo(() => {
@@ -252,7 +255,7 @@ const CategoryPage = ({ title }) => {
 
                 <div className="products-container">
                     <div className="products-list">
-                        {products.length > 0 ? (
+                        {loading ? <div className="empty-state"><p>Loading collection…</p></div> : error ? <div className="empty-state"><p>{error}</p></div> : products.length > 0 ? (
                             products.map(product => (
                                 <ProductCard key={product.id} product={product} />
                             ))

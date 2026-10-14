@@ -63,6 +63,12 @@ export const saveProductsToDatabase = (products) => request('products', {
   body: JSON.stringify({ products }),
 });
 
+export const deleteProductsFromDatabase = (ids) => request('products', {
+  method: 'DELETE',
+  admin: true,
+  body: JSON.stringify({ ids }),
+});
+
 export const syncCustomerToDatabase = (customer) => request('customers', {
   method: 'POST',
   auth: true,
@@ -82,5 +88,6 @@ export const createRazorpayOrder = (checkout) => request('payments/razorpay/crea
 
 export const verifyRazorpayPayment = (payment) => request('payments/razorpay/verify', {
   method: 'POST',
+  auth: true,
   body: JSON.stringify(payment),
 });

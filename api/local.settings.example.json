@@ -10,7 +10,6 @@
     "GOOGLE_CLIENT_ID": "920368340836-j753510od9dn8ced4due5p1787e35ghc.apps.googleusercontent.com",
     "RAZORPAY_KEY_ID": "rzp_test_replace_me",
     "RAZORPAY_KEY_SECRET": "replace-with-test-key-secret",
-    "RAZORPAY_CREDENTIALS_FILE": "optional-local-path-to-test-key-csv",
     "RAZORPAY_WEBHOOK_SECRET": "replace-after-deploying-the-webhook",
     "TRUST_PROXY": "1"
   }

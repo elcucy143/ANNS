@@ -1,4 +1,5 @@
 import jwb0001_black_beads from './img/jw/jwb0001-black-beads.jpg';
+import cmpGifts from './cmp-gf.jpg';
 import jwb0002_black_beads from './img/jw/jwb0002-black-beads.jpg';
 import jwb0003_black_beads from './img/jw/jwb0003-black-beads.jpg';
 import jwb0004_black_beads from './img/jw/jwb0004-black-beads.jpg';
@@ -360,6 +361,7 @@ import ww30110_1 from './img/ww/ww30110.1.jpg';
 import ww30110 from './img/ww/ww30110.jpg';
 
 const images = {
+    "cmp-gf.jpg": cmpGifts,
     "jwb0001-black-beads.jpg": jwb0001_black_beads,
     "jwb0002-black-beads.jpg": jwb0002_black_beads,
     "jwb0003-black-beads.jpg": jwb0003_black_beads,

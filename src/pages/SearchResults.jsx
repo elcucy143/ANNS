@@ -1,29 +1,23 @@
 import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import productsData from '../assets/json/products.json';
 import './SearchResults.css';
+import { useProductCatalog } from '../context/ProductCatalogContext';
 
 const SearchResults = () => {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
+    const { products: catalogProducts } = useProductCatalog();
     const results = useMemo(() => {
         if (!query) return [];
 
         const lowerQuery = query.toLowerCase();
-        const allProducts = [];
-
-        // Flatten products from all categories
-        Object.values(productsData).forEach(categoryProducts => {
-            allProducts.push(...categoryProducts);
-        });
-
-        return allProducts.filter(product =>
+        return catalogProducts.filter(product =>
             product.name.toLowerCase().includes(lowerQuery) ||
             product.description.toLowerCase().includes(lowerQuery) ||
             (product.category && product.category.toLowerCase().includes(lowerQuery))
         );
-    }, [query]);
+    }, [query, catalogProducts]);
 
     return (
         <div className="search-results-page container">

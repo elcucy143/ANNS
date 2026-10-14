@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     Boxes,
@@ -23,6 +23,7 @@ import {
     ReceiptText,
     RefreshCw,
     UploadCloud,
+    Trash2,
     XCircle,
 } from 'lucide-react';
 import productsData from '../assets/json/products.json';
@@ -30,6 +31,7 @@ import categoriesData from '../assets/json/categories.json';
 import { isCustomerActive, readCustomers, readOrders } from '../services/customerStore';
 import {
     clearAdminKey,
+    deleteProductsFromDatabase,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
     getProductsFromDatabase,
@@ -62,16 +64,11 @@ const getInitialFormData = () => ({
     shipping: [],
     featured: 'no',
     campaign: [],
+    showOnCategory: true,
 });
 
-const readProductDraft = () => {
-    try {
-        const draft = JSON.parse(localStorage.getItem(PRODUCT_DRAFT_KEY));
-        return draft && typeof draft === 'object' ? draft : productsData;
-    } catch {
-        return productsData;
-    }
-};
+const createEmptyCatalog = () => Object.fromEntries(Object.keys(productsData).map((category) => [category, []]));
+const readProductDraft = () => createEmptyCatalog();
 
 const toNumber = (value, fallback = 0) => {
     const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
@@ -250,16 +247,21 @@ const ProductManager = () => {
     const refreshProductsFromDatabase = async () => {
         try {
             const databaseProducts = await getProductsFromDatabase();
-            if (databaseProducts.length) {
-                const groupedProducts = groupDatabaseProducts(databaseProducts);
-                setProducts(groupedProducts);
-                localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(groupedProducts));
-            }
+            const groupedProducts = groupDatabaseProducts(databaseProducts);
+            setProducts(groupedProducts);
+            localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(groupedProducts));
             setDatabaseStatus('connected');
         } catch {
             setDatabaseStatus('local');
         }
     };
+
+    useEffect(() => {
+        if (!isAuthenticated || !hasAdminKey()) return;
+        void refreshProductsFromDatabase();
+        void refreshCustomerData();
+        // Refresh is intentionally performed when a stored admin session is restored.
+    }, [isAuthenticated]);
 
     const filteredProducts = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -349,6 +351,28 @@ const ProductManager = () => {
         setFormData((current) => ({ ...current, [field]: parseList(event.target.value) }));
     };
 
+    const handleImageFiles = async (event) => {
+        const files = [...(event.target.files || [])];
+        if (!files.length) return;
+        if (files.some((file) => !file.type.startsWith('image/') || file.size > 1024 * 1024)) {
+            setNotification('Choose image files smaller than 1 MB each.');
+            window.setTimeout(() => setNotification(''), 3000);
+            return;
+        }
+        const dataUrls = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        })));
+        setFormData((current) => ({
+            ...current,
+            image: current.image || dataUrls[0],
+            otherImages: [...current.otherImages, ...(current.image ? dataUrls : dataUrls.slice(1))].slice(0, 5),
+        }));
+        event.target.value = '';
+    };
+
     const getSubcategories = () => {
         const displayName = selectedCategory === 'Womens Wear' ? "Women's Wear" : selectedCategory;
         return categoriesData.categories.find((category) => category.name === displayName)?.subCategories || [];
@@ -394,6 +418,24 @@ const ProductManager = () => {
             `${normalizedProduct.name} ${selectedProductId === 'new' ? 'created' : 'updated'} in your local draft.`,
         );
         setSelectedProductId(normalizedProduct.id);
+    };
+
+    const removeProduct = async (product) => {
+        if (!window.confirm(`Remove “${product.name}” from the public catalog? This cannot be undone from Product Studio.`)) return;
+        try {
+            await deleteProductsFromDatabase([product.id]);
+            const nextProducts = {
+                ...products,
+                [product.category]: (products[product.category] || []).filter((item) => item.id !== product.id),
+            };
+            setProducts(nextProducts);
+            localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
+            setNotification(`${product.name} was removed from MongoDB Atlas and the storefront.`);
+            if (selectedProductId === product.id) openNewProduct();
+        } catch (error) {
+            setNotification(error.message || 'Could not remove the product. Please try again.');
+        }
+        window.setTimeout(() => setNotification(''), 3500);
     };
 
     const mapImportedRow = (rawRow, index) => {
@@ -728,7 +770,7 @@ const ProductManager = () => {
                                                 <td>{product.soldValue.toLocaleString('en-IN')}</td>
                                                 <td><strong>{product.remainingValue.toLocaleString('en-IN')}</strong></td>
                                                 <td><span className={`stock-status ${status}`}>{status === 'out' ? 'Out of stock' : status === 'low' ? 'Low stock' : 'Available'}</span></td>
-                                                <td><button type="button" className="table-edit-button" onClick={() => openProduct(product)} aria-label={`Edit ${product.name}`}><Edit3 size={16} /></button></td>
+                                                <td><div className="table-actions"><button type="button" className="table-edit-button" onClick={() => openProduct(product)} aria-label={`Edit ${product.name}`}><Edit3 size={16} /></button><button type="button" className="table-delete-button" onClick={() => removeProduct(product)} aria-label={`Remove ${product.name}`}><Trash2 size={16} /></button></div></td>
                                             </tr>
                                         );
                                     })}
@@ -864,13 +906,15 @@ const ProductManager = () => {
                                     <label>Units sold<input name="sold" type="number" min="0" value={formData.sold} onChange={handleInputChange} /></label>
                                     <div className="editor-inventory-result full-width"><span>Remaining stock</span><strong>{Math.max(0, toNumber(formData.stock) - toNumber(formData.sold)).toLocaleString('en-IN')}</strong><small>Calculated automatically</small></div>
                                     <label>Featured<select name="featured" value={formData.featured} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes</option></select></label>
+                                    <label className="editor-checkbox"><input type="checkbox" checked={formData.showOnCategory !== false} onChange={(event) => setFormData((current) => ({ ...current, showOnCategory: event.target.checked }))} /> Show in category page</label>
                                     <label>Color<input name="color" value={formData.color} onChange={handleInputChange} /></label>
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
                                 <div className="editor-form-grid">
-                                    <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} /></label>
+                                    <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
+                                    <label className="full-width image-upload-control">Upload images<input type="file" accept="image/*" multiple onChange={handleImageFiles} /><small>Select one main image and up to four gallery images. Images are stored securely with this product in MongoDB Atlas.</small></label>
                                     <label className="full-width">Other image URLs<textarea value={formData.otherImages.join(', ')} onChange={(event) => handleArrayChange(event, 'otherImages')} rows="2" placeholder="Comma separated" /></label>
                                     <label>Sizes<input value={formData.sizes.join(', ')} onChange={(event) => handleArrayChange(event, 'sizes')} placeholder="S, M, L" /></label>
                                     <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
@@ -879,7 +923,7 @@ const ProductManager = () => {
                                     <label className="full-width">Similar product IDs<input value={formData.similarProducts.join(', ')} onChange={(event) => handleArrayChange(event, 'similarProducts')} placeholder="Comma separated IDs" /></label>
                                 </div>
                             </section>
-                            <div className="editor-save-bar"><p>Changes are saved as a browser draft. Export JSON when ready to deploy.</p><button type="submit" className="admin-primary-button"><Save size={18} /> Save product</button></div>
+                            <div className="editor-save-bar"><p>Changes sync to MongoDB Atlas and appear on the storefront.</p><div className="editor-save-actions">{selectedProductId !== 'new' && <button type="button" className="admin-danger-button" onClick={() => removeProduct({ ...formData, category: selectedCategory })}><Trash2 size={18} /> Remove product</button>}<button type="submit" className="admin-primary-button"><Save size={18} /> Save product</button></div></div>
                         </div>
                         <aside className="editor-aside">
                             <section className="admin-panel">
@@ -888,7 +932,7 @@ const ProductManager = () => {
                                 <p>Based on matching names and subcategories.</p>
                                 {editorSuggestions.length ? <div className="editor-suggestion-list">{editorSuggestions.map((product) => <button type="button" key={product.id} onClick={() => openProduct(product)}><div><strong>{product.name}</strong><small>{product.id} · {product.category}</small></div><ChevronRight size={16} /></button>)}</div> : <div className="admin-empty-state compact"><Sparkles size={23} /><p>Add a name or subcategory to see matches.</p></div>}
                             </section>
-                            <section className="admin-panel admin-draft-note"><FileJson size={22} /><div><strong>Local draft mode</strong><p>This static site cannot write back to GitHub by itself. Export the updated JSON to publish catalog changes.</p></div></section>
+                            <section className="admin-panel admin-draft-note"><FileJson size={22} /><div><strong>Live catalog</strong><p>Product changes are stored in the shared MongoDB catalog. The public website reads the same catalog.</p></div></section>
                         </aside>
                     </form>
                 )}

@@ -4,12 +4,11 @@ import { Star, Truck, RefreshCw, Clock, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
 
-import productsData from '../assets/json/products.json';
-
 import Breadcrumbs from '../components/Breadcrumbs';
 
 import images from '../assets/images';
 import ProductCarousel from '../components/ProductCarousel';
+import { useProductCatalog } from '../context/ProductCatalogContext';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -18,14 +17,12 @@ const ProductDetails = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState('Red');
     const [selectedImage, setSelectedImage] = useState(null);
+    const { products: catalogProducts, loading } = useProductCatalog();
 
     // Find product by ID across all categories and get category name
-    const findProductAndCategory = (id) => {
-        for (const category in productsData) {
-            const found = productsData[category].find(p => p.id === id);
-            if (found) return { product: found, category };
-        }
-        return { product: null, category: null };
+    const findProductAndCategory = (productId) => {
+        const found = catalogProducts.find((product) => product.id === productId);
+        return { product: found || null, category: found?.category || null };
     };
 
     const { product: productData, category } = findProductAndCategory(id);
@@ -39,6 +36,10 @@ const ProductDetails = () => {
             setSelectedSize(null);
         }
     }, [id, productData]);
+
+    if (loading) {
+        return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>Loading product…</div>;
+    }
 
     if (!productData) {
         return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>Product not found</div>;
@@ -173,8 +174,8 @@ const ProductDetails = () => {
                     {/* Sizes */}
                     <div className="product-option">
                         <h3>Size: {selectedSize}</h3>
-                        <div className="size-options">
-                            {product.sizes.map(size => (
+                    <div className="size-options">
+                            {(product.sizes || []).map(size => (
                                 <button
                                     key={size}
                                     className={`size-btn ${selectedSize === size ? 'selected' : ''}`}

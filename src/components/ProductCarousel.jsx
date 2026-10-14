@@ -3,23 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './ProductCarousel.css';
 
-import productsData from '../assets/json/products.json';
-
 import images from '../assets/images';
+import { useProductCatalog } from '../context/ProductCatalogContext';
 
 // Flatten products from all categories and filter those marked as featured
-const getFeaturedProducts = () => {
-    let featuredProducts = [];
-    Object.values(productsData).forEach(categoryProducts => {
-        const filtered = categoryProducts.filter(p => p.featured === "yes");
-        featuredProducts = [...featuredProducts, ...filtered];
-    });
-    return featuredProducts;
-};
-
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
-    // Use input products if provided, otherwise fetch default featured products
-    const products = inputProducts || getFeaturedProducts();
+    const { products: catalogProducts } = useProductCatalog();
+    const products = inputProducts || catalogProducts.filter((product) => product.featured === 'yes').slice(0, 6);
 
     return (
         <section className="product-carousel-section">

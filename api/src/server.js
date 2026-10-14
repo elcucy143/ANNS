@@ -13,16 +13,6 @@ const loadLocalSettings = () => {
   for (const [key, value] of Object.entries(settings.Values || {})) {
     if (process.env[key] === undefined && value !== undefined) process.env[key] = String(value);
   }
-
-  if ((!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) && process.env.RAZORPAY_CREDENTIALS_FILE) {
-    const csv = fs.readFileSync(process.env.RAZORPAY_CREDENTIALS_FILE, 'utf8');
-    const values = new Map(csv.split(/\r?\n/).slice(1).map((line) => {
-      const separator = line.indexOf(',');
-      return separator < 0 ? ['', ''] : [line.slice(0, separator).trim(), line.slice(separator + 1).trim()];
-    }));
-    process.env.RAZORPAY_KEY_ID ||= values.get('Test Key ID');
-    process.env.RAZORPAY_KEY_SECRET ||= values.get('Test Key Secret');
-  }
 };
 
 loadLocalSettings();
@@ -61,7 +51,7 @@ const sensitiveLimiter = rateLimit({
 });
 server.use('/api', apiLimiter);
 server.use(['/api/admin-login', '/api/auth/google', '/api/payments/razorpay/create-order'], sensitiveLimiter);
-server.use(express.raw({ type: '*/*', limit: '2mb' }));
+server.use(express.raw({ type: '*/*', limit: '4mb' }));
 
 for (const route of registeredRoutes) {
   const endpoint = `/api/${route.route}`;

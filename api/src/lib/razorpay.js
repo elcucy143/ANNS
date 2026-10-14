@@ -24,7 +24,9 @@ const requestRazorpay = async (path, options = {}) => {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(body.error?.description || 'Razorpay request failed');
-    error.status = 502;
+    // Keep an invalid/disabled API-key response distinct from a provider outage.
+    // The client can then tell configuration failures from a retryable error.
+    error.status = response.status === 401 ? 401 : 502;
     error.providerStatus = response.status;
     throw error;
   }
