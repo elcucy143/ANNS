@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Star, Truck, RefreshCw, Clock, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
@@ -9,9 +9,11 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import images from '../assets/images';
 import ProductCarousel from '../components/ProductCarousel';
 import { useProductCatalog } from '../context/ProductCatalogContext';
+import { normalizeSizeList } from '../utils/productOptions';
 
 const ProductDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedSize, setSelectedSize] = useState(null);
@@ -30,8 +32,9 @@ const ProductDetails = () => {
     // Reset selected image and size when product changes
     React.useEffect(() => {
         setSelectedImage(null);
-        if (productData && productData.sizes && productData.sizes.length > 0) {
-            setSelectedSize(productData.sizes[0]);
+        const sizes = normalizeSizeList(productData?.sizes);
+        if (sizes.length > 0) {
+            setSelectedSize(sizes[0]);
         } else {
             setSelectedSize(null);
         }
@@ -48,7 +51,8 @@ const ProductDetails = () => {
     // Adapt JSON data to component state structure if needed, or use directly
     const product = {
         ...productData,
-        images: [productData.image, ...(productData.otherImages || [])],
+        images: [productData.image, ...(Array.isArray(productData.otherImages) ? productData.otherImages : [])].filter(Boolean),
+        sizes: normalizeSizeList(productData.sizes),
         rating: 4.5, // Default if not in JSON
         reviews: productData.reviews?.length || 0
     };
@@ -68,6 +72,7 @@ const ProductDetails = () => {
 
     const handleAddToCart = () => {
         addToCart(product, quantity, selectedSize, selectedColor);
+        navigate('/cart');
     };
 
     const getImageSrc = (path) => {
@@ -172,10 +177,10 @@ const ProductDetails = () => {
                     )}
 
                     {/* Sizes */}
-                    <div className="product-option">
+                    {product.sizes.length > 0 && <div className="product-option">
                         <h3>Size: {selectedSize}</h3>
-                    <div className="size-options">
-                            {(product.sizes || []).map(size => (
+                        <div className="size-options">
+                            {product.sizes.map(size => (
                                 <button
                                     key={size}
                                     className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
@@ -185,7 +190,8 @@ const ProductDetails = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
+                        <details className="size-guide"><summary>Size guide</summary><div><strong>Women's clothing guide (in inches)</strong><table><thead><tr><th>Size</th><th>Bust</th><th>Waist</th><th>Hip</th></tr></thead><tbody><tr><td>S</td><td>34–35</td><td>27–28</td><td>37–38</td></tr><tr><td>M</td><td>36–37</td><td>29–30</td><td>39–40</td></tr><tr><td>L</td><td>38–40</td><td>31–33</td><td>41–43</td></tr><tr><td>XL–4XL</td><td>Check product measurements</td><td>Check product measurements</td><td>Check product measurements</td></tr></tbody></table><small>Measurements can vary by style. Add exact measurements to the product description when available.</small></div></details>
+                    </div>}
 
                     {/* Quantity & Add to Cart */}
                     <div className="action-buttons">

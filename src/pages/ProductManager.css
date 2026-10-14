@@ -43,6 +43,14 @@
 .admin-login-card input { height: 48px; padding: 0 14px; border: 1px solid #ddd6cf; border-radius: 6px; font: inherit; outline: none; }
 .admin-login-card input:focus { border-color: #a66f49; box-shadow: 0 0 0 3px rgba(166, 111, 73, 0.1); }
 .admin-login-card button { height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; border: 0; border-radius: 6px; color: #fff; background: #29231f; font: 500 0.86rem var(--font-main); cursor: pointer; }
+
+.size-selector-control { margin: 0; padding: 0; border: 0; }
+.size-selector-control legend { margin-bottom: 6px; color: #514a44; font-size: 0.8rem; font-weight: 500; }
+.size-selector-control p { margin: 0 0 10px; color: #786f68; font-size: 0.76rem; }
+.size-selector-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.size-selector-buttons button { min-width: 48px; min-height: 38px; padding: 0 10px; border: 1px solid #d9d1ca; border-radius: 5px; color: #514a44; background: #fff; font: 600 0.78rem var(--font-main); cursor: pointer; }
+.size-selector-buttons button:hover, .size-selector-buttons button.selected { border-color: #a66f49; color: #fff; background: #a66f49; }
+.size-selector-control small { display: block; margin-top: 9px; color: #786f68; font-size: 0.73rem; }
 .admin-error { padding: 8px 10px; border-radius: 4px; color: #a23e37; background: #fff0ef; font-size: 0.78rem; }
 
 .admin-dashboard-page {

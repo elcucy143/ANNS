@@ -167,6 +167,7 @@
 /* Sizes */
 .size-options {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -186,6 +187,18 @@
     color: var(--color-white);
     border-color: var(--color-primary);
 }
+
+.size-guide {
+    margin-top: 16px;
+    color: var(--color-text-light);
+    font-size: 0.88rem;
+}
+
+.size-guide summary { cursor: pointer; color: var(--color-primary); font-weight: 600; }
+.size-guide > div { margin-top: 10px; }
+.size-guide table { width: 100%; margin: 10px 0; border-collapse: collapse; font-size: 0.8rem; }
+.size-guide th, .size-guide td { padding: 8px; border: 1px solid #e8e1db; text-align: left; }
+.size-guide th { background: #faf7f4; }
 
 /* Actions */
 .action-buttons {

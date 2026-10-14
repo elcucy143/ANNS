@@ -23,6 +23,35 @@ const cleanDocument = (document) => {
 const nowIso = () => new Date().toISOString();
 const cleanText = (value, maxLength = 200) => String(value || '').trim().slice(0, maxLength);
 const numericPrice = (value) => Number(String(value ?? '').replace(/[^0-9.]/g, ''));
+const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
+const normalizeList = (value) => {
+  if (Array.isArray(value)) return value.flatMap(normalizeList);
+  if (value === undefined || value === null || value === '') return [];
+  return String(value).split(/[,|;\n]/).map((item) => item.trim()).filter(Boolean);
+};
+const normalizeSizes = (value) => {
+  const sizes = normalizeList(value).flatMap((item) => item.match(/4XL|XXXXL|3XL|XXXL|XXL|XL|XS|S|M|L/gi) || [item])
+    .map((size) => String(size).trim().toUpperCase().replace(/^XXXL$/, '3XL').replace(/^XXXXL$/, '4XL'));
+  return [...new Set(sizes.filter(Boolean))].sort((first, second) => {
+    const firstIndex = standardSizes.indexOf(first);
+    const secondIndex = standardSizes.indexOf(second);
+    return (firstIndex === -1 ? 99 : firstIndex) - (secondIndex === -1 ? 99 : secondIndex);
+  });
+};
+const nonNegativeInteger = (value) => Math.max(0, Math.trunc(Number(value) || 0));
+const normalizeProduct = (product) => {
+  const stock = nonNegativeInteger(product.stock ?? product.totalStock ?? product.quantity);
+  const sold = Math.min(stock, nonNegativeInteger(product.sold ?? product.unitsSold));
+  return {
+    ...product,
+    stock,
+    sold,
+    sizes: normalizeSizes(product.sizes ?? product.size),
+    otherImages: normalizeList(product.otherImages),
+    subcategory: normalizeList(product.subcategory),
+    available: stock > sold ? 'In Stock' : 'Out of Stock',
+  };
+};
 const registeredRoutes = [];
 const registerHttp = (name, config) => {
   registeredRoutes.push({ name, ...config });
@@ -236,13 +265,16 @@ registerHttp('products', {
       const operationTime = nowIso();
       const operations = productList
         .filter((product) => product?.id && product?.name && product?.category)
-        .map((product) => ({
+        .map((rawProduct) => {
+          const product = normalizeProduct(rawProduct);
+          return ({
           updateOne: {
             filter: { id: String(product.id) },
             update: { $set: { ...product, id: String(product.id), updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
             upsert: true,
           },
-        }));
+          });
+        });
       if (!operations.length) return json({ error: 'No valid products supplied' }, 400);
       const result = await collection.bulkWrite(operations, { ordered: false });
       return json({ ok: true, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });

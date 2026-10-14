@@ -40,6 +40,7 @@ import {
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
+import { normalizeList, normalizeSizeList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
 const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
@@ -88,11 +89,7 @@ const normalizeName = (name = '') => name
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-const parseList = (value) => {
-    if (Array.isArray(value)) return value.filter(Boolean).map(String);
-    if (value === undefined || value === null || value === '') return [];
-    return String(value).split(/[,|;]/).map((item) => item.trim()).filter(Boolean);
-};
+const parseList = normalizeList;
 
 const normalizeCategory = (value = '') => {
     const normalized = String(value).trim().toLowerCase().replace(/[’']/g, '');
@@ -331,7 +328,7 @@ const ProductManager = () => {
             ...product,
             stock: product.stockValue,
             sold: product.soldValue,
-            sizes: parseList(product.sizes),
+            sizes: normalizeSizeList(product.sizes),
             otherImages: parseList(product.otherImages),
             subcategory: parseList(product.subcategory),
             similarProducts: parseList(product.similarProducts),
@@ -349,6 +346,15 @@ const ProductManager = () => {
 
     const handleArrayChange = (event, field) => {
         setFormData((current) => ({ ...current, [field]: parseList(event.target.value) }));
+    };
+
+    const toggleSize = (size) => {
+        setFormData((current) => ({
+            ...current,
+            sizes: current.sizes.includes(size)
+                ? current.sizes.filter((item) => item !== size)
+                : normalizeSizeList([...current.sizes, size]),
+        }));
     };
 
     const handleImageFiles = async (event) => {
@@ -403,6 +409,7 @@ const ProductManager = () => {
             id: formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`,
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
+            sizes: normalizeSizeList(formData.sizes),
             available: getRemaining(formData) > 0 ? 'In Stock' : 'Out of Stock',
         };
 
@@ -916,7 +923,14 @@ const ProductManager = () => {
                                     <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
                                     <label className="full-width image-upload-control">Upload images<input type="file" accept="image/*" multiple onChange={handleImageFiles} /><small>Select one main image and up to four gallery images. Images are stored securely with this product in MongoDB Atlas.</small></label>
                                     <label className="full-width">Other image URLs<textarea value={formData.otherImages.join(', ')} onChange={(event) => handleArrayChange(event, 'otherImages')} rows="2" placeholder="Comma separated" /></label>
-                                    <label>Sizes<input value={formData.sizes.join(', ')} onChange={(event) => handleArrayChange(event, 'sizes')} placeholder="S, M, L" /></label>
+                                    <fieldset className="size-selector-control full-width">
+                                        <legend>Available sizes</legend>
+                                        <p>Choose every size you will sell for this product.</p>
+                                        <div className="size-selector-buttons">
+                                            {STANDARD_CLOTHING_SIZES.map((size) => <button key={size} type="button" className={formData.sizes.includes(size) ? 'selected' : ''} onClick={() => toggleSize(size)} aria-pressed={formData.sizes.includes(size)}>{size}</button>)}
+                                        </div>
+                                        <small>{formData.sizes.length ? `Selected: ${formData.sizes.join(', ')}` : 'Select at least one size for clothing, or leave empty for non-sized products.'}</small>
+                                    </fieldset>
                                     <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
                                     <label className="full-width">Shipping information<input value={formData.shipping.join(', ')} onChange={(event) => handleArrayChange(event, 'shipping')} placeholder="Comma separated" /></label>
                                     <label className="full-width">Campaign labels<input value={formData.campaign.join(', ')} onChange={(event) => handleArrayChange(event, 'campaign')} placeholder="Comma separated" /></label>

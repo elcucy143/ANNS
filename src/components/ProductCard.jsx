@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import './ProductCard.css';
 
@@ -6,9 +6,13 @@ import images from '../assets/images';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
+    const navigate = useNavigate();
 
-    const handleAddToCart = () => {
+    const handleAddToCart = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         addToCart(product);
+        navigate('/cart');
     };
 
     const filename = product.image ? product.image.split('/').pop() : '';
