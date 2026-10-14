@@ -27,7 +27,9 @@ const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const normalizeList = (value) => {
   if (Array.isArray(value)) return value.flatMap(normalizeList);
   if (value === undefined || value === null || value === '') return [];
-  return String(value).split(/[,|;\n]/).map((item) => item.trim()).filter(Boolean);
+  const text = String(value).trim();
+  if (text.startsWith('data:image/')) return [text];
+  return text.split(/[,|;\n]/).map((item) => item.trim()).filter(Boolean);
 };
 const normalizeSizes = (value) => {
   const sizes = normalizeList(value).flatMap((item) => item.match(/4XL|XXXXL|3XL|XXXL|XXL|XL|XS|S|M|L/gi) || [item])
@@ -338,8 +340,11 @@ registerHttp('razorpay-create-order', {
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
-      if (!session) return json({ error: 'Please sign in before checkout' }, 401);
       if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
+      const customerName = cleanText(session?.name || customer.name, 120);
+      const customerEmail = cleanText(session?.email || customer.email, 254).toLowerCase();
+      const customerPhone = cleanText(customer.phone, 30);
+      if (!customerName || !customerEmail || !customerPhone) return json({ error: 'Name, email and mobile number are required' }, 400);
       if (!shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postalCode) {
         return json({ error: 'Complete shipping address is required' }, 400);
       }
@@ -383,24 +388,26 @@ registerHttp('razorpay-create-order', {
       }
 
       const localOrderId = `ANNS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const customerId = session?.sub || `guest-${crypto.createHash('sha256').update(customerEmail).digest('hex').slice(0, 24)}`;
       const razorpayOrder = await createRazorpayOrder({
         amount,
         currency: 'INR',
         receipt: localOrderId.slice(0, 40),
         notes: {
           local_order_id: localOrderId,
-          customer_id: session.sub,
+          customer_id: customerId,
         },
       });
 
       const operationTime = nowIso();
       const order = {
         id: localOrderId,
-        customerId: session.sub,
+        customerId,
+        checkoutMode: session ? 'account' : 'guest',
         customer: {
-          name: cleanText(session.name || customer.name, 120),
-          email: cleanText(session.email, 254),
-          phone: cleanText(customer.phone, 30),
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
         },
         shippingAddress: {
           addressLine1: cleanText(shippingAddress.addressLine1, 250),
@@ -427,10 +434,12 @@ registerHttp('razorpay-create-order', {
           $set: {
             id: order.customerId,
             ...order.customer,
+            provider: session?.provider || 'guest',
+            sessionActive: Boolean(session),
             lastSeenAt: operationTime,
             updatedAt: operationTime,
           },
-          $setOnInsert: { createdAt: operationTime, sessionActive: true },
+          $setOnInsert: { createdAt: operationTime },
         },
         { upsert: true },
       );
@@ -459,11 +468,12 @@ registerHttp('razorpay-verify-payment', {
         return json({ error: 'Payment verification details are required' }, 400);
       }
       const session = authenticateRequest(request);
-      if (!session) return json({ error: 'Please sign in before payment verification' }, 401);
       const db = await getDb();
       const order = await db.collection('orders').findOne({ razorpayOrderId: cleanText(body.razorpay_order_id, 100) });
       if (!order) return json({ error: 'Order was not found' }, 404);
-      if (order.customerId !== session.sub) return json({ error: 'Order does not belong to this customer' }, 403);
+      if (order.checkoutMode !== 'guest' && (!session || order.customerId !== session.sub)) {
+        return json({ error: 'Order does not belong to this customer' }, 403);
+      }
       const signatureValid = verifyPaymentSignature({
         orderId: order.razorpayOrderId,
         paymentId: cleanText(body.razorpay_payment_id, 100),

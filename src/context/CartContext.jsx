@@ -2,15 +2,22 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const CartContext = createContext();
 
+const readStoredCart = () => {
+    try {
+        const stored = JSON.parse(localStorage.getItem('cartItems'));
+        return Array.isArray(stored) ? stored.filter((item) => item?.id && item?.name) : [];
+    } catch {
+        localStorage.removeItem('cartItems');
+        return [];
+    }
+};
+
 // Provider and hook intentionally share this module.
 // eslint-disable-next-line react-refresh/only-export-components
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-    const [cartItems, setCartItems] = useState(() => {
-        const localData = localStorage.getItem('cartItems');
-        return localData ? JSON.parse(localData) : [];
-    });
+    const [cartItems, setCartItems] = useState(readStoredCart);
 
     const [lastAddedItem, setLastAddedItem] = useState(null);
     const [isPopupVisible, setIsPopupVisible] = useState(false);

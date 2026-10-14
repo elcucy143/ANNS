@@ -231,6 +231,11 @@
 .admin-danger-button { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #bd3d3d; color: #a22e2e; background: #fff; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
 .image-upload-control input { margin-top: 8px; }
 .image-upload-control small { display: block; margin-top: 7px; color: #766f69; line-height: 1.45; }
+.editor-image-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+.editor-image-preview figure { position: relative; overflow: hidden; margin: 0; border: 1px solid #e2dcd6; border-radius: 7px; background: #f8f6f4; }
+.editor-image-preview img { width: 100%; aspect-ratio: 4 / 5; display: block; object-fit: cover; }
+.editor-image-preview figcaption { padding: 7px 9px; color: #665e57; font-size: 0.66rem; }
+.editor-image-preview button { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #fff; background: rgba(34, 28, 24, 0.82); cursor: pointer; }
 .editor-checkbox { display: flex; align-items: center; gap: 9px; padding-top: 28px; cursor: pointer; }
 .editor-checkbox input { width: auto; }
 .editor-aside { position: sticky; top: calc(var(--header-height) + 25px); display: flex; flex-direction: column; gap: 15px; }

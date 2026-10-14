@@ -45,6 +45,9 @@ import { normalizeList, normalizeSizeList, STANDARD_CLOTHING_SIZES } from '../ut
 const ADMIN_SESSION_KEY = 'pm_auth';
 const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
 const LOW_STOCK_LIMIT = 10;
+const MAX_PRODUCT_IMAGES = 5;
+const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_STORED_IMAGE_BYTES = 450 * 1024;
 
 const getInitialFormData = () => ({
     id: '',
@@ -141,6 +144,43 @@ const productsForDatabase = (products) => Object.entries(products).flatMap(([cat
 ));
 
 const formatCurrency = (value) => `₹${toNumber(value).toLocaleString('en-IN')}`;
+
+const readBlobAsDataUrl = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+});
+
+const compressImageFile = (file) => new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const scale = Math.min(1, 1400 / image.naturalWidth, 1600 / image.naturalHeight);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#fff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const encode = (quality) => canvas.toBlob(async (blob) => {
+            if (!blob) return reject(new Error(`Could not prepare ${file.name}`));
+            if (blob.size > MAX_STORED_IMAGE_BYTES && quality > 0.46) {
+                encode(quality - 0.1);
+                return;
+            }
+            try { resolve(await readBlobAsDataUrl(blob)); } catch (error) { reject(error); }
+        }, 'image/jpeg', quality);
+        encode(0.78);
+    };
+    image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error(`${file.name} is not a supported image`));
+    };
+    image.src = objectUrl;
+});
 
 const ProductManager = () => {
     const [products, setProducts] = useState(readProductDraft);
@@ -275,21 +315,21 @@ const ProductManager = () => {
         });
     }, [allProducts, searchQuery, categoryFilter, stockFilter]);
 
-    const saveProducts = (nextProducts, message) => {
-        setProducts(nextProducts);
-        localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
+    const saveProducts = async (nextProducts, message, changedProducts = productsForDatabase(nextProducts)) => {
         setNotification(message);
         if (hasAdminKey()) {
-            saveProductsToDatabase(productsForDatabase(nextProducts))
-                .then(() => {
-                    setDatabaseStatus('connected');
-                    setNotification(`${message} Synced to MongoDB Atlas.`);
-                })
-                .catch(() => {
-                    setDatabaseStatus('local');
-                    setNotification(`${message} Database sync is pending.`);
-                });
+            try {
+                await saveProductsToDatabase(changedProducts);
+                setDatabaseStatus('connected');
+                setNotification(`${message} Synced to MongoDB Atlas.`);
+            } catch (error) {
+                setDatabaseStatus('local');
+                setNotification(error.message || 'The product could not be saved to MongoDB Atlas.');
+                throw error;
+            }
         }
+        setProducts(nextProducts);
+        localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
         window.setTimeout(() => setNotification(''), 3500);
     };
 
@@ -358,25 +398,48 @@ const ProductManager = () => {
     };
 
     const handleImageFiles = async (event) => {
-        const files = [...(event.target.files || [])];
-        if (!files.length) return;
-        if (files.some((file) => !file.type.startsWith('image/') || file.size > 1024 * 1024)) {
-            setNotification('Choose image files smaller than 1 MB each.');
+        const currentImageCount = [formData.image, ...formData.otherImages].filter(Boolean).length;
+        const availableSlots = Math.max(0, MAX_PRODUCT_IMAGES - currentImageCount);
+        const files = [...(event.target.files || [])].slice(0, availableSlots);
+        if (!availableSlots) {
+            setNotification('This product already has five images. Remove one before adding another.');
+            event.target.value = '';
             window.setTimeout(() => setNotification(''), 3000);
             return;
         }
-        const dataUrls = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        })));
-        setFormData((current) => ({
-            ...current,
-            image: current.image || dataUrls[0],
-            otherImages: [...current.otherImages, ...(current.image ? dataUrls : dataUrls.slice(1))].slice(0, 5),
-        }));
+        if (!files.length) return;
+        if (files.some((file) => !file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES)) {
+            setNotification('Choose JPG, PNG or WebP images smaller than 12 MB each.');
+            window.setTimeout(() => setNotification(''), 3000);
+            return;
+        }
+        try {
+            setNotification('Preparing images…');
+            const dataUrls = await Promise.all(files.map(compressImageFile));
+            setFormData((current) => {
+                const existingImages = [current.image, ...current.otherImages].filter(Boolean);
+                const images = [...existingImages, ...dataUrls].slice(0, MAX_PRODUCT_IMAGES);
+                return { ...current, image: images[0] || '', otherImages: images.slice(1) };
+            });
+            setNotification(`${dataUrls.length} image${dataUrls.length === 1 ? '' : 's'} prepared. Up to five will be saved with this product.`);
+        } catch (error) {
+            setNotification(error.message || 'The selected images could not be prepared.');
+        }
         event.target.value = '';
+        window.setTimeout(() => setNotification(''), 3500);
+    };
+
+    const removeProductImage = (index) => {
+        setFormData((current) => {
+            const images = [current.image, ...current.otherImages].filter(Boolean).filter((_, imageIndex) => imageIndex !== index);
+            return { ...current, image: images[0] || '', otherImages: images.slice(1, MAX_PRODUCT_IMAGES) };
+        });
+    };
+
+    const handleOtherImageUrls = (event) => {
+        const uploadedImages = formData.otherImages.filter((image) => image.startsWith('data:image/'));
+        const externalImages = event.target.value.split(/\n/).map((item) => item.trim()).filter(Boolean);
+        setFormData((current) => ({ ...current, otherImages: [...uploadedImages, ...externalImages].slice(0, MAX_PRODUCT_IMAGES - 1) }));
     };
 
     const getSubcategories = () => {
@@ -400,7 +463,7 @@ const ProductManager = () => {
             .slice(0, 5);
     }, [allProducts, formData.name, formData.subcategory, selectedProductId]);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const categoryProducts = [...(products[selectedCategory] || [])];
         const normalizedProduct = {
@@ -420,11 +483,16 @@ const ProductManager = () => {
             if (index >= 0) categoryProducts[index] = normalizedProduct;
         }
 
-        saveProducts(
-            { ...products, [selectedCategory]: categoryProducts },
-            `${normalizedProduct.name} ${selectedProductId === 'new' ? 'created' : 'updated'} in your local draft.`,
-        );
-        setSelectedProductId(normalizedProduct.id);
+        try {
+            await saveProducts(
+                { ...products, [selectedCategory]: categoryProducts },
+                `${normalizedProduct.name} ${selectedProductId === 'new' ? 'created' : 'updated'}.`,
+                [{ ...normalizedProduct, category: selectedCategory }],
+            );
+            setSelectedProductId(normalizedProduct.id);
+        } catch {
+            // saveProducts reports the actionable error in the dashboard notification.
+        }
     };
 
     const removeProduct = async (product) => {
@@ -508,9 +576,10 @@ const ProductManager = () => {
         }
     };
 
-    const applyImport = () => {
+    const applyImport = async () => {
         const validRows = importRows.filter((row) => row.valid);
         const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, [...items]]));
+        const changedProducts = [];
 
         validRows.forEach(({ category, product }, index) => {
             const generatedId = product.id || `${category.substring(0, 2).toLowerCase()}${Date.now()}${index}`;
@@ -522,11 +591,16 @@ const ProductManager = () => {
                 id: generatedId,
                 available: Math.max(0, product.stock - product.sold) > 0 ? 'In Stock' : 'Out of Stock',
             };
+            changedProducts.push({ ...importedProduct, category });
             if (existingIndex >= 0) nextProducts[category][existingIndex] = importedProduct;
             else nextProducts[category].push(importedProduct);
         });
 
-        saveProducts(nextProducts, `${validRows.length} products imported into your local draft.`);
+        try {
+            await saveProducts(nextProducts, `${validRows.length} products imported.`, changedProducts);
+        } catch {
+            return;
+        }
         setImportRows([]);
         setImportFileName('');
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -921,8 +995,9 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
-                                    <label className="full-width image-upload-control">Upload images<input type="file" accept="image/*" multiple onChange={handleImageFiles} /><small>Select one main image and up to four gallery images. Images are stored securely with this product in MongoDB Atlas.</small></label>
-                                    <label className="full-width">Other image URLs<textarea value={formData.otherImages.join(', ')} onChange={(event) => handleArrayChange(event, 'otherImages')} rows="2" placeholder="Comma separated" /></label>
+                                    <label className="full-width image-upload-control">Upload images<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleImageFiles} /><small>Select up to five images at once. The first is the main image and the other four appear in the product gallery. Large images are optimized automatically.</small></label>
+                                    {[formData.image, ...formData.otherImages].filter(Boolean).length > 0 && <div className="editor-image-preview full-width">{[formData.image, ...formData.otherImages].filter(Boolean).map((image, index) => <figure key={`${image.slice(0, 40)}-${index}`}><img src={image} alt={`${formData.name || 'Product'} ${index + 1}`} /><figcaption>{index === 0 ? 'Main image' : `Gallery ${index}`}</figcaption><button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove ${index === 0 ? 'main image' : `gallery image ${index}`}`}><XCircle size={17} /></button></figure>)}</div>}
+                                    <label className="full-width">Additional image URLs<textarea value={formData.otherImages.filter((image) => !image.startsWith('data:image/')).join('\n')} onChange={handleOtherImageUrls} rows="3" placeholder="One public image URL per line (optional)" /></label>
                                     <fieldset className="size-selector-control full-width">
                                         <legend>Available sizes</legend>
                                         <p>Choose every size you will sell for this product.</p>

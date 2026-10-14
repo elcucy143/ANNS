@@ -10,7 +10,9 @@ const sizeTokenPattern = /4XL|XXXXL|3XL|XXXL|XXL|XL|XS|S|M|L/gi;
 export const normalizeList = (value) => {
   if (Array.isArray(value)) return value.flatMap(normalizeList);
   if (value === undefined || value === null || value === '') return [];
-  return String(value).split(/[,|;\n]/).map((item) => item.trim()).filter(Boolean);
+  const text = String(value).trim();
+  if (text.startsWith('data:image/')) return [text];
+  return text.split(/[,|;\n]/).map((item) => item.trim()).filter(Boolean);
 };
 
 export const normalizeSizeList = (value) => {

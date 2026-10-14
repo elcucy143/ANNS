@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getProductsFromDatabase } from '../services/apiClient';
-import demoProducts from '../data/demoProducts';
 import { normalizeCatalogProduct } from '../utils/productOptions';
 
 const ProductCatalogContext = createContext({ products: [], loading: true, error: null, refreshProducts: async () => {} });
@@ -14,10 +13,10 @@ export const ProductCatalogProvider = ({ children }) => {
     setLoading(true);
     try {
       const catalog = await getProductsFromDatabase();
-      setProducts([...demoProducts, ...(Array.isArray(catalog) ? catalog : [])].map(normalizeCatalogProduct));
+      setProducts((Array.isArray(catalog) ? catalog : []).map(normalizeCatalogProduct));
       setError(null);
     } catch {
-      setProducts(demoProducts.map(normalizeCatalogProduct));
+      setProducts([]);
       setError('The catalog is temporarily unavailable. Please try again shortly.');
     } finally {
       setLoading(false);

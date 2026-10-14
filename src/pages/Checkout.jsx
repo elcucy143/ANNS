@@ -44,14 +44,14 @@ const Checkout = () => {
 
   const handlePayment = async (event) => {
     event.preventDefault();
-    if (!user || !cartItems.length || isPaying) return;
+    if (!cartItems.length || isPaying) return;
     setError('');
     setIsPaying(true);
     try {
       await loadRazorpay();
       const checkoutOrder = await createRazorpayOrder({
         customer: {
-          id: user.id,
+          id: user?.id || '',
           name: form.name,
           email: form.email,
           phone: form.phone,
@@ -126,19 +126,6 @@ const Checkout = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <main className="checkout-signin container">
-        <LockKeyhole size={42} />
-        <p className="checkout-kicker">SECURE CHECKOUT</p>
-        <h1>Sign in before payment</h1>
-        <p>Your account connects this purchase to your order history and delivery updates.</p>
-        <Link to="/account">Sign in or register</Link>
-        <Link to="/cart" className="checkout-back-link"><ChevronLeft size={17} /> Return to cart</Link>
-      </main>
-    );
-  }
-
   if (!cartItems.length) {
     return (
       <main className="checkout-signin container">
@@ -157,6 +144,7 @@ const Checkout = () => {
         <div><p className="checkout-kicker">SECURE CHECKOUT</p><h1>Delivery & payment</h1></div>
         <span><ShieldCheck size={18} /> Razorpay protected</span>
       </div>
+      {!user && <div className="guest-checkout-note"><LockKeyhole size={17} /><span><strong>Guest checkout</strong> — no Google sign-in is required. Enter your contact and delivery information below.</span></div>}
       <div className="checkout-layout">
         <form className="checkout-form" onSubmit={handlePayment}>
           <section>

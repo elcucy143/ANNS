@@ -48,3 +48,15 @@
 @keyframes checkout-spin { to { transform: rotate(360deg); } }
 @media (max-width: 900px) { .checkout-layout { grid-template-columns: 1fr; } .checkout-summary { position: static; order: -1; } }
 @media (max-width: 620px) { .checkout-page { padding-top: 25px; } .checkout-heading { align-items: flex-start; flex-direction: column; } .checkout-fields.two-column { grid-template-columns: 1fr; } .checkout-fields label.full-width { grid-column: auto; } .checkout-form { padding: 22px 17px; } }
+.guest-checkout-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid #dce9df;
+    border-radius: 7px;
+    color: #3f654b;
+    background: #f0f7f2;
+    font-size: 0.82rem;
+}
