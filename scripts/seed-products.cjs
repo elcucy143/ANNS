@@ -1,6 +1,6 @@
 const path = require('node:path');
-const productsByCategory = require(path.resolve(__dirname, '../../src/assets/json/products.json'));
-const { getDb } = require('../src/lib/db');
+const productsByCategory = require(path.resolve(__dirname, '../src/assets/json/products.json'));
+const { getDb } = require('../api/src/lib/db');
 
 const products = Object.entries(productsByCategory).flatMap(([category, items]) => (
   items.map((product) => ({ ...product, category, sold: Number(product.sold) || 0 }))

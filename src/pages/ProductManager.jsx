@@ -26,7 +26,6 @@ import {
     Trash2,
     XCircle,
 } from 'lucide-react';
-import productsData from '../assets/json/products.json';
 import categoriesData from '../assets/json/categories.json';
 import { isCustomerActive, readCustomers, readOrders } from '../services/customerStore';
 import {
@@ -45,6 +44,7 @@ import { normalizeList, normalizeSizeList, STANDARD_CLOTHING_SIZES } from '../ut
 const ADMIN_SESSION_KEY = 'pm_auth';
 const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
 const LOW_STOCK_LIMIT = 10;
+const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
@@ -71,7 +71,7 @@ const getInitialFormData = () => ({
     showOnCategory: true,
 });
 
-const createEmptyCatalog = () => Object.fromEntries(Object.keys(productsData).map((category) => [category, []]));
+const createEmptyCatalog = () => Object.fromEntries(PRODUCT_CATEGORIES.map((category) => [category, []]));
 const readProductDraft = () => createEmptyCatalog();
 
 const toNumber = (value, fallback = 0) => {
@@ -96,7 +96,7 @@ const parseList = normalizeList;
 
 const normalizeCategory = (value = '') => {
     const normalized = String(value).trim().toLowerCase().replace(/[’']/g, '');
-    const match = Object.keys(productsData).find((category) => (
+    const match = PRODUCT_CATEGORIES.find((category) => (
         category.toLowerCase().replace(/[’']/g, '') === normalized
     ));
     if (match) return match;
@@ -130,7 +130,7 @@ const flattenProducts = (products) => Object.entries(products).flatMap(([categor
 ));
 
 const groupDatabaseProducts = (items) => {
-    const grouped = Object.fromEntries(Object.keys(productsData).map((category) => [category, []]));
+    const grouped = Object.fromEntries(PRODUCT_CATEGORIES.map((category) => [category, []]));
     items.forEach(({ category, ...product }) => {
         const normalizedCategory = normalizeCategory(category);
         if (!grouped[normalizedCategory]) grouped[normalizedCategory] = [];
@@ -194,7 +194,7 @@ const ProductManager = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     const [stockFilter, setStockFilter] = useState('all');
-    const [selectedCategory, setSelectedCategory] = useState(Object.keys(productsData)[0] || 'Gifts');
+    const [selectedCategory, setSelectedCategory] = useState(PRODUCT_CATEGORIES[0]);
     const [selectedProductId, setSelectedProductId] = useState('new');
     const [formData, setFormData] = useState(getInitialFormData);
     const [importRows, setImportRows] = useState([]);
