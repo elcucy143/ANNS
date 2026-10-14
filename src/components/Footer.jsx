@@ -39,6 +39,7 @@ const Footer = () => {
                         <li><MapPin size={16} /> <span>{businessContact.addressLines[0]}<br />{businessContact.addressLines[1]}</span></li>
                         <li><MessageCircle size={16} /> <a href={`https://wa.me/${businessContact.whatsappNumber}`} target="_blank" rel="noreferrer">WhatsApp {businessContact.whatsappDisplay}</a></li>
                         <li><Mail size={16} /> <a href={`mailto:${businessContact.email}`}>{businessContact.email}</a></li>
+                        <li><Instagram size={16} /> <a href={businessContact.instagram} target="_blank" rel="noreferrer">Instagram @a.s.trends_gifts</a></li>
                     </ul>
                 </div>
 
