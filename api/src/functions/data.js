@@ -4,6 +4,7 @@ const { getClient, getDb } = require('../lib/db');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const { authenticateRequest, signAdminSession, signSession, verifyGoogleCredential } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
+const { getDeliveryEstimate, sendOrderEmails } = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
   createRazorpayOrder,
@@ -132,6 +133,55 @@ const finalizeCapturedOrder = async (db, order, payment) => {
   }
 
   return orders.findOne({ id: order.id });
+};
+
+const sendCapturedOrderConfirmation = async (db, order, context) => {
+  if (!order || order.paymentStatus !== 'captured' || !process.env.RESEND_API_KEY) return order;
+  const token = crypto.randomUUID();
+  const claimedAt = nowIso();
+  const claim = await db.collection('orders').updateOne(
+    {
+      id: order.id,
+      paymentStatus: 'captured',
+      'confirmationEmail.status': { $nin: ['sending', 'sent'] },
+    },
+    {
+      $set: {
+        confirmationEmail: { status: 'sending', token, attemptedAt: claimedAt },
+        updatedAt: claimedAt,
+      },
+    },
+  );
+  if (claim.modifiedCount !== 1) return order;
+
+  const estimate = order.deliveryEstimate || getDeliveryEstimate(order.paidAt || claimedAt);
+  try {
+    const result = await sendOrderEmails(order, estimate);
+    await db.collection('orders').updateOne(
+      { id: order.id, 'confirmationEmail.token': token },
+      {
+        $set: {
+          deliveryEstimate: estimate,
+          confirmationEmail: { status: 'sent', ...result, sentAt: nowIso() },
+          updatedAt: nowIso(),
+        },
+      },
+    );
+    return db.collection('orders').findOne({ id: order.id });
+  } catch (error) {
+    context.error('Order confirmation email failed', error);
+    await db.collection('orders').updateOne(
+      { id: order.id, 'confirmationEmail.token': token },
+      {
+        $set: {
+          deliveryEstimate: estimate,
+          confirmationEmail: { status: 'failed', error: cleanText(error.message, 300), attemptedAt: claimedAt },
+          updatedAt: nowIso(),
+        },
+      },
+    );
+    return db.collection('orders').findOne({ id: order.id });
+  }
 };
 
 registerHttp('health', {
@@ -502,7 +552,8 @@ registerHttp('razorpay-verify-payment', {
       if (payment.status === 'authorized') payment = await captureRazorpayPayment(payment.id, order.amountPaise);
       if (payment.status !== 'captured') return json({ error: 'Payment has not been captured' }, 409);
 
-      const completedOrder = await finalizeCapturedOrder(db, order, payment);
+      let completedOrder = await finalizeCapturedOrder(db, order, payment);
+      completedOrder = await sendCapturedOrderConfirmation(db, completedOrder, context);
       return json({ ok: true, order: cleanDocument(completedOrder) });
     } catch (error) {
       return paymentError(context, error);
@@ -527,7 +578,8 @@ registerHttp('razorpay-webhook', {
       if (!order) return json({ ok: true });
 
       if (event.event === 'payment.captured' || event.event === 'order.paid') {
-        await finalizeCapturedOrder(db, order, payment);
+        const completedOrder = await finalizeCapturedOrder(db, order, payment);
+        await sendCapturedOrderConfirmation(db, completedOrder, context);
       } else if (event.event === 'payment.failed') {
         await db.collection('orders').updateOne(
           { id: order.id, paymentStatus: { $ne: 'captured' } },

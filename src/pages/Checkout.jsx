@@ -121,6 +121,9 @@ const Checkout = () => {
         <h1>Thank you for your order</h1>
         <p>Your payment was verified and your order is now being prepared.</p>
         <div className="order-reference"><span>Order reference</span><strong>{completedOrder.id}</strong></div>
+        {completedOrder.deliveryEstimate && (
+          <p>Estimated delivery: {new Date(completedOrder.deliveryEstimate.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} – {new Date(completedOrder.deliveryEstimate.end).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        )}
         <Link to="/" className="checkout-home-link">Continue shopping</Link>
       </main>
     );

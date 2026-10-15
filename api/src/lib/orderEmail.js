@@ -1,0 +1,122 @@
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const DEFAULT_FROM = 'ANNS Orders <orders@annsonline.shop>';
+const DEFAULT_ADMIN_EMAIL = 'astrendsandgifts@gmail.com';
+
+const escapeHtml = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;');
+
+const formatCurrency = (value) => new Intl.NumberFormat('en-IN', {
+  style: 'currency', currency: 'INR', maximumFractionDigits: 2,
+}).format(Number(value) || 0);
+
+const formatDate = (value) => new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
+}).format(new Date(value));
+
+const addBusinessDays = (start, days) => {
+  const date = new Date(start);
+  let remaining = days;
+  while (remaining > 0) {
+    date.setUTCDate(date.getUTCDate() + 1);
+    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) remaining -= 1;
+  }
+  return date.toISOString();
+};
+
+const getDeliveryEstimate = (paidAt = new Date().toISOString()) => ({
+  start: addBusinessDays(paidAt, 5),
+  end: addBusinessDays(paidAt, 7),
+});
+
+const sendEmail = async ({ to, subject, html, text }) => {
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  if (!apiKey) throw new Error('RESEND_API_KEY is not configured');
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: process.env.ORDER_EMAIL_FROM || DEFAULT_FROM,
+      to: [to],
+      reply_to: process.env.ORDER_REPLY_TO || DEFAULT_ADMIN_EMAIL,
+      subject,
+      html,
+      text,
+    }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(result.message || 'Resend rejected the email');
+    error.status = response.status;
+    throw error;
+  }
+  return result;
+};
+
+const orderRows = (order) => order.items.map((item) => `
+  <tr>
+    <td style="padding:10px 0;border-bottom:1px solid #eee">${escapeHtml(item.name)}<br><small>${escapeHtml([item.size, item.color].filter(Boolean).join(' · '))}</small></td>
+    <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+    <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td>
+  </tr>`).join('');
+
+const orderText = (order, estimate) => [
+  `Thank you for shopping with ANNS, ${order.customer.name}.`,
+  `Order: ${order.id}`,
+  `Payment: Confirmed`,
+  `Estimated delivery: ${formatDate(estimate.start)} – ${formatDate(estimate.end)}`,
+  '',
+  ...order.items.map((item) => `${item.quantity} × ${item.name} (${[item.size, item.color].filter(Boolean).join(', ')}) — ${formatCurrency(item.lineTotal)}`),
+  '',
+  `Total: ${formatCurrency(order.total)}`,
+  `Deliver to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,
+  '',
+  'Questions? Reply to this email or WhatsApp +91 98497 92562.',
+].join('\n');
+
+const customerHtml = (order, estimate) => `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f">
+  <div style="max-width:640px;margin:auto;padding:28px 16px">
+    <div style="background:#fff;padding:32px;border-radius:12px">
+      <p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p>
+      <h1 style="font-family:Georgia,serif;font-weight:500">Your order is confirmed</h1>
+      <p>Hi ${escapeHtml(order.customer.name)}, we received your payment and are preparing your order.</p>
+      <div style="background:#f5f1ec;padding:16px;margin:24px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Estimated delivery: ${escapeHtml(formatDate(estimate.start))} – ${escapeHtml(formatDate(estimate.end))}</div>
+      <table style="width:100%;border-collapse:collapse">${orderRows(order)}<tr><td colspan="2" style="padding-top:16px;font-weight:700">Total</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></table>
+      <h3 style="margin-top:28px">Delivery address</h3>
+      <p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p>
+      <p style="margin-top:28px;color:#756d66">Need help? Reply to this email or WhatsApp +91 98497 92562.</p>
+    </div>
+  </div></body></html>`;
+
+const sendOrderEmails = async (order, estimate) => {
+  const customerResult = await sendEmail({
+    to: order.customer.email,
+    subject: `Order confirmed — ${order.id}`,
+    html: customerHtml(order, estimate),
+    text: orderText(order, estimate),
+  });
+
+  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
+  let adminResult = null;
+  let adminEmailError = null;
+  if (adminEmail && adminEmail.toLowerCase() !== order.customer.email.toLowerCase()) {
+    try {
+      adminResult = await sendEmail({
+        to: adminEmail,
+        subject: `New paid order — ${order.id}`,
+        html: customerHtml(order, estimate),
+        text: orderText(order, estimate),
+      });
+    } catch (error) {
+      // The customer receipt has already succeeded. Do not retry it and risk a
+      // duplicate merely because the internal notification was rejected.
+      adminEmailError = String(error.message || 'Admin notification failed').slice(0, 300);
+    }
+  }
+  return { customerEmailId: customerResult.id, adminEmailId: adminResult?.id || null, adminEmailError };
+};
+
+module.exports = { getDeliveryEstimate, sendOrderEmails };

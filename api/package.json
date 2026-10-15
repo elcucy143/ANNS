@@ -10,7 +10,7 @@
     "start": "node src/server.js",
     "start:azure": "func start",
     "seed": "node ../scripts/seed-products.cjs",
-    "check": "node --check src/index.js && node --check src/server.js && node --check src/lib/auth.js && node --check src/lib/config.js && node --check src/lib/db.js && node --check src/lib/razorpay.js && node --check src/functions/data.js",
+    "check": "node --check src/index.js && node --check src/server.js && node --check src/lib/auth.js && node --check src/lib/config.js && node --check src/lib/db.js && node --check src/lib/razorpay.js && node --check src/lib/orderEmail.js && node --check src/functions/data.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
