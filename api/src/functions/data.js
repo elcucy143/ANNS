@@ -132,6 +132,7 @@ const finalizeCapturedOrder = async (db, order, payment) => {
         },
         { session },
       );
+
     });
   } catch (error) {
     if (error.code !== 'INVENTORY_CONFLICT') throw error;
@@ -151,6 +152,24 @@ const finalizeCapturedOrder = async (db, order, payment) => {
   } finally {
     await session.endSession();
   }
+
+  // A checkout attempt is not a customer or sale until Razorpay confirms
+  // capture. This keeps cancelled/failed attempts out of the dashboard.
+  await db.collection('customers').updateOne(
+    { id: order.customerId },
+    {
+      $set: {
+        id: order.customerId,
+        ...order.customer,
+        provider: order.checkoutMode === 'guest' ? 'guest' : 'account',
+        sessionActive: order.checkoutMode !== 'guest',
+        lastSeenAt: nowIso(),
+        updatedAt: nowIso(),
+      },
+      $setOnInsert: { createdAt: nowIso() },
+    },
+    { upsert: true },
+  );
 
   return orders.findOne({ id: order.id });
 };
@@ -512,7 +531,6 @@ registerHttp('razorpay-create-order', {
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
-      if (!session) return json({ error: 'Sign in before checkout' }, 401);
       if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
       const customerName = cleanText(session?.name || customer.name, 120);
       const customerEmail = cleanText(session?.email || customer.email, 254).toLowerCase();
@@ -561,7 +579,7 @@ registerHttp('razorpay-create-order', {
       }
 
       const localOrderId = `ANNS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-      const customerId = session.sub;
+      const customerId = session?.sub || `guest:${crypto.createHash('sha256').update(customerEmail).digest('hex').slice(0, 24)}`;
       const razorpayOrder = await createRazorpayOrder({
         amount,
         currency: 'INR',
@@ -576,7 +594,7 @@ registerHttp('razorpay-create-order', {
       const order = {
         id: localOrderId,
         customerId,
-        checkoutMode: 'account',
+        checkoutMode: session ? 'account' : 'guest',
         customer: {
           name: customerName,
           email: customerEmail,
@@ -601,21 +619,6 @@ registerHttp('razorpay-create-order', {
         updatedAt: operationTime,
       };
       await db.collection('orders').insertOne(order);
-      await db.collection('customers').updateOne(
-        { id: order.customerId },
-        {
-          $set: {
-            id: order.customerId,
-            ...order.customer,
-            provider: session.provider,
-            sessionActive: true,
-            lastSeenAt: operationTime,
-            updatedAt: operationTime,
-          },
-          $setOnInsert: { createdAt: operationTime },
-        },
-        { upsert: true },
-      );
       const { keyId } = getCredentials();
       return json({
         keyId,
