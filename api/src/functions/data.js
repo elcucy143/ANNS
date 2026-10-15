@@ -685,7 +685,14 @@ registerHttp('orders', {
       if (request.method === 'GET') {
         const unauthorized = requireAdmin(request);
         if (unauthorized) return unauthorized;
-        const orders = await collection.find({}).sort({ createdAt: -1 }).limit(5000).toArray();
+        // Razorpay requires an order before Checkout opens, but it is not a
+        // business order until payment has been captured. Keep incomplete
+        // attempts for reconciliation without reporting them as sales.
+        const orders = await collection
+          .find({ paymentStatus: 'captured' })
+          .sort({ paidAt: -1, createdAt: -1 })
+          .limit(5000)
+          .toArray();
         return json(orders.map(cleanDocument));
       }
 

@@ -255,8 +255,11 @@ const ProductManager = () => {
     }), [allProducts]);
 
     const customerInsights = useMemo(() => {
+        // Never treat pending, cancelled, or failed checkout attempts as sales.
+        // This also protects the UI from older API responses and local caches.
+        const paidOrders = orders.filter((order) => order.paymentStatus === 'captured');
         const ordersByCustomer = new Map();
-        orders.forEach((order) => {
+        paidOrders.forEach((order) => {
             ordersByCustomer.set(order.customerId, [...(ordersByCustomer.get(order.customerId) || []), order]);
         });
         const enrichedCustomers = customers.map((customer) => {
@@ -271,8 +274,8 @@ const ProductManager = () => {
         return {
             customers: enrichedCustomers,
             activeCount: enrichedCustomers.filter((customer) => customer.active).length,
-            orderCount: orders.length,
-            revenue: orders.reduce((total, order) => total + toNumber(order.total), 0),
+            orderCount: paidOrders.length,
+            revenue: paidOrders.reduce((total, order) => total + toNumber(order.total), 0),
         };
     }, [customers, orders]);
 
@@ -983,8 +986,8 @@ const ProductManager = () => {
                         <section className="customer-stat-grid">
                             <article className="customer-stat"><UserCheck size={21} /><div><span>Active users</span><strong>{customerInsights.activeCount}</strong><small>Signed in within 30 minutes</small></div></article>
                             <article className="customer-stat"><Users size={21} /><div><span>Registered contacts</span><strong>{customers.length}</strong><small>Email and mobile registrations</small></div></article>
-                            <article className="customer-stat"><ReceiptText size={21} /><div><span>Orders recorded</span><strong>{customerInsights.orderCount}</strong><small>Across all customers</small></div></article>
-                            <article className="customer-stat"><ShoppingBag size={21} /><div><span>Customer revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>From recorded orders</small></div></article>
+                            <article className="customer-stat"><ReceiptText size={21} /><div><span>Paid orders</span><strong>{customerInsights.orderCount}</strong><small>Verified payments only</small></div></article>
+                            <article className="customer-stat"><ShoppingBag size={21} /><div><span>Paid revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>From captured payments</small></div></article>
                         </section>
 
                         <section className="admin-panel customer-panel">
