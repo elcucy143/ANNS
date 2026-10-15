@@ -6,9 +6,13 @@ import { GOOGLE_CLIENT_ID, GOOGLE_IDENTITY_SCRIPT_ID } from '../config/auth';
 import './Account.css';
 
 const Account = () => {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, registerWithAccount, signInWithCredentials, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', phone: '', email: '', password: '' });
+  const [accountError, setAccountError] = useState('');
+  const [accountBusy, setAccountBusy] = useState(false);
   const [googleError, setGoogleError] = useState('');
   const googleButtonRef = useRef(null);
 
@@ -62,6 +66,33 @@ const Account = () => {
     };
   }, [continueAfterLogin, signInWithGoogle, user]);
 
+  const handleAccountSubmit = async (event) => {
+    event.preventDefault();
+    setAccountError('');
+    setAccountBusy(true);
+    try {
+      if (mode === 'register') {
+        await registerWithAccount({
+          name: form.name,
+          phone: form.phone.replace(/\s+/g, ''),
+          email: form.email,
+          password: form.password,
+        });
+      } else {
+        await signInWithCredentials(form.email, form.password);
+      }
+      continueAfterLogin();
+    } catch (error) {
+      setAccountError(error.message || 'Unable to continue. Please try again.');
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleFormChange = (event) => {
+    setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  };
+
   if (user) {
     return (
       <section className="account-page account-dashboard-page">
@@ -100,12 +131,30 @@ const Account = () => {
           <div className="account-form-wrap">
             <div className="account-heading">
               <p className="account-eyebrow">WELCOME TO ANNS</p>
-              <h2>Sign in or create your account</h2>
-              <p>Continue securely with Google to proceed to checkout.</p>
+              <h2>{mode === 'login' ? 'Sign in to your account' : 'Create your account'}</h2>
+              <p>Use your ANNS account or continue securely with Google.</p>
             </div>
+            <div className="account-tabs" role="tablist" aria-label="Account action">
+              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setAccountError(''); }}>Sign in</button>
+              <button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => { setMode('register'); setAccountError(''); }}>Register</button>
+            </div>
+            <form className="account-form" onSubmit={handleAccountSubmit}>
+              {mode === 'register' && (
+                <>
+                  <label>Full name<input name="name" value={form.name} onChange={handleFormChange} required autoComplete="name" /></label>
+                  <label>Mobile number<input name="phone" value={form.phone} onChange={handleFormChange} required inputMode="tel" autoComplete="tel" placeholder="+91 98765 43210" /></label>
+                </>
+              )}
+              <label>Email address<input name="email" type="email" value={form.email} onChange={handleFormChange} required autoComplete="email" /></label>
+              <label>Password<input name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={10} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} /></label>
+              {mode === 'register' && <p className="password-guidance">Use 10–128 characters with a letter and number.</p>}
+              {accountError && <p className="account-error" role="alert">{accountError}</p>}
+              <button className="account-submit" type="submit" disabled={accountBusy}>{accountBusy ? 'Please wait…' : mode === 'register' ? 'Create account & continue' : 'Sign in & continue'}</button>
+            </form>
+            <div className="account-divider"><span>or</span></div>
             <div className="google-auth-container" ref={googleButtonRef} aria-label="Continue with Google" />
             {googleError && <p className="account-error google-auth-error" role="alert">{googleError}</p>}
-            <p className="account-security-note"><ShieldCheck size={17} /> Your identity is verified securely. ANNS never receives your Google password.</p>
+            <p className="account-security-note"><ShieldCheck size={17} /> Passwords are securely hashed. ANNS never receives your Google password.</p>
             <p className="account-terms">By continuing, you agree to our <a href="/terms-conditions">Terms</a> and <a href="/privacy-policy">Privacy Policy</a>.</p>
           </div>
         </div>

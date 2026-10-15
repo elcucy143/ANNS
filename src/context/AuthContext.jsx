@@ -2,10 +2,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signOut as signOutFirebase } from '@firebase/auth';
 import {
   AUTH_SESSION_STORAGE,
+  authenticateWithCredentials,
   authenticateWithFirebase,
   authenticateWithGoogle,
   closeAuthSession,
   getAuthSession,
+  registerWithCredentials,
 } from '../services/apiClient';
 import { firebaseAuth } from '../config/firebase';
 
@@ -47,6 +49,20 @@ export const AuthProvider = ({ children }) => {
     return authenticatedSession.user;
   };
 
+  const storeAuthenticatedSession = (authenticatedSession) => {
+    localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(authenticatedSession));
+    setSession(authenticatedSession);
+    return authenticatedSession.user;
+  };
+
+  const signInWithCredentials = async (email, password) => (
+    storeAuthenticatedSession(await authenticateWithCredentials(email, password))
+  );
+
+  const registerWithAccount = async (account) => (
+    storeAuthenticatedSession(await registerWithCredentials(account))
+  );
+
   const signInWithPhone = async (firebaseUser) => {
     const idToken = await firebaseUser.getIdToken(true);
     const authenticatedSession = await authenticateWithFirebase(idToken, firebaseUser.phoneNumber);
@@ -67,7 +83,9 @@ export const AuthProvider = ({ children }) => {
     user,
     isLoading: Boolean(sessionToken && !user),
     signInWithGoogle,
+    signInWithCredentials,
     signInWithPhone,
+    registerWithAccount,
     signOut,
   };
 

@@ -31,6 +31,10 @@ const ensureIndexes = async (db) => {
     indexesPromise = Promise.all([
       db.collection('products').createIndex({ id: 1 }, { unique: true }),
       db.collection('customers').createIndex({ id: 1 }, { unique: true }),
+      db.collection('customers').createIndex(
+        { normalizedEmail: 1 },
+        { unique: true, partialFilterExpression: { normalizedEmail: { $type: 'string' } } },
+      ),
       db.collection('customers').createIndex({ lastSeenAt: -1 }),
       db.collection('orders').createIndex({ id: 1 }, { unique: true }),
       db.collection('orders').createIndex({ razorpayOrderId: 1 }, { unique: true, sparse: true }),

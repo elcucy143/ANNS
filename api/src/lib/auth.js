@@ -1,8 +1,10 @@
 const crypto = require('node:crypto');
+const { promisify } = require('node:util');
 const { OAuth2Client } = require('google-auth-library');
 
 const DEFAULT_GOOGLE_CLIENT_ID = '920368340836-j753510od9dn8ced4due5p1787e35ghc.apps.googleusercontent.com';
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
+const scrypt = promisify(crypto.scrypt);
 
 const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
@@ -63,6 +65,19 @@ const safeEqual = (first, second) => {
   const firstBuffer = Buffer.from(String(first || ''));
   const secondBuffer = Buffer.from(String(second || ''));
   return firstBuffer.length === secondBuffer.length && crypto.timingSafeEqual(firstBuffer, secondBuffer);
+};
+
+const hashPassword = async (password) => {
+  const salt = crypto.randomBytes(16).toString('base64url');
+  const derivedKey = await scrypt(String(password), salt, 64);
+  return `scrypt$${salt}$${derivedKey.toString('base64url')}`;
+};
+
+const verifyPassword = async (password, storedHash) => {
+  const [algorithm, salt, expected] = String(storedHash || '').split('$');
+  if (algorithm !== 'scrypt' || !salt || !expected) return false;
+  const derivedKey = await scrypt(String(password), salt, 64);
+  return safeEqual(derivedKey.toString('base64url'), expected);
 };
 
 const signSession = (user) => {
@@ -141,10 +156,12 @@ const verifyGoogleCredential = async (credential) => {
 module.exports = {
   authenticateRequest,
   getGoogleClientId,
+  hashPassword,
   signAdminSession,
   signSession,
   verifyAdminSession,
   verifyFirebaseCredential,
   verifyGoogleCredential,
+  verifyPassword,
   verifySession,
 };

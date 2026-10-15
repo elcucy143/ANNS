@@ -2,7 +2,15 @@ const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
 const { getClient, getDb } = require('../lib/db');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
-const { authenticateRequest, signAdminSession, signSession, verifyFirebaseCredential, verifyGoogleCredential } = require('../lib/auth');
+const {
+  authenticateRequest,
+  hashPassword,
+  signAdminSession,
+  signSession,
+  verifyFirebaseCredential,
+  verifyGoogleCredential,
+  verifyPassword,
+} = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const { getDeliveryEstimate, sendOrderEmails } = require('../lib/orderEmail');
 const {
@@ -19,6 +27,11 @@ assertProductionConfig();
 const cleanDocument = (document) => {
   const cleaned = { ...document };
   delete cleaned._id;
+  return cleaned;
+};
+const cleanCustomerDocument = (document) => {
+  const cleaned = cleanDocument(document);
+  delete cleaned.passwordHash;
   return cleaned;
 };
 const nowIso = () => new Date().toISOString();
@@ -267,6 +280,7 @@ registerHttp('google-auth', {
     try {
       const body = await parseJson(request);
       const user = await verifyGoogleCredential(body?.credential);
+      user.normalizedEmail = user.email.toLowerCase();
       const operationTime = nowIso();
       const db = await getDb();
       await db.collection('customers').updateOne(
@@ -282,6 +296,104 @@ registerHttp('google-auth', {
       const status = Number.isInteger(error.status) ? error.status : 401;
       if (status >= 500) context.error(error);
       return json({ error: status === 503 ? error.message : 'Google authentication failed' }, status);
+    }
+  },
+});
+
+registerHttp('credential-register', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/register',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      const name = cleanText(body?.name, 120);
+      const phone = cleanText(body?.phone, 30).replace(/\s+/g, '');
+      const email = cleanText(body?.email, 254).toLowerCase();
+      const password = String(body?.password || '');
+      if (name.length < 2) return json({ error: 'Enter your full name' }, 400);
+      if (!/^\+?[0-9]{10,15}$/.test(phone)) return json({ error: 'Enter a valid mobile number' }, 400);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Enter a valid email address' }, 400);
+      if (password.length < 10 || password.length > 128 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        return json({ error: 'Password must be 10 to 128 characters and include a letter and number' }, 400);
+      }
+
+      const db = await getDb();
+      const customers = db.collection('customers');
+      if (await customers.findOne({ normalizedEmail: email })) {
+        return json({ error: 'An account already exists for this email' }, 409);
+      }
+      const operationTime = nowIso();
+      const user = {
+        id: `credentials:${crypto.createHash('sha256').update(email).digest('hex').slice(0, 32)}`,
+        name,
+        email,
+        normalizedEmail: email,
+        phone,
+        picture: '',
+        provider: 'credentials',
+      };
+      await customers.insertOne({
+        ...user,
+        passwordHash: await hashPassword(password),
+        sessionActive: true,
+        createdAt: operationTime,
+        lastSeenAt: operationTime,
+        updatedAt: operationTime,
+      });
+      const publicUser = cleanCustomerDocument(user);
+      return json({ user: publicUser, token: signSession(publicUser) }, 201);
+    } catch (error) {
+      if (error?.code === 11000) return json({ error: 'An account already exists for this email' }, 409);
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('credential-login', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/login',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      const email = cleanText(body?.email, 254).toLowerCase();
+      const password = String(body?.password || '');
+      const db = await getDb();
+      const customers = db.collection('customers');
+      const customer = await customers.findOne({ normalizedEmail: email, provider: 'credentials' });
+      const operationTime = nowIso();
+      if (customer?.lockedUntil && new Date(customer.lockedUntil).getTime() > Date.now()) {
+        return json({ error: 'Too many sign-in attempts. Please try again in 15 minutes' }, 429);
+      }
+      if (!customer || !(await verifyPassword(password, customer.passwordHash))) {
+        if (customer) {
+          const failedLoginAttempts = Number(customer.failedLoginAttempts || 0) + 1;
+          const lockAccount = failedLoginAttempts >= 5;
+          await customers.updateOne(
+            { id: customer.id },
+            {
+              $set: {
+                failedLoginAttempts: lockAccount ? 0 : failedLoginAttempts,
+                ...(lockAccount ? { lockedUntil: new Date(Date.now() + 15 * 60 * 1000).toISOString() } : {}),
+                updatedAt: operationTime,
+              },
+            },
+          );
+        }
+        return json({ error: 'Email or password is incorrect' }, 401);
+      }
+      await customers.updateOne(
+        { id: customer.id },
+        {
+          $set: { sessionActive: true, lastSeenAt: operationTime, updatedAt: operationTime },
+          $unset: { failedLoginAttempts: '', lockedUntil: '' },
+        },
+      );
+      const user = cleanCustomerDocument(customer);
+      return json({ user, token: signSession(user) });
+    } catch (error) {
+      return handleError(context, error);
     }
   },
 });
@@ -476,7 +588,7 @@ registerHttp('customers', {
         const unauthorized = requireAdmin(request);
         if (unauthorized) return unauthorized;
         const customers = await collection.find({}).sort({ lastSeenAt: -1 }).toArray();
-        return json(customers.map(cleanDocument));
+        return json(customers.map(cleanCustomerDocument));
       }
 
       if (request.method === 'DELETE') {
@@ -503,7 +615,7 @@ registerHttp('customers', {
         email: String(session.email || existing?.email || '').slice(0, 254),
         phone: String(body.phone || existing?.phone || '').slice(0, 30),
         picture: String(session.picture || existing?.picture || '').slice(0, 1000),
-        provider: 'google',
+        provider: session.provider,
         sessionActive: body.sessionActive !== false,
         lastSeenAt: nowIso(),
         updatedAt: nowIso(),

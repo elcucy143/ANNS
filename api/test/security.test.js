@@ -2,7 +2,8 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const test = require('node:test');
 const {
-  signAdminSession, signSession, verifyAdminSession, verifyFirebaseCredential, verifySession,
+  hashPassword, signAdminSession, signSession, verifyAdminSession, verifyFirebaseCredential,
+  verifyPassword, verifySession,
 } = require('../src/lib/auth');
 const { configurationProblems } = require('../src/lib/config');
 const { verifyPaymentSignature, verifyWebhookSignature } = require('../src/lib/razorpay');
@@ -15,6 +16,16 @@ test('customer sessions reject tampering', () => {
   const adminToken = signAdminSession();
   assert.equal(verifyAdminSession(adminToken), true);
   assert.equal(verifyAdminSession(token), false);
+});
+
+test('customer passwords are salted, hashed and timing-safe verified', async () => {
+  const firstHash = await hashPassword('SecurePass123');
+  const secondHash = await hashPassword('SecurePass123');
+  assert.notEqual(firstHash, secondHash);
+  assert.equal(firstHash.includes('SecurePass123'), false);
+  assert.equal(await verifyPassword('SecurePass123', firstHash), true);
+  assert.equal(await verifyPassword('WrongPass123', firstHash), false);
+  assert.equal(await verifyPassword('SecurePass123', 'invalid'), false);
 });
 
 test('Razorpay signatures use timing-safe HMAC verification', () => {

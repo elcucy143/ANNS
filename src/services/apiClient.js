@@ -73,6 +73,16 @@ export const authenticateWithGoogle = (credential) => request('auth/google', {
   body: JSON.stringify({ credential }),
 });
 
+export const registerWithCredentials = (account) => request('auth/register', {
+  method: 'POST',
+  body: JSON.stringify(account),
+});
+
+export const authenticateWithCredentials = (email, password) => request('auth/login', {
+  method: 'POST',
+  body: JSON.stringify({ email, password }),
+});
+
 export const authenticateWithFirebase = (idToken, phone) => request('auth/firebase', {
   method: 'POST',
   body: JSON.stringify({ idToken, phone }),
