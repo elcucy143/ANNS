@@ -12,7 +12,9 @@ const {
   verifyPassword,
 } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
-const { getDeliveryEstimate, sendOrderEmails, sendWelcomeEmail } = require('../lib/orderEmail');
+const {
+  getDeliveryEstimate, sendContactMessage, sendOrderEmails, sendWelcomeEmail,
+} = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
   createRazorpayOrder,
@@ -303,6 +305,30 @@ registerHttp('readiness', {
     } catch (error) {
       context.error(error);
       return json({ ready: false, database: false, missing: problems }, 503);
+    }
+  },
+});
+
+registerHttp('contact-message', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'contact',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      // This hidden field catches basic form bots without revealing the filter.
+      if (cleanText(body?.website, 200)) return json({ ok: true });
+      const name = cleanText(body?.name, 120).replace(/\s+/g, ' ');
+      const email = cleanText(body?.email, 254).toLowerCase();
+      const message = cleanText(body?.message, 3000);
+      if (name.length < 2) return json({ error: 'Please enter your name' }, 400);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Please enter a valid email address' }, 400);
+      if (message.length < 3) return json({ error: 'Please enter a message' }, 400);
+      await sendContactMessage({ name, email, message });
+      return json({ ok: true });
+    } catch (error) {
+      context.error('[contact-message]', error);
+      return json({ error: 'We could not send your message. Please try again or contact us on WhatsApp.' }, 502);
     }
   },
 });

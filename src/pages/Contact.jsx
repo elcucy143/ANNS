@@ -1,30 +1,31 @@
-import React, { useRef, useState } from 'react';
-import emailjs from '@emailjs/browser';
+import React, { useState } from 'react';
 import './Contact.css';
 import { businessContact } from '../config/contact';
+import { sendContactMessage } from '../services/apiClient';
 
 const Contact = () => {
-    const form = useRef();
     const [status, setStatus] = useState('');
+    const [error, setError] = useState('');
 
-    const sendEmail = (e) => {
+    const sendEmail = async (e) => {
         e.preventDefault();
+        const formElement = e.currentTarget;
         setStatus('sending');
-
-        emailjs.sendForm(
-            import.meta.env.VITE_EMAILJS_SERVICE_ID,
-            import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-            form.current,
-            import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-        )
-            .then((result) => {
-                console.log(result.text);
-                setStatus('success');
-                e.target.reset();
-            }, (error) => {
-                console.log(error.text);
-                setStatus('error');
+        setError('');
+        const form = new FormData(formElement);
+        try {
+            await sendContactMessage({
+                name: form.get('user_name'),
+                email: form.get('user_email'),
+                message: form.get('message'),
+                website: form.get('website'),
             });
+            setStatus('success');
+            formElement.reset();
+        } catch (requestError) {
+            setError(requestError.message || 'Failed to send message. Please try again.');
+            setStatus('error');
+        }
     };
 
     return (
@@ -34,7 +35,8 @@ const Contact = () => {
             <div className="contact-content">
                 <div className="contact-form-container">
                     <h2>Send us a message</h2>
-                    <form className="contact-form" ref={form} onSubmit={sendEmail}>
+                    <form className="contact-form" onSubmit={sendEmail}>
+                        <input type="text" name="website" tabIndex="-1" autoComplete="off" aria-hidden="true" style={{ display: 'none' }} />
                         <div className="form-group">
                             <label htmlFor="name">Name</label>
                             <input type="text" id="name" name="user_name" placeholder="Your Name" required />
@@ -51,7 +53,7 @@ const Contact = () => {
                             {status === 'sending' ? 'Sending...' : 'Send Message'}
                         </button>
                         {status === 'success' && <p className="success-msg">Message sent successfully!</p>}
-                        {status === 'error' && <p className="error-msg">Failed to send message. Please try again.</p>}
+                        {status === 'error' && <p className="error-msg">{error}</p>}
                     </form>
                 </div>
 

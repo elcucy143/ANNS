@@ -50,6 +50,11 @@ export const getOrdersFromDatabase = () => request('orders', { admin: true });
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 
+export const sendContactMessage = (message) => request('contact', {
+  method: 'POST',
+  body: JSON.stringify(message),
+});
+
 export const saveReviewToDatabase = (review) => request('admin/reviews', {
   method: 'POST',
   admin: true,

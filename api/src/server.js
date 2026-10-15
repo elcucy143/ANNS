@@ -56,6 +56,7 @@ server.use([
   '/api/auth/firebase',
   '/api/auth/login',
   '/api/auth/register',
+  '/api/contact',
   '/api/payments/razorpay/create-order',
 ], sensitiveLimiter);
 server.use(express.raw({ type: '*/*', limit: '4mb' }));

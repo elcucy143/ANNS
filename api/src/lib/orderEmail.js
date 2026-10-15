@@ -32,7 +32,7 @@ const getDeliveryEstimate = (paidAt = new Date().toISOString()) => ({
   end: addBusinessDays(paidAt, 7),
 });
 
-const sendEmail = async ({ to, subject, html, text }) => {
+const sendEmail = async ({ to, subject, html, text, replyTo }) => {
   const apiKey = String(process.env.RESEND_API_KEY || '').trim();
   if (!apiKey) throw new Error('RESEND_API_KEY is not configured');
   const response = await fetch(RESEND_API_URL, {
@@ -41,7 +41,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     body: JSON.stringify({
       from: process.env.ORDER_EMAIL_FROM || DEFAULT_FROM,
       to: [to],
-      reply_to: process.env.ORDER_REPLY_TO || DEFAULT_ADMIN_EMAIL,
+      reply_to: replyTo || process.env.ORDER_REPLY_TO || DEFAULT_ADMIN_EMAIL,
       subject,
       html,
       text,
@@ -54,6 +54,29 @@ const sendEmail = async ({ to, subject, html, text }) => {
     throw error;
   }
   return result;
+};
+
+const sendContactMessage = async ({ name, email, message }) => {
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message).replaceAll('\n', '<br>');
+  const adminEmail = process.env.CONTACT_NOTIFICATION_EMAIL
+    || process.env.ORDER_NOTIFICATION_EMAIL
+    || DEFAULT_ADMIN_EMAIL;
+  return sendEmail({
+    to: adminEmail,
+    replyTo: email,
+    subject: `New website message from ${name}`,
+    html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f">
+      <div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px">
+        <p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p>
+        <h1 style="font-family:Georgia,serif;font-weight:500">New contact message</h1>
+        <p><strong>From:</strong> ${safeName}</p><p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+        <div style="background:#f5f1ec;padding:18px;margin-top:24px;line-height:1.6">${safeMessage}</div>
+        <p style="color:#756d66;margin-top:24px">Reply directly to this email to answer the customer.</p>
+      </div></div></body></html>`,
+    text: `New ANNS website message\n\nFrom: ${name}\nEmail: ${email}\n\n${message}`,
+  });
 };
 
 const orderRows = (order) => order.items.map((item) => `
@@ -148,4 +171,4 @@ const sendWelcomeEmail = async (customer) => {
   });
 };
 
-module.exports = { getDeliveryEstimate, sendOrderEmails, sendWelcomeEmail };
+module.exports = { getDeliveryEstimate, sendContactMessage, sendOrderEmails, sendWelcomeEmail };
