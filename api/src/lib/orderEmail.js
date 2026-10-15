@@ -119,4 +119,33 @@ const sendOrderEmails = async (order, estimate) => {
   return { customerEmailId: customerResult.id, adminEmailId: adminResult?.id || null, adminEmailError };
 };
 
-module.exports = { getDeliveryEstimate, sendOrderEmails };
+const sendWelcomeEmail = async (customer) => {
+  const name = escapeHtml(customer.name || 'there');
+  const html = `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f">
+    <div style="max-width:640px;margin:auto;padding:28px 16px">
+      <div style="background:#fff;padding:36px;border-radius:12px">
+        <p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p>
+        <h1 style="font-family:Georgia,serif;font-weight:500">Welcome to ANNS</h1>
+        <p>Hi ${name}, thank you for registering with ANNS.</p>
+        <p>Your account is ready. You can now keep your cart through sign-in, check out securely and receive order and delivery updates.</p>
+        <p style="margin:28px 0"><a href="https://www.annsonline.shop" style="display:inline-block;padding:13px 22px;background:#29231f;color:#fff;text-decoration:none;border-radius:4px">Start shopping</a></p>
+        <p style="color:#756d66">Need help? Reply to this email or WhatsApp +91 98497 92562.</p>
+      </div>
+    </div></body></html>`;
+  const text = [
+    `Hi ${customer.name || 'there'},`,
+    '',
+    'Thank you for registering with ANNS. Your account is ready.',
+    'Shop securely at https://www.annsonline.shop',
+    '',
+    'Need help? Reply to this email or WhatsApp +91 98497 92562.',
+  ].join('\n');
+  return sendEmail({
+    to: customer.email,
+    subject: 'Welcome to ANNS — your account is ready',
+    html,
+    text,
+  });
+};
+
+module.exports = { getDeliveryEstimate, sendOrderEmails, sendWelcomeEmail };

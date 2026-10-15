@@ -12,7 +12,7 @@ const {
   verifyPassword,
 } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
-const { getDeliveryEstimate, sendOrderEmails } = require('../lib/orderEmail');
+const { getDeliveryEstimate, sendOrderEmails, sendWelcomeEmail } = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
   createRazorpayOrder,
@@ -110,6 +110,30 @@ const paymentError = (context, error) => {
 const getActiveCustomer = async (db, session) => {
   if (!session?.sub || session.sub === 'admin') return null;
   return db.collection('customers').findOne({ id: session.sub, sessionActive: true });
+};
+
+const sendWelcomeEmailOnce = async (db, customer, context) => {
+  if (!customer?.id || !customer.email || !process.env.RESEND_API_KEY) return;
+  const token = crypto.randomUUID();
+  const attemptedAt = nowIso();
+  const claim = await db.collection('customers').updateOne(
+    { id: customer.id, 'welcomeEmail.status': { $nin: ['sending', 'sent'] } },
+    { $set: { welcomeEmail: { status: 'sending', token, attemptedAt }, updatedAt: attemptedAt } },
+  );
+  if (claim.modifiedCount !== 1) return;
+  try {
+    const result = await sendWelcomeEmail(customer);
+    await db.collection('customers').updateOne(
+      { id: customer.id, 'welcomeEmail.token': token },
+      { $set: { welcomeEmail: { status: 'sent', emailId: result.id, sentAt: nowIso() }, updatedAt: nowIso() } },
+    );
+  } catch (error) {
+    context.error('[welcome-email]', error);
+    await db.collection('customers').updateOne(
+      { id: customer.id, 'welcomeEmail.token': token },
+      { $set: { welcomeEmail: { status: 'failed', error: cleanText(error.message, 300), attemptedAt }, updatedAt: nowIso() } },
+    );
+  }
 };
 
 const finalizeCapturedOrder = async (db, order, payment) => {
@@ -294,6 +318,7 @@ registerHttp('google-auth', {
       user.normalizedEmail = user.email.toLowerCase();
       const operationTime = nowIso();
       const db = await getDb();
+      const existingCustomer = await db.collection('customers').findOne({ id: user.id });
       await db.collection('customers').updateOne(
         { id: user.id },
         {
@@ -302,6 +327,7 @@ registerHttp('google-auth', {
         },
         { upsert: true },
       );
+      if (!existingCustomer) await sendWelcomeEmailOnce(db, user, context);
       return json({ user, token: signSession(user) });
     } catch (error) {
       const status = Number.isInteger(error.status) ? error.status : 401;
@@ -352,6 +378,7 @@ registerHttp('credential-register', {
         lastSeenAt: operationTime,
         updatedAt: operationTime,
       });
+      await sendWelcomeEmailOnce(db, user, context);
       const publicUser = cleanCustomerDocument(user);
       return json({ user: publicUser, token: signSession(publicUser) }, 201);
     } catch (error) {
