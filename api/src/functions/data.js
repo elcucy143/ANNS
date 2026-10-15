@@ -13,7 +13,7 @@ const {
 } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const {
-  getDeliveryEstimate, sendContactMessage, sendOrderEmails, sendWelcomeEmail,
+  getDeliveryEstimate, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendWelcomeEmail,
 } = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
@@ -880,7 +880,7 @@ registerHttp('razorpay-webhook', {
 });
 
 registerHttp('orders', {
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PATCH'],
   authLevel: 'anonymous',
   route: 'orders',
   handler: async (request, context) => {
@@ -905,6 +905,49 @@ registerHttp('orders', {
       const unauthorized = requireAdmin(request);
       if (unauthorized) return unauthorized;
       const body = await parseJson(request);
+      if (request.method === 'PATCH') {
+        const orderId = cleanText(body?.id, 100);
+        const fulfillmentStatus = cleanText(body?.fulfillmentStatus, 30).toLowerCase();
+        const allowedStatuses = ['processing', 'packed', 'shipped', 'delivered'];
+        if (!orderId || !allowedStatuses.includes(fulfillmentStatus)) return json({ error: 'A valid order and fulfilment status are required' }, 400);
+        const existing = await collection.findOne({ id: orderId, paymentStatus: 'captured' });
+        if (!existing) return json({ error: 'Paid order was not found' }, 404);
+        const currentIndex = allowedStatuses.indexOf(existing.fulfillmentStatus || 'processing');
+        const nextIndex = allowedStatuses.indexOf(fulfillmentStatus);
+        if (nextIndex < currentIndex) return json({ error: 'Order status cannot be moved backwards' }, 409);
+        const courier = cleanText(body?.courier, 100);
+        const trackingNumber = cleanText(body?.trackingNumber, 120);
+        const trackingUrlInput = cleanText(body?.trackingUrl, 1000);
+        const trackingUrl = /^https:\/\//i.test(trackingUrlInput) ? trackingUrlInput : '';
+        if (fulfillmentStatus === 'shipped' && (!courier || !trackingNumber)) return json({ error: 'Courier and tracking number are required when an order is shipped' }, 400);
+        const changed = fulfillmentStatus !== existing.fulfillmentStatus
+          || courier !== (existing.courier || '')
+          || trackingNumber !== (existing.trackingNumber || '')
+          || trackingUrl !== (existing.trackingUrl || '');
+        const operationTime = nowIso();
+        await collection.updateOne(
+          { id: orderId, paymentStatus: 'captured' },
+          { $set: { fulfillmentStatus, courier, trackingNumber, trackingUrl, status: fulfillmentStatus[0].toUpperCase() + fulfillmentStatus.slice(1), updatedAt: operationTime } },
+        );
+        let updatedOrder = await collection.findOne({ id: orderId });
+        if (changed && ['shipped', 'delivered'].includes(fulfillmentStatus) && process.env.RESEND_API_KEY) {
+          try {
+            const result = await sendFulfillmentUpdateEmail(updatedOrder);
+            await collection.updateOne(
+              { id: orderId },
+              { $set: { [`fulfillmentNotifications.${fulfillmentStatus}`]: { status: 'sent', emailId: result.id, sentAt: nowIso() } } },
+            );
+          } catch (error) {
+            context.error('[fulfillment-email]', error);
+            await collection.updateOne(
+              { id: orderId },
+              { $set: { [`fulfillmentNotifications.${fulfillmentStatus}`]: { status: 'failed', error: cleanText(error.message, 300), attemptedAt: nowIso() } } },
+            );
+          }
+          updatedOrder = await collection.findOne({ id: orderId });
+        }
+        return json({ ok: true, order: cleanDocument(updatedOrder) });
+      }
       if (!body?.id || !body?.customerId || !Array.isArray(body.items)) return json({ error: 'Order id, customer id and items are required' }, 400);
       const order = {
         id: String(body.id),

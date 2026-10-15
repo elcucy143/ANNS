@@ -43,6 +43,7 @@ import {
     hasAdminKey,
     saveProductsToDatabase,
     saveReviewToDatabase,
+    updateOrderFulfillment,
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
@@ -221,6 +222,8 @@ const ProductManager = () => {
     const [importError, setImportError] = useState('');
     const [customers, setCustomers] = useState(readCustomers);
     const [orders, setOrders] = useState(readOrders);
+    const [orderSearch, setOrderSearch] = useState('');
+    const [orderUpdatingId, setOrderUpdatingId] = useState('');
     const [customerSearch, setCustomerSearch] = useState('');
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
     const [databaseStatus, setDatabaseStatus] = useState(hasAdminKey() ? 'connecting' : 'local');
@@ -291,6 +294,14 @@ const ProductManager = () => {
 
     const selectedCustomer = customerInsights.customers.find((customer) => customer.id === selectedCustomerId);
 
+    const filteredOrders = useMemo(() => {
+        const query = orderSearch.trim().toLowerCase();
+        return orders.filter((order) => order.paymentStatus === 'captured' && (
+            !query || [order.id, order.customer?.name, order.customer?.email, order.customer?.phone, order.razorpayPaymentId]
+                .join(' ').toLowerCase().includes(query)
+        ));
+    }, [orders, orderSearch]);
+
     const filteredReviews = useMemo(() => {
         const query = reviewSearch.trim().toLowerCase();
         return reviews.filter((review) => !query || [review.reviewerName, review.title, review.comment, review.productId]
@@ -324,6 +335,32 @@ const ProductManager = () => {
             setNotification('Database unavailable—showing this browser’s local data.');
         }
         window.setTimeout(() => setNotification(''), 3000);
+    };
+
+    const submitFulfillmentUpdate = async (event, orderId) => {
+        event.preventDefault();
+        const fields = new FormData(event.currentTarget);
+        setOrderUpdatingId(orderId);
+        setNotification('Updating order…');
+        try {
+            const result = await updateOrderFulfillment({
+                id: orderId,
+                fulfillmentStatus: fields.get('fulfillmentStatus'),
+                courier: fields.get('courier'),
+                trackingNumber: fields.get('trackingNumber'),
+                trackingUrl: fields.get('trackingUrl'),
+            });
+            setOrders((current) => current.map((order) => (order.id === orderId ? result.order : order)));
+            const emailState = result.order?.fulfillmentNotifications?.[result.order.fulfillmentStatus]?.status;
+            setNotification(emailState === 'failed'
+                ? 'Order updated, but the customer email could not be delivered.'
+                : 'Order updated successfully. The customer was notified when required.');
+        } catch (error) {
+            setNotification(error.message || 'The order could not be updated.');
+        } finally {
+            setOrderUpdatingId('');
+            window.setTimeout(() => setNotification(''), 4000);
+        }
     };
 
     const removeCustomer = async (customer) => {
@@ -813,6 +850,7 @@ const ProductManager = () => {
     const navigation = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         { id: 'inventory', label: 'Inventory', icon: Boxes },
+        { id: 'orders', label: 'Orders', icon: ReceiptText },
         { id: 'customers', label: 'Customers', icon: Users },
         { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
@@ -822,6 +860,7 @@ const ProductManager = () => {
     const handleNavigation = (view) => {
         setActiveView(view);
         if (view === 'customers') refreshCustomerData();
+        if (view === 'orders') refreshCustomerData();
         if (view === 'reviews') refreshReviews();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
     };
@@ -981,6 +1020,52 @@ const ProductManager = () => {
                         </div>
                         {!filteredProducts.length && <div className="admin-empty-state"><Search size={27} /><p>No products match these filters.</p></div>}
                     </section>
+                )}
+
+                {activeView === 'orders' && (
+                    <div className="admin-view-stack">
+                        <section className="customer-stat-grid">
+                            <article className="customer-stat"><ReceiptText size={21} /><div><span>Paid orders</span><strong>{customerInsights.orderCount}</strong><small>Captured by Razorpay</small></div></article>
+                            <article className="customer-stat"><ShoppingBag size={21} /><div><span>Paid revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>Verified payments only</small></div></article>
+                            <article className="customer-stat"><Package size={21} /><div><span>To process</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && !['shipped', 'delivered'].includes(order.fulfillmentStatus)).length}</strong><small>Processing or packed</small></div></article>
+                            <article className="customer-stat"><CheckCircle2 size={21} /><div><span>Delivered</span><strong>{orders.filter((order) => order.fulfillmentStatus === 'delivered').length}</strong><small>Completed orders</small></div></article>
+                        </section>
+                        <section className="admin-panel order-management-panel">
+                            <div className="customer-toolbar">
+                                <div className="admin-search"><Search size={18} /><input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder="Search order, customer, email or payment ID" /></div>
+                                <button type="button" className="admin-secondary-button" onClick={refreshCustomerData}><RefreshCw size={17} /> Refresh orders</button>
+                            </div>
+                            <div className="fulfillment-order-list">
+                                {filteredOrders.map((order) => {
+                                    const address = order.shippingAddress || {};
+                                    const currentStatus = order.fulfillmentStatus || 'processing';
+                                    const statusOrder = ['processing', 'packed', 'shipped', 'delivered'];
+                                    const currentStatusIndex = statusOrder.indexOf(currentStatus);
+                                    return (
+                                        <article className="fulfillment-order" key={order.id}>
+                                            <div className="fulfillment-order-head">
+                                                <div><p className="admin-kicker">ORDER {order.id}</p><h3>{order.customer?.name || 'Customer'}</h3><small>{[order.customer?.email, order.customer?.phone].filter(Boolean).join(' · ')}</small></div>
+                                                <div><span className={`fulfillment-badge ${currentStatus}`}>{currentStatus}</span><strong>{formatCurrency(order.total)}</strong><small>{new Date(order.paidAt || order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></div>
+                                            </div>
+                                            <div className="fulfillment-products">
+                                                {(order.items || []).map((item, index) => <span key={`${order.id}-${item.id || index}`}><strong>{toNumber(item.quantity, 1)}× {item.name}</strong><small>{[item.size, item.color].filter(Boolean).join(' · ')}</small></span>)}
+                                            </div>
+                                            <div className="fulfillment-meta"><span><strong>Delivery:</strong> {[address.addressLine1, address.addressLine2, address.city, address.state, address.postalCode].filter(Boolean).join(', ')}</span><span><strong>Payment:</strong> {order.razorpayPaymentId || 'Captured'}</span></div>
+                                            <form key={order.updatedAt} className="fulfillment-form" onSubmit={(event) => submitFulfillmentUpdate(event, order.id)}>
+                                                <label>Status<select name="fulfillmentStatus" defaultValue={currentStatus}>{statusOrder.map((status, index) => <option key={status} value={status} disabled={index < currentStatusIndex}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></label>
+                                                <label>Courier<input name="courier" defaultValue={order.courier || ''} maxLength="100" placeholder="For example: Delhivery" /></label>
+                                                <label>Tracking number<input name="trackingNumber" defaultValue={order.trackingNumber || ''} maxLength="120" placeholder="Courier tracking ID" /></label>
+                                                <label>Tracking link<input name="trackingUrl" type="url" defaultValue={order.trackingUrl || ''} maxLength="1000" placeholder="https://…" /></label>
+                                                <button type="submit" className="admin-primary-button" disabled={orderUpdatingId === order.id}>{orderUpdatingId === order.id ? 'Saving…' : 'Update order'}</button>
+                                            </form>
+                                            {order.fulfillmentNotifications?.[currentStatus] && <p className={`fulfillment-email-state ${order.fulfillmentNotifications[currentStatus].status}`}>Customer email: {order.fulfillmentNotifications[currentStatus].status}</p>}
+                                        </article>
+                                    );
+                                })}
+                                {!filteredOrders.length && <div className="admin-empty-state"><ReceiptText size={28} /><p>No paid orders match this search.</p></div>}
+                            </div>
+                        </section>
+                    </div>
                 )}
 
                 {activeView === 'customers' && (

@@ -171,4 +171,21 @@ const sendWelcomeEmail = async (customer) => {
   });
 };
 
-module.exports = { getDeliveryEstimate, sendContactMessage, sendOrderEmails, sendWelcomeEmail };
+const sendFulfillmentUpdateEmail = async (order) => {
+  const shipped = order.fulfillmentStatus === 'shipped';
+  const delivered = order.fulfillmentStatus === 'delivered';
+  const heading = delivered ? 'Your order has been delivered' : 'Your order is on its way';
+  const tracking = shipped && order.trackingNumber
+    ? `<div style="background:#f5f1ec;padding:16px;margin:24px 0"><strong>${escapeHtml(order.courier || 'Courier')}</strong><br>Tracking number: ${escapeHtml(order.trackingNumber)}${order.trackingUrl ? `<br><a href="${escapeHtml(order.trackingUrl)}">Track your shipment</a>` : ''}</div>`
+    : '';
+  return sendEmail({
+    to: order.customer.email,
+    subject: `${heading} — ${order.id}`,
+    html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p><h1 style="font-family:Georgia,serif;font-weight:500">${heading}</h1><p>Hi ${escapeHtml(order.customer.name)}, ${delivered ? 'your ANNS order has been marked as delivered.' : 'your ANNS order has been shipped.'}</p><p><strong>Order ${escapeHtml(order.id)}</strong></p>${tracking}<p style="margin-top:28px;color:#756d66">Need help? Reply to this email or WhatsApp +91 98497 92562.</p></div></div></body></html>`,
+    text: [heading, `Order: ${order.id}`, shipped && order.courier ? `Courier: ${order.courier}` : '', shipped && order.trackingNumber ? `Tracking number: ${order.trackingNumber}` : '', shipped && order.trackingUrl ? `Track: ${order.trackingUrl}` : '', '', 'Need help? Reply to this email or WhatsApp +91 98497 92562.'].filter(Boolean).join('\n'),
+  });
+};
+
+module.exports = {
+  getDeliveryEstimate, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendWelcomeEmail,
+};

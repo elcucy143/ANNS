@@ -47,6 +47,11 @@ export const getDatabaseHealth = () => request('health');
 export const getProductsFromDatabase = () => request('products');
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
+export const updateOrderFulfillment = (order) => request('orders', {
+  method: 'PATCH',
+  admin: true,
+  body: JSON.stringify(order),
+});
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 
