@@ -18,11 +18,13 @@ import Checkout from './pages/Checkout';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductCatalogProvider } from './context/ProductCatalogContext';
+import { ReviewProvider } from './context/ReviewContext';
 
 function App() {
   return (
     <AuthProvider>
       <ProductCatalogProvider>
+      <ReviewProvider>
       <CartProvider>
         <Router>
           <Layout>
@@ -47,6 +49,7 @@ function App() {
           </Layout>
         </Router>
       </CartProvider>
+      </ReviewProvider>
       </ProductCatalogProvider>
     </AuthProvider>
   );

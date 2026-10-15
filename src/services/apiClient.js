@@ -47,6 +47,20 @@ export const getDatabaseHealth = () => request('health');
 export const getProductsFromDatabase = () => request('products');
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
+export const getPublishedReviews = () => request('reviews');
+export const getAdminReviews = () => request('admin/reviews', { admin: true });
+
+export const saveReviewToDatabase = (review) => request('admin/reviews', {
+  method: 'POST',
+  admin: true,
+  body: JSON.stringify({ review }),
+});
+
+export const deleteReviewsFromDatabase = (ids) => request('admin/reviews', {
+  method: 'DELETE',
+  admin: true,
+  body: JSON.stringify({ ids }),
+});
 
 export const deleteCustomersFromDatabase = (ids) => request('customers', {
   method: 'DELETE',

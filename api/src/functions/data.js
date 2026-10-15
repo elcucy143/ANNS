@@ -42,6 +42,26 @@ const normalizeSizes = (value) => {
   });
 };
 const nonNegativeInteger = (value) => Math.max(0, Math.trunc(Number(value) || 0));
+const normalizeReviewImage = (value) => {
+  const image = String(value || '').trim();
+  if (!image) return '';
+  if (image.startsWith('data:image/') && image.length <= 700000) return image;
+  if (/^https:\/\//i.test(image) && image.length <= 2000) return image;
+  return '';
+};
+const normalizeReview = (review = {}) => ({
+  id: cleanText(review.id, 100) || `review-${crypto.randomUUID()}`,
+  reviewerName: cleanText(review.reviewerName, 120),
+  rating: Math.max(1, Math.min(5, nonNegativeInteger(review.rating) || 5)),
+  title: cleanText(review.title, 160),
+  comment: cleanText(review.comment, 1500),
+  image: normalizeReviewImage(review.image),
+  productId: cleanText(review.productId, 100),
+  reviewDate: cleanText(review.reviewDate, 30) || nowIso().slice(0, 10),
+  featured: review.featured === true,
+  published: review.published !== false,
+  source: 'customer',
+});
 const normalizeProduct = (product) => {
   const stock = nonNegativeInteger(product.stock ?? product.totalStock ?? product.quantity);
   const sold = Math.min(stock, nonNegativeInteger(product.sold ?? product.unitsSold));
@@ -330,6 +350,66 @@ registerHttp('products', {
       if (!operations.length) return json({ error: 'No valid products supplied' }, 400);
       const result = await collection.bulkWrite(operations, { ordered: false });
       return json({ ok: true, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('reviews', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'reviews',
+  handler: async (_request, context) => {
+    try {
+      const db = await getDb();
+      const reviews = await db.collection('reviews')
+        .find({ published: true })
+        .sort({ featured: -1, reviewDate: -1, createdAt: -1 })
+        .limit(100)
+        .toArray();
+      return json(reviews.map(cleanDocument));
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('admin-reviews', {
+  methods: ['GET', 'POST', 'DELETE'],
+  authLevel: 'anonymous',
+  route: 'admin/reviews',
+  handler: async (request, context) => {
+    try {
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+      const db = await getDb();
+      const collection = db.collection('reviews');
+
+      if (request.method === 'GET') {
+        const reviews = await collection.find({}).sort({ reviewDate: -1, createdAt: -1 }).toArray();
+        return json(reviews.map(cleanDocument));
+      }
+
+      const body = await parseJson(request);
+      if (request.method === 'DELETE') {
+        const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 100)).filter(Boolean) : [];
+        if (!ids.length) return json({ error: 'At least one review ID is required' }, 400);
+        const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        return json({ ok: true, deleted: result.deletedCount });
+      }
+
+      const review = normalizeReview(body?.review || body);
+      if (!review.reviewerName || !review.comment) {
+        return json({ error: 'Customer name and review text are required' }, 400);
+      }
+      const operationTime = nowIso();
+      await collection.updateOne(
+        { id: review.id },
+        { $set: { ...review, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        { upsert: true },
+      );
+      return json({ ok: true, review: cleanDocument(await collection.findOne({ id: review.id })) });
     } catch (error) {
       return handleError(context, error);
     }

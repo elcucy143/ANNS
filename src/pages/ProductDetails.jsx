@@ -11,6 +11,8 @@ import ProductCarousel from '../components/ProductCarousel';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { normalizeSizeList } from '../utils/productOptions';
 import { businessContact } from '../config/contact';
+import { useReviews } from '../context/ReviewContext';
+import ReviewsSection from '../components/ReviewsSection';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -22,6 +24,7 @@ const ProductDetails = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [customization, setCustomization] = useState({ nameOrText: '', instructions: '' });
     const { products: catalogProducts, loading } = useProductCatalog();
+    const { reviews } = useReviews();
 
     // Find product by ID across all categories and get category name
     const findProductAndCategory = (productId) => {
@@ -51,12 +54,16 @@ const ProductDetails = () => {
     }
 
     // Adapt JSON data to component state structure if needed, or use directly
+    const productReviews = reviews.filter((review) => review.productId === productData.id);
+    const averageRating = productReviews.length
+        ? productReviews.reduce((total, review) => total + Number(review.rating || 0), 0) / productReviews.length
+        : 0;
     const product = {
         ...productData,
         images: [productData.image, ...(Array.isArray(productData.otherImages) ? productData.otherImages : [])].filter(Boolean),
         sizes: normalizeSizeList(productData.sizes),
-        rating: 4.5, // Default if not in JSON
-        reviews: productData.reviews?.length || 0
+        rating: averageRating,
+        reviewCount: productReviews.length,
     };
 
     const breadcrumbItems = [
@@ -161,14 +168,14 @@ const ProductDetails = () => {
                 {/* Product Info */}
                 <div className="product-info-section">
                     <h1 className="product-title">{product.name}</h1>
-                    <div className="product-rating">
+                    {product.reviewCount > 0 && <div className="product-rating">
                         <div className="stars">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} size={16} fill={i < Math.floor(product.rating) ? "#FFD700" : "none"} color="#FFD700" />
+                                <Star key={i} size={16} fill={i < Math.round(product.rating) ? "#B97A42" : "none"} color="#B97A42" />
                             ))}
                         </div>
-                        <a href="#" className="review-link">({product.reviews} Reviews)</a>
-                    </div>
+                        <a href="#customer-reviews" className="review-link">{product.rating.toFixed(1)} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</a>
+                    </div>}
                     <p className="product-price">₹{product.price}</p>
                     <p className="product-description">{product.description}</p>
 
@@ -291,6 +298,7 @@ const ProductDetails = () => {
                     );
                 })()
             }
+            <ReviewsSection productId={product.id} title={`Customer reviews for ${product.name}`} />
         </div >
     );
 };

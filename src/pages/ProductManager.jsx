@@ -19,6 +19,9 @@ import {
     UserCheck,
     Users,
     Mail,
+    MessageSquareQuote,
+    ImagePlus,
+    Star,
     Phone,
     ReceiptText,
     RefreshCw,
@@ -32,11 +35,14 @@ import {
     clearAdminKey,
     deleteCustomersFromDatabase,
     deleteProductsFromDatabase,
+    deleteReviewsFromDatabase,
+    getAdminReviews,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
     getProductsFromDatabase,
     hasAdminKey,
     saveProductsToDatabase,
+    saveReviewToDatabase,
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
@@ -49,6 +55,18 @@ const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
+const getInitialReviewForm = () => ({
+    id: '',
+    reviewerName: '',
+    rating: 5,
+    title: '',
+    comment: '',
+    image: '',
+    productId: '',
+    reviewDate: new Date().toISOString().slice(0, 10),
+    featured: true,
+    published: true,
+});
 
 const getInitialFormData = () => ({
     id: '',
@@ -206,7 +224,12 @@ const ProductManager = () => {
     const [customerSearch, setCustomerSearch] = useState('');
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
     const [databaseStatus, setDatabaseStatus] = useState(hasAdminKey() ? 'connecting' : 'local');
+    const [reviews, setReviews] = useState([]);
+    const [reviewForm, setReviewForm] = useState(getInitialReviewForm);
+    const [reviewSearch, setReviewSearch] = useState('');
+    const [reviewSaving, setReviewSaving] = useState(false);
     const fileInputRef = useRef(null);
+    const reviewImageInputRef = useRef(null);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
 
@@ -263,6 +286,22 @@ const ProductManager = () => {
 
     const selectedCustomer = customerInsights.customers.find((customer) => customer.id === selectedCustomerId);
 
+    const filteredReviews = useMemo(() => {
+        const query = reviewSearch.trim().toLowerCase();
+        return reviews.filter((review) => !query || [review.reviewerName, review.title, review.comment, review.productId]
+            .join(' ').toLowerCase().includes(query));
+    }, [reviews, reviewSearch]);
+
+    const refreshReviews = async () => {
+        try {
+            const databaseReviews = await getAdminReviews();
+            setReviews(Array.isArray(databaseReviews) ? databaseReviews : []);
+            setDatabaseStatus('connected');
+        } catch (error) {
+            setNotification(error.message || 'Reviews could not be loaded.');
+        }
+    };
+
     const refreshCustomerData = async () => {
         try {
             const [databaseCustomers, databaseOrders] = await Promise.all([
@@ -317,6 +356,7 @@ const ProductManager = () => {
         if (!isAuthenticated || !hasAdminKey()) return;
         void refreshProductsFromDatabase();
         void refreshCustomerData();
+        void refreshReviews();
         // Refresh is intentionally performed when a stored admin session is restored.
     }, [isAuthenticated]);
 
@@ -361,7 +401,7 @@ const ProductManager = () => {
             setIsAuthenticated(true);
             setLoginError('');
             setDatabaseStatus('connected');
-            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData()]);
+            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews()]);
         } catch {
             setLoginError('Incorrect admin password.');
         }
@@ -378,6 +418,60 @@ const ProductManager = () => {
         setSelectedProductId('new');
         setFormData(getInitialFormData());
         setActiveView('editor');
+    };
+
+    const resetReviewForm = () => setReviewForm(getInitialReviewForm());
+
+    const editReview = (review) => {
+        setReviewForm({ ...getInitialReviewForm(), ...review });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleReviewImage = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setNotification('Choose a JPG, PNG or WebP review image smaller than 12 MB.');
+            return;
+        }
+        try {
+            setNotification('Preparing review image…');
+            const image = await compressImageFile(file);
+            setReviewForm((current) => ({ ...current, image }));
+            setNotification('Review image is ready. Save the review to publish it.');
+        } catch (error) {
+            setNotification(error.message || 'The review image could not be prepared.');
+        }
+    };
+
+    const submitReview = async (event) => {
+        event.preventDefault();
+        setReviewSaving(true);
+        try {
+            const result = await saveReviewToDatabase(reviewForm);
+            setReviews((current) => [result.review, ...current.filter((item) => item.id !== result.review.id)]);
+            resetReviewForm();
+            setNotification('Review saved to MongoDB Atlas and updated on the storefront.');
+        } catch (error) {
+            setNotification(error.message || 'The review could not be saved.');
+        } finally {
+            setReviewSaving(false);
+            window.setTimeout(() => setNotification(''), 3500);
+        }
+    };
+
+    const removeReview = async (review) => {
+        if (!window.confirm(`Delete the review from ${review.reviewerName}?`)) return;
+        try {
+            await deleteReviewsFromDatabase([review.id]);
+            setReviews((current) => current.filter((item) => item.id !== review.id));
+            if (reviewForm.id === review.id) resetReviewForm();
+            setNotification('Review deleted.');
+        } catch (error) {
+            setNotification(error.message || 'The review could not be deleted.');
+        }
+        window.setTimeout(() => setNotification(''), 3000);
     };
 
     const openProduct = (product) => {
@@ -715,6 +809,7 @@ const ProductManager = () => {
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         { id: 'inventory', label: 'Inventory', icon: Boxes },
         { id: 'customers', label: 'Customers', icon: Users },
+        { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
         { id: 'editor', label: selectedProductId === 'new' ? 'Add product' : 'Edit product', icon: Edit3 },
     ];
@@ -722,6 +817,7 @@ const ProductManager = () => {
     const handleNavigation = (view) => {
         setActiveView(view);
         if (view === 'customers') refreshCustomerData();
+        if (view === 'reviews') refreshReviews();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
     };
 
@@ -934,6 +1030,57 @@ const ProductManager = () => {
                         )}
 
                         <section className="admin-panel customer-data-note"><AlertTriangle size={21} /><div><strong>{databaseStatus === 'connected' ? 'MongoDB analytics' : 'Offline fallback'}</strong><p>{databaseStatus === 'connected' ? 'Customer sessions, contacts and paid-order history are loaded from the shared MongoDB database.' : 'The database is unavailable, so this browser’s cached data is shown until the connection recovers.'}</p></div></section>
+                    </div>
+                )}
+
+                {activeView === 'reviews' && (
+                    <div className="admin-view-stack">
+                        <section className="review-admin-grid">
+                            <form className="admin-panel review-editor" onSubmit={submitReview}>
+                                <div className="admin-panel-heading">
+                                    <div><p className="admin-kicker">CUSTOMER TESTIMONIAL</p><h2>{reviewForm.id ? 'Edit review' : 'Add a review'}</h2></div>
+                                    {reviewForm.id && <button type="button" className="admin-secondary-button" onClick={resetReviewForm}>New review</button>}
+                                </div>
+                                <p className="review-editor-intro">Add testimonials received through WhatsApp or business groups. Only published entries appear on the website.</p>
+                                <div className="editor-form-grid">
+                                    <label>Customer name<input value={reviewForm.reviewerName} maxLength="120" required onChange={(event) => setReviewForm((current) => ({ ...current, reviewerName: event.target.value }))} placeholder="Customer name" /></label>
+                                    <label>Review date<input type="date" value={reviewForm.reviewDate} onChange={(event) => setReviewForm((current) => ({ ...current, reviewDate: event.target.value }))} /></label>
+                                    <fieldset className="review-rating-field full-width"><legend>Rating</legend><div>{[1, 2, 3, 4, 5].map((rating) => <button key={rating} type="button" className={rating <= reviewForm.rating ? 'selected' : ''} onClick={() => setReviewForm((current) => ({ ...current, rating }))} aria-label={`${rating} stars`}><Star size={21} fill={rating <= reviewForm.rating ? 'currentColor' : 'none'} /></button>)}</div></fieldset>
+                                    <label className="full-width">Short heading<input value={reviewForm.title} maxLength="160" onChange={(event) => setReviewForm((current) => ({ ...current, title: event.target.value }))} placeholder="For example: Beautiful quality and quick delivery" /></label>
+                                    <label className="full-width">Review text<textarea rows="5" value={reviewForm.comment} maxLength="1500" required onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))} placeholder="Paste the customer’s testimonial here" /><small>{reviewForm.comment.length}/1500 characters</small></label>
+                                    <label className="full-width">Related product (optional)<select value={reviewForm.productId} onChange={(event) => setReviewForm((current) => ({ ...current, productId: event.target.value }))}><option value="">General store review</option>{allProducts.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id}</option>)}</select><small>Product-linked reviews also appear on that product page.</small></label>
+                                </div>
+                                <div className="review-image-uploader">
+                                    <input ref={reviewImageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleReviewImage} />
+                                    {reviewForm.image ? <div className="review-image-preview"><img src={reviewForm.image} alt="Review preview" /><button type="button" onClick={() => setReviewForm((current) => ({ ...current, image: '' }))}><Trash2 size={16} /> Remove image</button></div> : <button type="button" className="review-upload-button" onClick={() => reviewImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add screenshot or customer photo</strong><small>Optional · WhatsApp screenshots are optimized automatically</small></button>}
+                                </div>
+                                <div className="review-publish-options">
+                                    <label><input type="checkbox" checked={reviewForm.featured} onChange={(event) => setReviewForm((current) => ({ ...current, featured: event.target.checked }))} /> Feature on homepage</label>
+                                    <label><input type="checkbox" checked={reviewForm.published} onChange={(event) => setReviewForm((current) => ({ ...current, published: event.target.checked }))} /> Published</label>
+                                </div>
+                                <button className="admin-primary-button review-save-button" type="submit" disabled={reviewSaving}><Save size={18} /> {reviewSaving ? 'Saving…' : 'Save review'}</button>
+                            </form>
+
+                            <section className="admin-panel review-library">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">REVIEW LIBRARY</p><h2>{reviews.length} testimonials</h2></div><button type="button" className="admin-icon-button" onClick={refreshReviews} title="Refresh reviews"><RefreshCw size={17} /></button></div>
+                                <div className="admin-search review-search"><Search size={18} /><input value={reviewSearch} onChange={(event) => setReviewSearch(event.target.value)} placeholder="Search reviews" /></div>
+                                <div className="review-admin-list">
+                                    {filteredReviews.map((review) => (
+                                        <article key={review.id}>
+                                            {review.image ? <img src={review.image} alt="" /> : <span className="review-list-avatar">{review.reviewerName?.charAt(0)?.toUpperCase() || 'A'}</span>}
+                                            <div className="review-list-copy">
+                                                <div><strong>{review.reviewerName}</strong><span className="review-list-stars">{[1, 2, 3, 4, 5].map((rating) => <Star key={rating} size={13} fill={rating <= review.rating ? 'currentColor' : 'none'} />)}</span></div>
+                                                {review.title && <h3>{review.title}</h3>}
+                                                <p>{review.comment}</p>
+                                                <small>{review.reviewDate} · {review.productId ? `Product ${review.productId}` : 'General review'} · {review.featured ? 'Homepage featured' : 'Not featured'} · {review.published ? 'Published' : 'Hidden'}</small>
+                                            </div>
+                                            <div className="review-list-actions"><button type="button" onClick={() => editReview(review)} title="Edit review"><Edit3 size={16} /></button><button type="button" className="delete" onClick={() => removeReview(review)} title="Delete review"><Trash2 size={16} /></button></div>
+                                        </article>
+                                    ))}
+                                </div>
+                                {!filteredReviews.length && <div className="admin-empty-state"><MessageSquareQuote size={28} /><p>No reviews yet. Add the first customer testimonial using the form.</p></div>}
+                            </section>
+                        </section>
                     </div>
                 )}
 
