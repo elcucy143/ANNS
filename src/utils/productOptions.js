@@ -43,6 +43,7 @@ export const normalizeCatalogProduct = (product) => ({
   sizes: normalizeSizeList(product?.sizes),
   otherImages: normalizeList(product?.otherImages),
   subcategory: normalizeList(product?.subcategory),
+  similarProducts: [...new Set(normalizeList(product?.similarProducts))],
   stock: Math.max(0, Number(product?.stock) || 0),
   sold: Math.max(0, Number(product?.sold) || 0),
 });

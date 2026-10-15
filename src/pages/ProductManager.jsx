@@ -220,6 +220,7 @@ const ProductManager = () => {
     const [selectedCategory, setSelectedCategory] = useState(PRODUCT_CATEGORIES[0]);
     const [selectedProductId, setSelectedProductId] = useState('new');
     const [formData, setFormData] = useState(getInitialFormData);
+    const [similarProductIdsInput, setSimilarProductIdsInput] = useState('');
     const [importRows, setImportRows] = useState([]);
     const [importFileName, setImportFileName] = useState('');
     const [importError, setImportError] = useState('');
@@ -480,6 +481,7 @@ const ProductManager = () => {
     const openNewProduct = () => {
         setSelectedProductId('new');
         setFormData(getInitialFormData());
+        setSimilarProductIdsInput('');
         setActiveView('editor');
     };
 
@@ -553,6 +555,7 @@ const ProductManager = () => {
             shipping: parseList(product.shipping),
             campaign: parseList(product.campaign),
         });
+        setSimilarProductIdsInput(parseList(product.similarProducts).join(', '));
         setActiveView('editor');
     };
 
@@ -562,7 +565,10 @@ const ProductManager = () => {
     };
 
     const handleArrayChange = (event, field) => {
-        setFormData((current) => ({ ...current, [field]: parseList(event.target.value) }));
+        // Preserve the final empty token while typing so a comma does not
+        // disappear before the administrator can enter the next value.
+        const values = event.target.value.split(',').map((value) => value.trimStart());
+        setFormData((current) => ({ ...current, [field]: values }));
     };
 
     const toggleSize = (size) => {
@@ -643,13 +649,18 @@ const ProductManager = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         const categoryProducts = [...(products[selectedCategory] || [])];
+        const productId = formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`;
+        const similarProductIds = [...new Set(parseList(similarProductIdsInput))].filter((id) => id !== productId);
         const normalizedProduct = {
             ...getInitialFormData(),
             ...formData,
-            id: formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`,
+            id: productId,
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
+            similarProducts: similarProductIds,
+            shipping: parseList(formData.shipping),
+            campaign: parseList(formData.campaign),
             available: getRemaining(formData) > 0 ? 'In Stock' : 'Out of Stock',
         };
 
@@ -1358,7 +1369,7 @@ const ProductManager = () => {
                                     <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
                                     <label className="full-width">Shipping information<input value={formData.shipping.join(', ')} onChange={(event) => handleArrayChange(event, 'shipping')} placeholder="Comma separated" /></label>
                                     <label className="full-width">Campaign labels<input value={formData.campaign.join(', ')} onChange={(event) => handleArrayChange(event, 'campaign')} placeholder="Comma separated" /></label>
-                                    <label className="full-width">Similar product IDs<input value={formData.similarProducts.join(', ')} onChange={(event) => handleArrayChange(event, 'similarProducts')} placeholder="Comma separated IDs" /></label>
+                                    <label className="full-width">Similar product IDs<input value={similarProductIdsInput} onChange={(event) => setSimilarProductIdsInput(event.target.value)} placeholder="For example: ww30001, ww30002, ww30003" /><small>Enter each colour variant’s unique product ID separated by commas. Related products: {parseList(similarProductIdsInput).length || 0}</small></label>
                                 </div>
                             </section>
                             <div className="editor-save-bar"><p>Changes sync to MongoDB Atlas and appear on the storefront.</p><div className="editor-save-actions">{selectedProductId !== 'new' && <button type="button" className="admin-danger-button" onClick={() => removeProduct({ ...formData, category: selectedCategory })}><Trash2 size={18} /> Remove product</button>}<button type="submit" className="admin-primary-button"><Save size={18} /> Save product</button></div></div>
