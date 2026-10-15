@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { ArrowLeft, Check, Download, LogOut, Package, ShieldCheck, UserRound, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GOOGLE_CLIENT_ID, GOOGLE_IDENTITY_SCRIPT_ID } from '../config/auth';
+import { getMyOrders, requestOrderCancellation, requestPasswordReset, resetPassword } from '../services/apiClient';
 import './Account.css';
 
 const Account = () => {
@@ -14,7 +15,16 @@ const Account = () => {
   const [accountError, setAccountError] = useState('');
   const [accountBusy, setAccountBusy] = useState(false);
   const [googleError, setGoogleError] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [ordersError, setOrdersError] = useState('');
+  const [notice, setNotice] = useState('');
   const googleButtonRef = useRef(null);
+  const resetToken = new URLSearchParams(location.search).get('reset') || '';
+
+  useEffect(() => {
+    if (!user) return;
+    getMyOrders().then(setOrders).catch((error) => setOrdersError(error.message));
+  }, [user]);
 
   const continueAfterLogin = useCallback(() => {
     navigate(location.state?.from || '/', { replace: true });
@@ -93,6 +103,39 @@ const Account = () => {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   };
 
+  const handleForgotPassword = async () => {
+    setAccountError('');
+    if (!form.email) return setAccountError('Enter your email address first.');
+    setAccountBusy(true);
+    try { const result = await requestPasswordReset(form.email); setNotice(result.message); } catch (error) { setAccountError(error.message); }
+    finally { setAccountBusy(false); }
+  };
+
+  const handleResetPassword = async (event) => {
+    event.preventDefault(); setAccountError(''); setAccountBusy(true);
+    try { await resetPassword(resetToken, form.password); setNotice('Password updated. You can now sign in.'); navigate('/account', { replace: true }); }
+    catch (error) { setAccountError(error.message); } finally { setAccountBusy(false); }
+  };
+
+  const cancelOrder = async (order) => {
+    const reason = window.prompt('Why would you like to cancel this order?');
+    if (!reason) return;
+    try {
+      const result = await requestOrderCancellation(order.id, reason);
+      setOrders((current) => current.map((item) => item.id === order.id ? result.order : item));
+    } catch (error) { setOrdersError(error.message); }
+  };
+
+  const printInvoice = (order) => {
+    const escapeInvoice = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
+    const popup = window.open('', '_blank');
+    if (!popup) return setOrdersError('Allow pop-ups to download or print the invoice.');
+    popup.opener = null;
+    const rows = (order.items || []).map((item) => `<tr><td>${escapeInvoice(item.name)}</td><td>${Number(item.quantity) || 0}</td><td>₹${Number(item.lineTotal).toFixed(2)}</td></tr>`).join('');
+    popup.document.write(`<!doctype html><title>ANNS Invoice ${escapeInvoice(order.id)}</title><style>body{font:14px Arial;max-width:760px;margin:40px auto;color:#29231f}h1{font-family:Georgia}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{text-align:right;font-size:20px}</style><h1>ANNS Order Invoice</h1><p><strong>Invoice / Order:</strong> ${escapeInvoice(order.id)}<br><strong>Paid:</strong> ${new Date(order.paidAt).toLocaleDateString('en-IN')}<br><strong>Payment ID:</strong> ${escapeInvoice(order.razorpayPaymentId)}</p><p><strong>Bill to:</strong> ${escapeInvoice(order.customer.name)}<br>${escapeInvoice(order.customer.email)}<br>${escapeInvoice(order.customer.phone || '')}</p><table><thead><tr><th>Item</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total ₹${Number(order.total).toFixed(2)}</strong></p><p>A.S. Trends & Gifts<br>#36 Sri Sai Anjaneya Nilayam, Jesus Krupa, Block 3, Kodichikknahalli, Bengaluru, Karnataka 560076</p><script>window.print()</script>`);
+    popup.document.close();
+  };
+
   if (user) {
     return (
       <section className="account-page account-dashboard-page">
@@ -105,6 +148,21 @@ const Account = () => {
             <UserRound size={24} />
             <div><span>Account details</span><strong>{user.email || user.phone}</strong></div>
           </div>
+          <div className="account-orders">
+            <h2><Package size={22} /> My Orders</h2>
+            {orders.map((order) => {
+              const cancellable = !['shipped', 'delivered'].includes(order.fulfillmentStatus) && !order.cancellation?.status && !order.refundStatus;
+              return <article key={order.id} className="account-order-card">
+                <div><strong>{order.id}</strong><span>{new Date(order.paidAt || order.createdAt).toLocaleDateString('en-IN')} · ₹{Number(order.total).toLocaleString('en-IN')}</span></div>
+                <p>Status: <strong>{order.status || order.fulfillmentStatus || 'Processing'}</strong></p>
+                {order.deliveryEstimate?.end && <p>Estimated delivery: {new Date(order.deliveryEstimate.start).toLocaleDateString('en-IN')} – {new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN')}</p>}
+                {order.trackingUrl && <a href={order.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>}
+                <div className="account-order-actions"><button type="button" onClick={() => printInvoice(order)}><Download size={15} /> Invoice</button>{cancellable && <button type="button" className="danger" onClick={() => cancelOrder(order)}><XCircle size={15} /> Request cancellation</button>}</div>
+              </article>;
+            })}
+            {!orders.length && !ordersError && <p>No paid orders yet.</p>}
+            {ordersError && <p className="account-error">{ordersError}</p>}
+          </div>
           <a href="/" className="account-primary-link">Continue shopping</a>
           <button type="button" className="account-signout" onClick={signOut}>
             <LogOut size={17} /> Sign out
@@ -112,6 +170,10 @@ const Account = () => {
         </div>
       </section>
     );
+  }
+
+  if (resetToken) {
+    return <section className="account-page"><div className="account-panel"><div className="account-form-wrap"><div className="account-heading"><p className="account-eyebrow">ANNS ACCOUNT</p><h2>Choose a new password</h2></div><form className="account-form" onSubmit={handleResetPassword}><label>New password<input name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={10} maxLength={128} autoComplete="new-password" /></label><p className="password-guidance">Use 10–128 characters with a letter and number.</p>{accountError && <p className="account-error">{accountError}</p>}<button className="account-submit" disabled={accountBusy}>{accountBusy ? 'Updating…' : 'Update password'}</button></form></div></div></section>;
   }
 
   return (
@@ -147,10 +209,12 @@ const Account = () => {
               )}
               <label>Email address<input name="email" type="email" value={form.email} onChange={handleFormChange} required autoComplete="email" /></label>
               <label>Password<input name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={10} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} /></label>
+              {mode === 'login' && <button type="button" className="account-forgot" onClick={handleForgotPassword} disabled={accountBusy}>Forgot password?</button>}
               {mode === 'register' && <p className="password-guidance">Use 10–128 characters with a letter and number.</p>}
               {accountError && <p className="account-error" role="alert">{accountError}</p>}
               <button className="account-submit" type="submit" disabled={accountBusy}>{accountBusy ? 'Please wait…' : mode === 'register' ? 'Create account & continue' : 'Sign in & continue'}</button>
             </form>
+            {notice && <p className="account-notice" role="status">{notice}</p>}
             <div className="account-divider"><span>or</span></div>
             <div className="google-auth-container" ref={googleButtonRef} aria-label="Continue with Google" />
             {googleError && <p className="account-error google-auth-error" role="alert">{googleError}</p>}

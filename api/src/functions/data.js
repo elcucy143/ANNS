@@ -13,13 +13,14 @@ const {
 } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const {
-  getDeliveryEstimate, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendWelcomeEmail,
+  getDeliveryEstimate, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendWelcomeEmail,
 } = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
   createRazorpayOrder,
   getCredentials,
   getRazorpayPayment,
+  refundRazorpayPayment,
   verifyPaymentSignature,
   verifyWebhookSignature,
 } = require('../lib/razorpay');
@@ -462,6 +463,68 @@ registerHttp('credential-login', {
   },
 });
 
+registerHttp('forgot-password', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/forgot-password',
+  handler: async (request, context) => {
+    const genericResponse = json({ ok: true, message: 'If an ANNS account exists, a reset link has been sent.' });
+    try {
+      const body = await parseJson(request);
+      const email = cleanText(body?.email, 254).toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return genericResponse;
+      const db = await getDb();
+      const customer = await db.collection('customers').findOne({ normalizedEmail: email, provider: 'credentials' });
+      if (!customer) return genericResponse;
+      const token = crypto.randomBytes(32).toString('base64url');
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+      await db.collection('customers').updateOne(
+        { id: customer.id },
+        { $set: { passwordReset: { tokenHash, expiresAt, requestedAt: nowIso() }, updatedAt: nowIso() } },
+      );
+      const resetUrl = `https://www.annsonline.shop/account?reset=${encodeURIComponent(token)}`;
+      await sendPasswordResetEmail(customer, resetUrl);
+      return genericResponse;
+    } catch (error) {
+      context.error('[forgot-password]', error);
+      return genericResponse;
+    }
+  },
+});
+
+registerHttp('reset-password', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/reset-password',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      const token = String(body?.token || '');
+      const password = String(body?.password || '');
+      if (token.length < 32) return json({ error: 'This reset link is invalid or expired' }, 400);
+      if (password.length < 10 || password.length > 128 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        return json({ error: 'Password must be 10 to 128 characters and include a letter and number' }, 400);
+      }
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const db = await getDb();
+      const customer = await db.collection('customers').findOne({
+        provider: 'credentials',
+        'passwordReset.tokenHash': tokenHash,
+        'passwordReset.expiresAt': { $gt: nowIso() },
+      });
+      if (!customer) return json({ error: 'This reset link is invalid or expired' }, 400);
+      await db.collection('customers').updateOne(
+        { id: customer.id, 'passwordReset.tokenHash': tokenHash },
+        { $set: { passwordHash: await hashPassword(password), sessionActive: false, updatedAt: nowIso() }, $unset: { passwordReset: '', failedLoginAttempts: '', lockedUntil: '' } },
+      );
+      return json({ ok: true });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('firebase-auth', {
   methods: ['POST'],
   authLevel: 'anonymous',
@@ -857,6 +920,15 @@ registerHttp('razorpay-webhook', {
       const signature = request.headers.get('x-razorpay-signature');
       if (!verifyWebhookSignature(payload, signature)) return json({ error: 'Invalid webhook signature' }, 401);
       const event = JSON.parse(payload);
+      const refund = event.payload?.refund?.entity;
+      if (refund?.payment_id && ['refund.processed', 'refund.failed'].includes(event.event)) {
+        const db = await getDb();
+        await db.collection('orders').updateOne(
+          { razorpayPaymentId: refund.payment_id },
+          { $set: { refundStatus: event.event === 'refund.processed' ? 'processed' : 'failed', status: event.event === 'refund.processed' ? 'Refunded' : 'Refund failed — review required', updatedAt: nowIso() } },
+        );
+        return json({ ok: true });
+      }
       const payment = event.payload?.payment?.entity;
       if (!payment?.order_id) return json({ ok: true });
       const db = await getDb();
@@ -875,6 +947,46 @@ registerHttp('razorpay-webhook', {
       return json({ ok: true });
     } catch (error) {
       return paymentError(context, error);
+    }
+  },
+});
+
+registerHttp('customer-orders', {
+  methods: ['GET', 'POST'],
+  authLevel: 'anonymous',
+  route: 'account/orders',
+  handler: async (request, context) => {
+    try {
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Authentication required' }, 401);
+      const db = await getDb();
+      const customer = await getActiveCustomer(db, session);
+      if (!customer) return json({ error: 'Your session has expired. Please sign in again' }, 401);
+      const orders = db.collection('orders');
+      if (request.method === 'GET') {
+        const history = await orders.find({ customerId: customer.id, paymentStatus: 'captured' })
+          .sort({ paidAt: -1, createdAt: -1 }).limit(250).toArray();
+        return json(history.map(cleanDocument));
+      }
+      const body = await parseJson(request);
+      const orderId = cleanText(body?.id, 100);
+      const reason = cleanText(body?.reason, 500);
+      if (!orderId || reason.length < 3) return json({ error: 'Choose an order and provide a cancellation reason' }, 400);
+      const order = await orders.findOne({ id: orderId, customerId: customer.id, paymentStatus: 'captured' });
+      if (!order) return json({ error: 'Paid order was not found' }, 404);
+      if (['shipped', 'delivered'].includes(order.fulfillmentStatus)) return json({ error: 'This order has already shipped and can no longer be cancelled' }, 409);
+      if (['requested', 'approved'].includes(order.cancellation?.status) || order.refundStatus) return json({ error: 'A cancellation or refund already exists for this order' }, 409);
+      await orders.updateOne(
+        { id: orderId, customerId: customer.id },
+        { $set: { cancellation: { status: 'requested', reason, requestedAt: nowIso() }, status: 'Cancellation requested', updatedAt: nowIso() } },
+      );
+      const updatedOrder = await orders.findOne({ id: orderId });
+      if (process.env.RESEND_API_KEY) {
+        sendCancellationEmail(updatedOrder, 'requested').catch((error) => context.error('[cancellation-email]', error));
+      }
+      return json({ ok: true, order: cleanDocument(updatedOrder) });
+    } catch (error) {
+      return handleError(context, error);
     }
   },
 });
@@ -907,11 +1019,51 @@ registerHttp('orders', {
       const body = await parseJson(request);
       if (request.method === 'PATCH') {
         const orderId = cleanText(body?.id, 100);
+        if (body?.action === 'approve-cancellation') {
+          if (!orderId) return json({ error: 'Order ID is required' }, 400);
+          const existing = await collection.findOne({ id: orderId, paymentStatus: 'captured' });
+          if (!existing) return json({ error: 'Paid order was not found' }, 404);
+          if (existing.cancellation?.status !== 'requested') return json({ error: 'The customer has not requested cancellation' }, 409);
+          if (['shipped', 'delivered'].includes(existing.fulfillmentStatus)) return json({ error: 'Shipped or delivered orders cannot be refunded through cancellation' }, 409);
+          if (!existing.razorpayPaymentId) return json({ error: 'Razorpay payment ID is missing; reconcile this order manually' }, 409);
+          const claim = await collection.updateOne(
+            { id: orderId, 'cancellation.status': 'requested', refundStatus: { $exists: false } },
+            { $set: { 'cancellation.status': 'refunding', 'cancellation.refundStartedAt': nowIso(), updatedAt: nowIso() } },
+          );
+          if (claim.modifiedCount !== 1) return json({ error: 'This refund is already being processed' }, 409);
+          let refund;
+          try {
+            refund = await refundRazorpayPayment(existing.razorpayPaymentId, existing.amountPaise, { local_order_id: existing.id, reason: existing.cancellation.reason });
+          } catch (error) {
+            await collection.updateOne(
+              { id: orderId, 'cancellation.status': 'refunding' },
+              { $set: { 'cancellation.status': 'requested', 'cancellation.refundError': cleanText(error.message, 300), updatedAt: nowIso() }, $unset: { 'cancellation.refundStartedAt': '' } },
+            );
+            throw error;
+          }
+          const refundStatus = refund.status === 'processed' ? 'processed' : 'pending';
+          if (existing.inventoryStatus !== 'restored' && existing.items?.length) {
+            await db.collection('products').bulkWrite(existing.items.map((item) => ({
+              updateOne: {
+                filter: { id: item.id },
+                update: [{ $set: { sold: { $max: [0, { $subtract: [{ $ifNull: ['$sold', 0] }, Number(item.quantity) || 0] }] }, updatedAt: nowIso() } }],
+              },
+            })), { ordered: false });
+          }
+          await collection.updateOne(
+            { id: orderId, 'cancellation.status': 'refunding' },
+            { $set: { 'cancellation.status': 'approved', 'cancellation.approvedAt': nowIso(), razorpayRefundId: refund.id, refundStatus, inventoryStatus: 'restored', status: refundStatus === 'processed' ? 'Refunded' : 'Refund initiated', updatedAt: nowIso() }, $unset: { 'cancellation.refundStartedAt': '', 'cancellation.refundError': '' } },
+          );
+          const updatedOrder = await collection.findOne({ id: orderId });
+          if (process.env.RESEND_API_KEY) sendCancellationEmail(updatedOrder, 'approved').catch((error) => context.error('[refund-email]', error));
+          return json({ ok: true, order: cleanDocument(updatedOrder) });
+        }
         const fulfillmentStatus = cleanText(body?.fulfillmentStatus, 30).toLowerCase();
         const allowedStatuses = ['processing', 'packed', 'shipped', 'delivered'];
         if (!orderId || !allowedStatuses.includes(fulfillmentStatus)) return json({ error: 'A valid order and fulfilment status are required' }, 400);
         const existing = await collection.findOne({ id: orderId, paymentStatus: 'captured' });
         if (!existing) return json({ error: 'Paid order was not found' }, 404);
+        if (existing.cancellation?.status === 'requested' || existing.refundStatus) return json({ error: 'Resolve the cancellation/refund before updating fulfilment' }, 409);
         const currentIndex = allowedStatuses.indexOf(existing.fulfillmentStatus || 'processing');
         const nextIndex = allowedStatuses.indexOf(fulfillmentStatus);
         if (nextIndex < currentIndex) return json({ error: 'Order status cannot be moved backwards' }, 409);
@@ -963,6 +1115,37 @@ registerHttp('orders', {
     } catch (error) {
       return handleError(context, error);
     }
+  },
+});
+
+registerHttp('email-retries', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'maintenance/email-retries',
+  handler: async (request, context) => {
+    const supplied = String(request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+    const expected = String(process.env.CRON_SECRET || '');
+    const valid = supplied && expected && supplied.length === expected.length
+      && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+    if (!valid) return json({ error: 'Unauthorized' }, 401);
+    try {
+      const db = await getDb();
+      const failedOrders = await db.collection('orders').find({ paymentStatus: 'captured', 'confirmationEmail.status': 'failed' }).limit(25).toArray();
+      for (const order of failedOrders) await sendCapturedOrderConfirmation(db, order, context);
+      const failedWelcomes = await db.collection('customers').find({ 'welcomeEmail.status': 'failed', email: { $exists: true, $ne: '' } }).limit(25).toArray();
+      for (const customer of failedWelcomes) await sendWelcomeEmailOnce(db, customer, context);
+      const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['shipped', 'delivered'] } }).limit(50).toArray();
+      let fulfillmentRetried = 0;
+      for (const order of failedFulfillment) {
+        if (order.fulfillmentNotifications?.[order.fulfillmentStatus]?.status !== 'failed') continue;
+        try {
+          const result = await sendFulfillmentUpdateEmail(order);
+          await db.collection('orders').updateOne({ id: order.id }, { $set: { [`fulfillmentNotifications.${order.fulfillmentStatus}`]: { status: 'sent', emailId: result.id, sentAt: nowIso() } } });
+          fulfillmentRetried += 1;
+        } catch (error) { context.error('[fulfillment-email-retry]', error); }
+      }
+      return json({ ok: true, orderEmailsRetried: failedOrders.length, welcomeEmailsRetried: failedWelcomes.length, fulfillmentRetried });
+    } catch (error) { return handleError(context, error); }
   },
 });
 

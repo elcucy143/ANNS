@@ -56,6 +56,8 @@ server.use([
   '/api/auth/firebase',
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
   '/api/contact',
   '/api/payments/razorpay/create-order',
 ], sensitiveLimiter);

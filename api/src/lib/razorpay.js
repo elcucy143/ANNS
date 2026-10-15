@@ -45,6 +45,11 @@ const captureRazorpayPayment = (paymentId, amount) => requestRazorpay(`/payments
   body: JSON.stringify({ amount, currency: 'INR' }),
 });
 
+const refundRazorpayPayment = (paymentId, amount, notes = {}) => requestRazorpay(`/payments/${encodeURIComponent(paymentId)}/refund`, {
+  method: 'POST',
+  body: JSON.stringify({ amount, speed: 'normal', notes }),
+});
+
 const safeEqual = (first, second) => {
   const firstBuffer = Buffer.from(String(first || ''));
   const secondBuffer = Buffer.from(String(second || ''));
@@ -69,6 +74,7 @@ module.exports = {
   createRazorpayOrder,
   getCredentials,
   getRazorpayPayment,
+  refundRazorpayPayment,
   verifyPaymentSignature,
   verifyWebhookSignature,
 };

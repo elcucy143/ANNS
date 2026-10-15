@@ -33,6 +33,7 @@ import categoriesData from '../assets/json/categories.json';
 import { isCustomerActive, readCustomers, readOrders } from '../services/customerStore';
 import {
     clearAdminKey,
+    approveOrderCancellation,
     deleteCustomersFromDatabase,
     deleteProductsFromDatabase,
     deleteReviewsFromDatabase,
@@ -273,14 +274,14 @@ const ProductManager = () => {
                 ...customer,
                 active: isCustomerActive(customer),
                 orders: customerOrders,
-                totalSpent: customerOrders.reduce((total, order) => total + toNumber(order.total), 0),
+                totalSpent: customerOrders.filter((order) => !['pending', 'processed'].includes(order.refundStatus)).reduce((total, order) => total + toNumber(order.total), 0),
             };
         });
         return {
             customers: enrichedCustomers,
             activeCount: enrichedCustomers.filter((customer) => customer.active).length,
             orderCount: paidOrders.length,
-            revenue: paidOrders.reduce((total, order) => total + toNumber(order.total), 0),
+            revenue: paidOrders.filter((order) => !['pending', 'processed'].includes(order.refundStatus)).reduce((total, order) => total + toNumber(order.total), 0),
         };
     }, [customers, orders]);
 
@@ -361,6 +362,18 @@ const ProductManager = () => {
             setOrderUpdatingId('');
             window.setTimeout(() => setNotification(''), 4000);
         }
+    };
+
+    const approveCancellation = async (order) => {
+        if (!window.confirm(`Approve cancellation and initiate a full Razorpay refund of ${formatCurrency(order.total)}?`)) return;
+        setOrderUpdatingId(order.id);
+        setNotification('Initiating Razorpay refund…');
+        try {
+            const result = await approveOrderCancellation(order.id);
+            setOrders((current) => current.map((item) => item.id === order.id ? result.order : item));
+            setNotification('Refund initiated. Razorpay will update the final refund status.');
+        } catch (error) { setNotification(error.message || 'Refund could not be initiated.'); }
+        finally { setOrderUpdatingId(''); window.setTimeout(() => setNotification(''), 5000); }
     };
 
     const removeCustomer = async (customer) => {
@@ -1027,7 +1040,7 @@ const ProductManager = () => {
                         <section className="customer-stat-grid">
                             <article className="customer-stat"><ReceiptText size={21} /><div><span>Paid orders</span><strong>{customerInsights.orderCount}</strong><small>Captured by Razorpay</small></div></article>
                             <article className="customer-stat"><ShoppingBag size={21} /><div><span>Paid revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>Verified payments only</small></div></article>
-                            <article className="customer-stat"><Package size={21} /><div><span>To process</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && !['shipped', 'delivered'].includes(order.fulfillmentStatus)).length}</strong><small>Processing or packed</small></div></article>
+                            <article className="customer-stat"><Package size={21} /><div><span>To process</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && !order.refundStatus && order.cancellation?.status !== 'requested' && !['shipped', 'delivered'].includes(order.fulfillmentStatus)).length}</strong><small>Processing or packed</small></div></article>
                             <article className="customer-stat"><CheckCircle2 size={21} /><div><span>Delivered</span><strong>{orders.filter((order) => order.fulfillmentStatus === 'delivered').length}</strong><small>Completed orders</small></div></article>
                         </section>
                         <section className="admin-panel order-management-panel">
@@ -1051,6 +1064,7 @@ const ProductManager = () => {
                                                 {(order.items || []).map((item, index) => <span key={`${order.id}-${item.id || index}`}><strong>{toNumber(item.quantity, 1)}× {item.name}</strong><small>{[item.size, item.color].filter(Boolean).join(' · ')}</small></span>)}
                                             </div>
                                             <div className="fulfillment-meta"><span><strong>Delivery:</strong> {[address.addressLine1, address.addressLine2, address.city, address.state, address.postalCode].filter(Boolean).join(', ')}</span><span><strong>Payment:</strong> {order.razorpayPaymentId || 'Captured'}</span></div>
+                                            {order.cancellation?.status && <div className="admin-alert"><strong>Cancellation: {order.cancellation.status}</strong><span>{order.cancellation.reason}</span>{order.cancellation.status === 'requested' && <button type="button" className="admin-primary-button" disabled={orderUpdatingId === order.id} onClick={() => approveCancellation(order)}>Approve & refund</button>}{order.refundStatus && <span>Refund status: {order.refundStatus}</span>}</div>}
                                             <form key={order.updatedAt} className="fulfillment-form" onSubmit={(event) => submitFulfillmentUpdate(event, order.id)}>
                                                 <label>Status<select name="fulfillmentStatus" defaultValue={currentStatus}>{statusOrder.map((status, index) => <option key={status} value={status} disabled={index < currentStatusIndex}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></label>
                                                 <label>Courier<input name="courier" defaultValue={order.courier || ''} maxLength="100" placeholder="For example: Delhivery" /></label>

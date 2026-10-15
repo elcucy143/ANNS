@@ -186,6 +186,24 @@ const sendFulfillmentUpdateEmail = async (order) => {
   });
 };
 
+const sendPasswordResetEmail = async (customer, resetUrl) => sendEmail({
+  to: customer.email,
+  subject: 'Reset your ANNS password',
+  html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p><h1 style="font-family:Georgia,serif;font-weight:500">Reset your password</h1><p>Hi ${escapeHtml(customer.name || 'there')}, use the secure link below within 30 minutes.</p><p style="margin:28px 0"><a href="${escapeHtml(resetUrl)}" style="display:inline-block;padding:13px 22px;background:#29231f;color:#fff;text-decoration:none;border-radius:4px">Reset password</a></p><p style="color:#756d66">If you did not request this, you can safely ignore this email.</p></div></div></body></html>`,
+  text: `Reset your ANNS password within 30 minutes: ${resetUrl}\n\nIf you did not request this, ignore this email.`,
+});
+
+const sendCancellationEmail = async (order, type) => {
+  const isRequest = type === 'requested';
+  const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
+  return sendEmail({
+    to: isRequest ? adminEmail : order.customer.email,
+    subject: isRequest ? `Cancellation requested — ${order.id}` : `Refund initiated — ${order.id}`,
+    html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p><h1 style="font-family:Georgia,serif;font-weight:500">${isRequest ? 'Cancellation requested' : 'Your refund has been initiated'}</h1><p>Order <strong>${escapeHtml(order.id)}</strong></p><p>${isRequest ? `Customer: ${escapeHtml(order.customer.name)} (${escapeHtml(order.customer.email)})<br>Reason: ${escapeHtml(order.cancellation?.reason || 'Not provided')}` : `We initiated a refund of ${escapeHtml(formatCurrency(order.total))}. Your bank may take several business days to show it.`}</p></div></div></body></html>`,
+    text: isRequest ? `Cancellation requested\nOrder: ${order.id}\nCustomer: ${order.customer.name}\nReason: ${order.cancellation?.reason || 'Not provided'}` : `Refund initiated\nOrder: ${order.id}\nAmount: ${formatCurrency(order.total)}`,
+  });
+};
+
 module.exports = {
-  getDeliveryEstimate, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendWelcomeEmail,
+  getDeliveryEstimate, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendWelcomeEmail,
 };

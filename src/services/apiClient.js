@@ -52,6 +52,9 @@ export const updateOrderFulfillment = (order) => request('orders', {
   admin: true,
   body: JSON.stringify(order),
 });
+export const approveOrderCancellation = (id) => request('orders', {
+  method: 'PATCH', admin: true, body: JSON.stringify({ id, action: 'approve-cancellation' }),
+});
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 
@@ -91,6 +94,16 @@ export const registerWithCredentials = (account) => request('auth/register', {
 export const authenticateWithCredentials = (email, password) => request('auth/login', {
   method: 'POST',
   body: JSON.stringify({ email, password }),
+});
+export const requestPasswordReset = (email) => request('auth/forgot-password', {
+  method: 'POST', body: JSON.stringify({ email }),
+});
+export const resetPassword = (token, password) => request('auth/reset-password', {
+  method: 'POST', body: JSON.stringify({ token, password }),
+});
+export const getMyOrders = () => request('account/orders', { auth: true });
+export const requestOrderCancellation = (id, reason) => request('account/orders', {
+  method: 'POST', auth: true, body: JSON.stringify({ id, reason }),
 });
 
 export const authenticateWithFirebase = (idToken, phone) => request('auth/firebase', {

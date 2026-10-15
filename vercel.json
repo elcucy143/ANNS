@@ -10,6 +10,7 @@
       "maxDuration": 30
     }
   },
+  "crons": [{ "path": "/api/maintenance/email-retries", "schedule": "0 3 * * *" }],
   "headers": [
     {
       "source": "/((?!assets/).*)",
