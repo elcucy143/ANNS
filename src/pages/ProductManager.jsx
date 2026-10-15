@@ -263,7 +263,9 @@ const ProductManager = () => {
             ordersByCustomer.set(order.customerId, [...(ordersByCustomer.get(order.customerId) || []), order]);
         });
         const enrichedCustomers = customers.map((customer) => {
-            const customerOrders = ordersByCustomer.get(customer.id) || [];
+            const customerOrders = (ordersByCustomer.get(customer.id) || []).sort((first, second) => (
+                new Date(second.paidAt || second.createdAt).getTime() - new Date(first.paidAt || first.createdAt).getTime()
+            ));
             return {
                 ...customer,
                 active: isCustomerActive(customer),
@@ -1007,7 +1009,7 @@ const ProductManager = () => {
                                                 <td><span className={`activity-badge ${customer.active ? 'active' : 'inactive'}`}><i /> {customer.active ? 'Active now' : 'Inactive'}</span><small>{customer.lastSeenAt ? new Date(customer.lastSeenAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'No activity'}</small></td>
                                                 <td>{customer.orders.length}</td>
                                                 <td><strong>{formatCurrency(customer.totalSpent)}</strong></td>
-                                                <td><div className="customer-actions"><button type="button" className="history-button" onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> History</button><button type="button" className="customer-delete-button" onClick={() => removeCustomer(customer)} aria-label={`Delete ${customer.name || 'customer'}`} title="Delete customer contact"><Trash2 size={15} /></button></div></td>
+                                                <td><div className="customer-actions"><button type="button" className={`history-button ${selectedCustomerId === customer.id ? 'selected' : ''}`} onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> {selectedCustomerId === customer.id ? 'Close' : 'View history'}</button><button type="button" className="customer-delete-button" onClick={() => removeCustomer(customer)} aria-label={`Delete ${customer.name || 'customer'}`} title="Delete customer contact"><Trash2 size={15} /></button></div></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1018,16 +1020,38 @@ const ProductManager = () => {
 
                         {selectedCustomer && (
                             <section className="admin-panel purchase-history-panel">
-                                <div className="admin-panel-heading"><div><p className="admin-kicker">PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2></div><span className="admin-count-badge">{selectedCustomer.orders.length} orders</span></div>
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">COMPLETE PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2><p className="history-customer-contact">{[selectedCustomer.email, selectedCustomer.phone && `+91 ${selectedCustomer.phone}`].filter(Boolean).join(' · ')}</p></div><div className="history-heading-actions"><span className="admin-count-badge">{selectedCustomer.orders.length} paid order{selectedCustomer.orders.length === 1 ? '' : 's'} · {formatCurrency(selectedCustomer.totalSpent)}</span><button type="button" className="history-close-button" onClick={() => setSelectedCustomerId('')} aria-label="Close purchase history"><XCircle size={20} /></button></div></div>
                                 {selectedCustomer.orders.length ? (
-                                    <div className="order-history-list">{selectedCustomer.orders.map((order) => (
-                                        <article key={order.id}>
-                                            <div><strong>Order {order.id}</strong><small>{new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></div>
-                                            <span className="order-status">{order.status || 'Placed'}</span>
-                                            <div><strong>{order.items?.reduce((total, item) => total + toNumber(item.quantity, 1), 0) || 0} items</strong><small>{(order.items || []).map((item) => item.name).join(', ')}</small></div>
-                                            <strong>{formatCurrency(order.total)}</strong>
-                                        </article>
-                                    ))}</div>
+                                    <div className="order-history-list">{selectedCustomer.orders.map((order) => {
+                                        const address = order.shippingAddress || {};
+                                        const addressText = [address.addressLine1, address.addressLine2, address.city, address.state, address.postalCode, address.country].filter(Boolean).join(', ');
+                                        const paidDate = order.paidAt || order.createdAt;
+                                        return (
+                                            <article className="order-history-card" key={order.id}>
+                                                <header className="order-history-summary">
+                                                    <div><span>Order ID</span><strong>{order.id}</strong></div>
+                                                    <div><span>Payment</span><strong className="order-status">Paid</strong></div>
+                                                    <div><span>Paid on</span><strong>{paidDate ? new Date(paidDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Not recorded'}</strong></div>
+                                                    <div><span>Order total</span><strong>{formatCurrency(order.total)}</strong></div>
+                                                </header>
+                                                <div className="history-item-list">
+                                                    {(order.items || []).map((item, index) => (
+                                                        <div className="history-line-item" key={`${order.id}-${item.id || item.name}-${index}`}>
+                                                            {item.image ? <img src={item.image} alt="" /> : <div className="history-item-placeholder"><Package size={18} /></div>}
+                                                            <div><strong>{item.name || item.id || 'Product'}</strong><small>{[item.size && `Size: ${item.size}`, item.color && `Colour: ${item.color}`, item.id && `ID: ${item.id}`].filter(Boolean).join(' · ') || 'Standard option'}</small></div>
+                                                            <span>Qty {toNumber(item.quantity, 1)}</span>
+                                                            <strong>{formatCurrency(item.lineTotal ?? (toNumber(item.price) * toNumber(item.quantity, 1)))}</strong>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <footer className="order-history-details">
+                                                    <div><span>Delivery address</span><strong>{addressText || 'Not recorded'}</strong></div>
+                                                    <div><span>Razorpay payment ID</span><strong>{order.razorpayPaymentId || 'Captured by Razorpay'}</strong></div>
+                                                    <div><span>Estimated delivery</span><strong>{order.deliveryEstimate?.start && order.deliveryEstimate?.end ? `${new Date(order.deliveryEstimate.start).toLocaleDateString('en-IN', { dateStyle: 'medium' })} – ${new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN', { dateStyle: 'medium' })}` : 'Not recorded'}</strong></div>
+                                                </footer>
+                                            </article>
+                                        );
+                                    })}</div>
                                 ) : <div className="admin-empty-state"><ReceiptText size={28} /><p>No purchases recorded for this customer.</p></div>}
                             </section>
                         )}

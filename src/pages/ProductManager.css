@@ -279,17 +279,37 @@
 .activity-badge.active i { background: #4c9a69; box-shadow: 0 0 0 3px #e3f2e8; }
 .customer-table td:nth-child(4) > small { display: block; margin-top: 3px; }
 .history-button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid #dfd9d3; border-radius: 5px; color: #61574f; background: #fff; font: 0.68rem var(--font-main); cursor: pointer; }
+.history-button.selected { border-color: #805a3e; color: #fff; background: #805a3e; }
 .customer-actions { display: flex; align-items: center; gap: 7px; }
 .customer-delete-button { width: 31px; height: 31px; display: grid; place-items: center; padding: 0; border: 1px solid #efcfcb; border-radius: 5px; color: #b84d45; background: #fff9f8; cursor: pointer; }
 .customer-delete-button:hover { color: #fff; background: #b84d45; }
 .purchase-history-panel { overflow: hidden; }
-.order-history-list { display: flex; flex-direction: column; }
-.order-history-list article { display: grid; grid-template-columns: 1fr 110px 1.4fr auto; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid #eeeae6; }
-.order-history-list article > div { min-width: 0; }
-.order-history-list strong,
-.order-history-list small { display: block; }
-.order-history-list strong { font-size: 0.78rem; font-weight: 500; }
-.order-history-list small { overflow: hidden; color: #968e87; font-size: 0.65rem; text-overflow: ellipsis; white-space: nowrap; }
+.history-customer-contact { margin-top: 4px; color: #8d837b; font-size: .7rem; }
+.history-heading-actions { display: flex; align-items: center; gap: 10px; }
+.history-close-button { display: grid; place-items: center; padding: 4px; border: 0; color: #8a817a; background: transparent; cursor: pointer; }
+.order-history-list { display: grid; gap: 16px; }
+.order-history-card { overflow: hidden; border: 1px solid #e5dfda; border-radius: 8px; background: #fff; }
+.order-history-summary { display: grid; grid-template-columns: 1.2fr .65fr 1fr .65fr; gap: 18px; padding: 15px 18px; background: #f8f5f2; }
+.order-history-summary div,
+.order-history-details div { min-width: 0; }
+.order-history-summary span,
+.order-history-details span { display: block; margin-bottom: 3px; color: #958b83; font-size: .61rem; text-transform: uppercase; letter-spacing: .04em; }
+.order-history-summary strong,
+.order-history-details strong { display: block; overflow-wrap: anywhere; color: #403934; font-size: .72rem; font-weight: 500; }
+.history-item-list { padding: 4px 18px; }
+.history-line-item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #eeeae6; }
+.history-line-item:last-child { border-bottom: 0; }
+.history-line-item img,
+.history-item-placeholder { width: 44px; height: 50px; border-radius: 4px; }
+.history-line-item img { object-fit: cover; }
+.history-item-placeholder { display: grid; place-items: center; color: #9b8a7d; background: #f1ece7; }
+.history-line-item div strong,
+.history-line-item div small { display: block; }
+.history-line-item div strong { color: #433c37; font-size: .74rem; font-weight: 500; }
+.history-line-item div small { margin-top: 3px; color: #958b83; font-size: .63rem; }
+.history-line-item > span { color: #756c65; font-size: .68rem; }
+.history-line-item > strong { color: #433c37; font-size: .75rem; font-weight: 600; }
+.order-history-details { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 20px; padding: 14px 18px; border-top: 1px solid #eeeae6; background: #fdfcfb; }
 .order-status { width: fit-content; padding: 4px 8px; border-radius: 20px; color: #376e4b; background: #eaf5ee; font-size: 0.64rem; }
 .customer-data-note { display: flex; gap: 12px; color: #805a3e; background: #fff8f1; }
 .customer-data-note strong { font-size: 0.78rem; }
@@ -366,7 +386,11 @@
     .inventory-toolbar { grid-template-columns: 1fr; }
     .customer-stat-grid { grid-template-columns: 1fr; }
     .customer-toolbar { align-items: stretch; flex-direction: column; }
-    .order-history-list article { grid-template-columns: 1fr; gap: 7px; }
+    .history-heading-actions { align-items: flex-end; flex-direction: column-reverse; }
+    .order-history-summary,
+    .order-history-details { grid-template-columns: 1fr; gap: 10px; }
+    .history-line-item { grid-template-columns: 40px minmax(0, 1fr) auto; }
+    .history-line-item > strong { grid-column: 2; }
     .admin-search { grid-column: auto; }
     .editor-save-bar,
     .import-actions { align-items: stretch; flex-direction: column; }
