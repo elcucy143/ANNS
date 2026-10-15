@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronLeft, CreditCard, LoaderCircle, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, CreditCard, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/apiClient';
@@ -147,7 +147,6 @@ const Checkout = () => {
         <div><p className="checkout-kicker">SECURE CHECKOUT</p><h1>Delivery & payment</h1></div>
         <span><ShieldCheck size={18} /> Razorpay protected</span>
       </div>
-      {!user && <div className="guest-checkout-note"><LockKeyhole size={17} /><span><strong>Guest checkout</strong> — no Google sign-in is required. Enter your contact and delivery information below.</span></div>}
       <div className="checkout-layout">
         <form className="checkout-form" onSubmit={handlePayment}>
           <section>

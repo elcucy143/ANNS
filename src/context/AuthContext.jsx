@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   AUTH_SESSION_STORAGE,
+  authenticateWithFirebase,
   authenticateWithGoogle,
   closeAuthSession,
   getAuthSession,
@@ -44,6 +45,14 @@ export const AuthProvider = ({ children }) => {
     return authenticatedSession.user;
   };
 
+  const signInWithPhone = async (firebaseUser) => {
+    const idToken = await firebaseUser.getIdToken();
+    const authenticatedSession = await authenticateWithFirebase(idToken);
+    localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(authenticatedSession));
+    setSession(authenticatedSession);
+    return authenticatedSession.user;
+  };
+
   const signOut = () => {
     window.google?.accounts?.id?.disableAutoSelect();
     if (session?.token) closeAuthSession().catch(() => {});
@@ -53,7 +62,9 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    isLoading: Boolean(sessionToken && !user),
     signInWithGoogle,
+    signInWithPhone,
     signOut,
   };
 

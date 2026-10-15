@@ -14,6 +14,7 @@ import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Account from './pages/Account';
 import Checkout from './pages/Checkout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -29,16 +30,16 @@ function App() {
         <Router>
           <Layout>
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/womens-wear" element={<CategoryPage title="Women's Wear" />} />
-              <Route path="/gifts" element={<CategoryPage title="Gifts" />} />
-              <Route path="/jewellery" element={<CategoryPage title="Jewellery" />} />
-              <Route path="/sale" element={<CategoryPage title="Sale" />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/search" element={<SearchResults />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/womens-wear" element={<ProtectedRoute><CategoryPage title="Women's Wear" /></ProtectedRoute>} />
+              <Route path="/gifts" element={<ProtectedRoute><CategoryPage title="Gifts" /></ProtectedRoute>} />
+              <Route path="/jewellery" element={<ProtectedRoute><CategoryPage title="Jewellery" /></ProtectedRoute>} />
+              <Route path="/sale" element={<ProtectedRoute><CategoryPage title="Sale" /></ProtectedRoute>} />
+              <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+              <Route path="/product/:id" element={<ProtectedRoute><ProductDetails /></ProtectedRoute>} />
               <Route path="/return-policy" element={<ReturnPolicy />} />
               <Route path="/shipping-policy" element={<ShippingPolicy />} />
               <Route path="/terms-conditions" element={<TermsConditions />} />

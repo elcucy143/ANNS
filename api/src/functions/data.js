@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
 const { getClient, getDb } = require('../lib/db');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
-const { authenticateRequest, signAdminSession, signSession, verifyGoogleCredential } = require('../lib/auth');
+const { authenticateRequest, signAdminSession, signSession, verifyFirebaseCredential, verifyGoogleCredential } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const { getDeliveryEstimate, sendOrderEmails } = require('../lib/orderEmail');
 const {
@@ -267,6 +267,33 @@ registerHttp('google-auth', {
   },
 });
 
+registerHttp('firebase-auth', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'auth/firebase',
+  handler: async (request, context) => {
+    try {
+      const body = await parseJson(request);
+      const user = await verifyFirebaseCredential(body?.idToken);
+      const operationTime = nowIso();
+      const db = await getDb();
+      await db.collection('customers').updateOne(
+        { id: user.id },
+        {
+          $set: { ...user, sessionActive: true, lastSeenAt: operationTime, updatedAt: operationTime },
+          $setOnInsert: { createdAt: operationTime },
+        },
+        { upsert: true },
+      );
+      return json({ user, token: signSession(user) });
+    } catch (error) {
+      const status = Number.isInteger(error.status) ? error.status : 401;
+      if (status >= 500) context.error(error);
+      return json({ error: status === 503 ? error.message : 'Phone authentication failed' }, status);
+    }
+  },
+});
+
 registerHttp('customer-session', {
   methods: ['GET', 'DELETE'],
   authLevel: 'anonymous',
@@ -279,8 +306,9 @@ registerHttp('customer-session', {
         id: session.sub,
         name: session.name,
         email: session.email,
+        phone: session.phone,
         picture: session.picture,
-        provider: 'google',
+        provider: session.provider,
       };
       const operationTime = nowIso();
       const db = await getDb();
@@ -484,6 +512,7 @@ registerHttp('razorpay-create-order', {
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Sign in before checkout' }, 401);
       if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
       const customerName = cleanText(session?.name || customer.name, 120);
       const customerEmail = cleanText(session?.email || customer.email, 254).toLowerCase();
@@ -532,7 +561,7 @@ registerHttp('razorpay-create-order', {
       }
 
       const localOrderId = `ANNS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-      const customerId = session?.sub || `guest-${crypto.createHash('sha256').update(customerEmail).digest('hex').slice(0, 24)}`;
+      const customerId = session.sub;
       const razorpayOrder = await createRazorpayOrder({
         amount,
         currency: 'INR',
@@ -547,7 +576,7 @@ registerHttp('razorpay-create-order', {
       const order = {
         id: localOrderId,
         customerId,
-        checkoutMode: session ? 'account' : 'guest',
+        checkoutMode: 'account',
         customer: {
           name: customerName,
           email: customerEmail,
@@ -578,8 +607,8 @@ registerHttp('razorpay-create-order', {
           $set: {
             id: order.customerId,
             ...order.customer,
-            provider: session?.provider || 'guest',
-            sessionActive: Boolean(session),
+            provider: session.provider,
+            sessionActive: true,
             lastSeenAt: operationTime,
             updatedAt: operationTime,
           },

@@ -26,9 +26,9 @@ server.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://checkout.razorpay.com', 'https://www.googletagmanager.com'],
-      frameSrc: ["'self'", 'https://accounts.google.com', 'https://api.razorpay.com', 'https://*.razorpay.com'],
-      connectSrc: ["'self'", 'https://accounts.google.com', 'https://*.razorpay.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://www.google.com', 'https://www.gstatic.com', 'https://checkout.razorpay.com', 'https://www.googletagmanager.com'],
+      frameSrc: ["'self'", 'https://accounts.google.com', 'https://www.google.com', 'https://recaptcha.google.com', 'https://api.razorpay.com', 'https://*.razorpay.com'],
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://identitytoolkit.googleapis.com', 'https://securetoken.googleapis.com', 'https://www.googleapis.com', 'https://*.razorpay.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
       fontSrc: ["'self'", 'data:', 'https:'],
@@ -50,7 +50,7 @@ const sensitiveLimiter = rateLimit({
   message: { error: 'Too many attempts. Please wait before trying again.' },
 });
 server.use('/api', apiLimiter);
-server.use(['/api/admin-login', '/api/auth/google', '/api/payments/razorpay/create-order'], sensitiveLimiter);
+server.use(['/api/admin-login', '/api/auth/google', '/api/auth/firebase', '/api/payments/razorpay/create-order'], sensitiveLimiter);
 server.use(express.raw({ type: '*/*', limit: '4mb' }));
 
 for (const route of registeredRoutes) {

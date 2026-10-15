@@ -6,6 +6,35 @@ const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
+const verifyFirebaseCredential = async (idToken) => {
+  const apiKey = process.env.FIREBASE_API_KEY;
+  if (!idToken || !apiKey) {
+    const error = new Error('Phone authentication is not configured');
+    error.status = 503;
+    throw error;
+  }
+  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(apiKey)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  const result = await response.json().catch(() => ({}));
+  const profile = result.users?.[0];
+  if (!response.ok || !profile?.localId || !profile.phoneNumber) {
+    const error = new Error('Firebase could not verify this phone number');
+    error.status = 401;
+    throw error;
+  }
+  return {
+    id: `phone:${profile.localId}`,
+    name: `Customer ${profile.phoneNumber.slice(-4)}`,
+    email: String(profile.email || '').slice(0, 254),
+    phone: String(profile.phoneNumber).slice(0, 30),
+    picture: String(profile.photoUrl || '').slice(0, 1000),
+    provider: 'phone',
+  };
+};
+
 const getSessionSecret = () => {
   const secret = process.env.AUTH_SESSION_SECRET;
   if (!secret || secret.length < 32) {
@@ -31,6 +60,7 @@ const signSession = (user) => {
     name: user.name,
     email: user.email,
     picture: user.picture,
+    phone: user.phone,
     provider: user.provider || 'google',
     iat: now,
     exp: now + SESSION_TTL_SECONDS,
@@ -102,6 +132,7 @@ module.exports = {
   signAdminSession,
   signSession,
   verifyAdminSession,
+  verifyFirebaseCredential,
   verifyGoogleCredential,
   verifySession,
 };

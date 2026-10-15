@@ -12,6 +12,7 @@ const configurationProblems = () => {
   requireValue('MONGODB_DB_NAME', 1);
   requireValue('ADMIN_API_KEY', 32);
   requireValue('AUTH_SESSION_SECRET', 32);
+  requireValue('FIREBASE_API_KEY', 20);
   const razorpayKeyId = requireValue('RAZORPAY_KEY_ID', 12);
   requireValue('RAZORPAY_KEY_SECRET', 16);
   requireValue('RAZORPAY_WEBHOOK_SECRET', 16);

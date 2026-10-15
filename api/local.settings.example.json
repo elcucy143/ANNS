@@ -8,6 +8,7 @@
     "ADMIN_API_KEY": "replace-with-a-long-random-admin-secret",
     "AUTH_SESSION_SECRET": "replace-with-an-independent-random-32-byte-secret",
     "GOOGLE_CLIENT_ID": "920368340836-j753510od9dn8ced4due5p1787e35ghc.apps.googleusercontent.com",
+    "FIREBASE_API_KEY": "replace-with-firebase-web-api-key",
     "RAZORPAY_KEY_ID": "rzp_test_replace_me",
     "RAZORPAY_KEY_SECRET": "replace-with-test-key-secret",
     "RAZORPAY_WEBHOOK_SECRET": "replace-after-deploying-the-webhook",
