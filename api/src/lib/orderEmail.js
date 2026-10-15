@@ -1,6 +1,7 @@
 const RESEND_API_URL = 'https://api.resend.com/emails';
 const DEFAULT_FROM = 'ANNS Orders <orders@annsonline.shop>';
 const DEFAULT_ADMIN_EMAIL = 'astrendsandgifts@gmail.com';
+const SITE_URL = 'https://www.annsonline.shop';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -114,11 +115,35 @@ const customerHtml = (order, estimate) => `<!doctype html><html><body style="mar
     </div>
   </div></body></html>`;
 
+const adminOrderRows = (order) => order.items.map((item) => {
+  const productUrl = `${SITE_URL}/product/${encodeURIComponent(item.id)}`;
+  return `<tr><td style="padding:12px 0;border-bottom:1px solid #e9e4df"><a href="${productUrl}" style="color:#8b5737;font-weight:700">${escapeHtml(item.name)}</a><br><small>Product code: ${escapeHtml(item.id)} · ${escapeHtml([item.size, item.color].filter(Boolean).join(' · ') || 'Standard')}</small></td><td style="padding:12px;border-bottom:1px solid #e9e4df;text-align:center">${item.quantity}</td><td style="padding:12px 0;border-bottom:1px solid #e9e4df;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td></tr>`;
+}).join('');
+
+const adminOrderText = (order, estimate) => [
+  'NEW PAID ORDER — ACTION REQUIRED',
+  `Order: ${order.id}`,
+  `Admin: ${SITE_URL}/product-manager?view=orders&order=${encodeURIComponent(order.id)}`,
+  `Payment ID: ${order.razorpayPaymentId || 'Captured by Razorpay'}`,
+  `Customer: ${order.customer.name} | ${order.customer.email} | ${order.customer.phone || ''}`,
+  `Estimated delivery: ${formatDate(estimate.start)} – ${formatDate(estimate.end)}`,
+  '',
+  ...order.items.map((item) => `${item.quantity} × ${item.name} | Code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)} | ${SITE_URL}/product/${encodeURIComponent(item.id)}`),
+  '',
+  `Total: ${formatCurrency(order.total)}`,
+  `Ship to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,
+].join('\n');
+
+const adminOrderHtml = (order, estimate) => {
+  const adminUrl = `${SITE_URL}/product-manager?view=orders&order=${encodeURIComponent(order.id)}`;
+  return `<!doctype html><html><body style="margin:0;background:#eee9e4;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:680px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px;border-top:5px solid #a66f49"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS ADMIN ALERT</p><h1 style="font-family:Georgia,serif;font-weight:500">New paid order</h1><p>This is an internal fulfilment notification. Payment has been verified and captured.</p><div style="background:#f5f1ec;padding:18px;margin:22px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Payment: ${escapeHtml(order.razorpayPaymentId || 'Captured by Razorpay')}<br>Estimated delivery: ${escapeHtml(formatDate(estimate.start))} – ${escapeHtml(formatDate(estimate.end))}</div><h3>Customer</h3><p>${escapeHtml(order.customer.name)}<br><a href="mailto:${escapeHtml(order.customer.email)}">${escapeHtml(order.customer.email)}</a><br>${escapeHtml(order.customer.phone || '')}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Product / code</th><th>Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${adminOrderRows(order)}<tr><td colspan="2" style="padding-top:16px;font-weight:700">Total paid</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></tbody></table><h3 style="margin-top:26px">Delivery address</h3><p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p><p style="margin:28px 0 4px"><a href="${adminUrl}" style="display:inline-block;padding:14px 22px;background:#29231f;color:#fff;text-decoration:none;border-radius:5px">Open order in admin dashboard</a></p></div></div></body></html>`;
+};
+
 const sendAdminOrderEmail = async (order, estimate) => sendEmail({
   to: process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL,
-  subject: `New paid order — ${order.id}`,
-  html: customerHtml(order, estimate),
-  text: orderText(order, estimate),
+  subject: `ADMIN: New paid order ${order.id} — ${order.items.map((item) => item.id).join(', ')}`,
+  html: adminOrderHtml(order, estimate),
+  text: adminOrderText(order, estimate),
 });
 
 const sendOrderEmails = async (order, estimate) => {

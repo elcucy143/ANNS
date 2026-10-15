@@ -210,7 +210,9 @@ const ProductManager = () => {
     ));
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
-    const [activeView, setActiveView] = useState('overview');
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'import', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -234,6 +236,7 @@ const ProductManager = () => {
     const [reviewSaving, setReviewSaving] = useState(false);
     const fileInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
+    const linkedOrderId = initialParams.get('order') || '';
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
 
@@ -414,6 +417,11 @@ const ProductManager = () => {
         void refreshReviews();
         // Refresh is intentionally performed when a stored admin session is restored.
     }, [isAuthenticated]);
+
+    useEffect(() => {
+        if (activeView !== 'orders' || !linkedOrderId || !orders.length) return;
+        window.setTimeout(() => document.getElementById(`order-${linkedOrderId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }, [activeView, linkedOrderId, orders.length]);
 
     const filteredProducts = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();
@@ -825,6 +833,52 @@ const ProductManager = () => {
         writeFileXLSX(workbook, 'ANNS-inventory.xlsx');
     };
 
+    const customerHistoryRows = (customerList) => customerList.flatMap((customer) => (
+        customer.orders.flatMap((order) => (order.items || []).map((item) => ({
+            customerName: customer.name,
+            email: customer.email,
+            mobile: customer.phone,
+            orderId: order.id,
+            paidAt: order.paidAt || order.createdAt,
+            paymentId: order.razorpayPaymentId,
+            fulfillmentStatus: order.fulfillmentStatus || 'processing',
+            refundStatus: order.refundStatus || '',
+            productCode: item.id,
+            productName: item.name,
+            size: item.size || '',
+            colour: item.color || '',
+            quantity: toNumber(item.quantity, 1),
+            lineTotal: toNumber(item.lineTotal),
+            orderTotal: toNumber(order.total),
+            courier: order.courier || '',
+            trackingNumber: order.trackingNumber || '',
+            trackingUrl: order.trackingUrl || '',
+        })))
+    ));
+
+    const exportCustomerHistoryExcel = async (customerList = filteredCustomers) => {
+        const rows = customerHistoryRows(customerList);
+        if (!rows.length) return setNotification('There is no paid order history to export.');
+        const { utils, writeFileXLSX } = await import('xlsx');
+        const worksheet = utils.json_to_sheet(rows);
+        worksheet['!cols'] = [24, 30, 16, 24, 22, 24, 16, 16, 18, 32, 10, 14, 10, 14, 14, 18, 22, 40].map((wch) => ({ wch }));
+        const workbook = utils.book_new();
+        utils.book_append_sheet(workbook, worksheet, 'Customer orders');
+        writeFileXLSX(workbook, customerList.length === 1 ? `ANNS-${customerList[0].name || 'customer'}-orders.xlsx` : 'ANNS-customer-order-history.xlsx');
+    };
+
+    const exportCustomerHistoryPdf = (customerList = filteredCustomers) => {
+        const rows = customerHistoryRows(customerList);
+        if (!rows.length) return setNotification('There is no paid order history to export.');
+        const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
+        const popup = window.open('', '_blank');
+        if (!popup) return setNotification('Allow pop-ups to download the PDF report.');
+        popup.opener = null;
+        const body = rows.map((row) => `<tr><td>${escape(row.customerName)}<br><small>${escape(row.email)}</small></td><td>${escape(row.orderId)}<br><small>${escape(new Date(row.paidAt).toLocaleDateString('en-IN'))}</small></td><td>${escape(row.productName)}<br><small>${escape(row.productCode)} · ${escape(row.size)}</small></td><td>${escape(row.quantity)}</td><td>₹${escape(row.lineTotal.toFixed(2))}</td><td>${escape(row.fulfillmentStatus)}${row.trackingNumber ? `<br><small>${escape(row.trackingNumber)}</small>` : ''}</td></tr>`).join('');
+        popup.document.write(`<!doctype html><title>ANNS Customer Order History</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial;color:#29231f}h1{font:24px Georgia}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ddd;text-align:left;vertical-align:top}th{background:#f1ece7}small{color:#6f6862}</style><h1>ANNS Customer Order History</h1><p>Generated ${new Date().toLocaleString('en-IN')} · Paid orders only</p><table><thead><tr><th>Customer</th><th>Order</th><th>Product / code</th><th>Qty</th><th>Amount</th><th>Status / tracking</th></tr></thead><tbody>${body}</tbody></table><script>window.print()</script>`);
+        popup.document.close();
+    };
+
     const downloadJson = () => {
         const url = URL.createObjectURL(new Blob([JSON.stringify(products, null, 2)], { type: 'application/json' }));
         const anchor = document.createElement('a');
@@ -1055,7 +1109,7 @@ const ProductManager = () => {
                                     const statusOrder = ['processing', 'packed', 'shipped', 'delivered'];
                                     const currentStatusIndex = statusOrder.indexOf(currentStatus);
                                     return (
-                                        <article className="fulfillment-order" key={order.id}>
+                                        <article className={`fulfillment-order ${linkedOrderId === order.id ? 'linked-order' : ''}`} id={`order-${order.id}`} key={order.id}>
                                             <div className="fulfillment-order-head">
                                                 <div><p className="admin-kicker">ORDER {order.id}</p><h3>{order.customer?.name || 'Customer'}</h3><small>{[order.customer?.email, order.customer?.phone].filter(Boolean).join(' · ')}</small></div>
                                                 <div><span className={`fulfillment-badge ${currentStatus}`}>{currentStatus}</span><strong>{formatCurrency(order.total)}</strong><small>{new Date(order.paidAt || order.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</small></div>
@@ -1094,6 +1148,8 @@ const ProductManager = () => {
                         <section className="admin-panel customer-panel">
                             <div className="customer-toolbar">
                                 <div className="admin-search"><Search size={18} /><input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} placeholder="Search name, email or mobile" /></div>
+                                <button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryExcel()}><FileSpreadsheet size={17} /> Export Excel</button>
+                                <button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryPdf()}><Download size={17} /> Export PDF</button>
                                 <button type="button" className="admin-secondary-button" onClick={refreshCustomerData}><RefreshCw size={17} /> Refresh activity</button>
                             </div>
                             <div className="admin-table-wrap">
@@ -1119,7 +1175,7 @@ const ProductManager = () => {
 
                         {selectedCustomer && (
                             <section className="admin-panel purchase-history-panel">
-                                <div className="admin-panel-heading"><div><p className="admin-kicker">COMPLETE PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2><p className="history-customer-contact">{[selectedCustomer.email, selectedCustomer.phone && `+91 ${selectedCustomer.phone}`].filter(Boolean).join(' · ')}</p></div><div className="history-heading-actions"><span className="admin-count-badge">{selectedCustomer.orders.length} paid order{selectedCustomer.orders.length === 1 ? '' : 's'} · {formatCurrency(selectedCustomer.totalSpent)}</span><button type="button" className="history-close-button" onClick={() => setSelectedCustomerId('')} aria-label="Close purchase history"><XCircle size={20} /></button></div></div>
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">COMPLETE PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2><p className="history-customer-contact">{[selectedCustomer.email, selectedCustomer.phone && `+91 ${selectedCustomer.phone}`].filter(Boolean).join(' · ')}</p></div><div className="history-heading-actions"><span className="admin-count-badge">{selectedCustomer.orders.length} paid order{selectedCustomer.orders.length === 1 ? '' : 's'} · {formatCurrency(selectedCustomer.totalSpent)}</span><button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryExcel([selectedCustomer])}><FileSpreadsheet size={16} /> Excel</button><button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryPdf([selectedCustomer])}><Download size={16} /> PDF</button><button type="button" className="history-close-button" onClick={() => setSelectedCustomerId('')} aria-label="Close purchase history"><XCircle size={20} /></button></div></div>
                                 {selectedCustomer.orders.length ? (
                                     <div className="order-history-list">{selectedCustomer.orders.map((order) => {
                                         const address = order.shippingAddress || {};

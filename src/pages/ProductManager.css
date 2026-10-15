@@ -318,6 +318,7 @@
 .order-management-panel { padding: 0; overflow: hidden; }
 .fulfillment-order-list { display: grid; gap: 16px; padding: 20px; }
 .fulfillment-order { overflow: hidden; border: 1px solid #e3ded9; border-radius: 8px; background: #fff; }
+.fulfillment-order.linked-order { border-color: #a66f49; box-shadow: 0 0 0 3px rgba(166, 111, 73, 0.14); }
 .fulfillment-order-head { display: flex; justify-content: space-between; gap: 18px; padding: 18px; background: #f9f7f5; }
 .fulfillment-order-head h3 { margin: 4px 0; font-size: .92rem; font-weight: 600; }
 .fulfillment-order-head small { display: block; color: #8b827b; font-size: .66rem; }

@@ -156,7 +156,10 @@ const Account = () => {
                 <div><strong>{order.id}</strong><span>{new Date(order.paidAt || order.createdAt).toLocaleDateString('en-IN')} · ₹{Number(order.total).toLocaleString('en-IN')}</span></div>
                 <p>Status: <strong>{order.status || order.fulfillmentStatus || 'Processing'}</strong></p>
                 {order.deliveryEstimate?.end && <p>Estimated delivery: {new Date(order.deliveryEstimate.start).toLocaleDateString('en-IN')} – {new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN')}</p>}
-                {order.trackingUrl && <a href={order.trackingUrl} target="_blank" rel="noreferrer">Track shipment</a>}
+                {order.trackingNumber && <p>Tracking: <strong>{order.courier || 'Courier'} · {order.trackingNumber}</strong></p>}
+                {order.trackingUrl
+                  ? <a href={order.trackingUrl} target="_blank" rel="noreferrer">Track shipment with {order.courier || 'courier'}</a>
+                  : ['processing', 'packed'].includes(order.fulfillmentStatus || 'processing') && <p>Your tracking link will appear here after dispatch.</p>}
                 <div className="account-order-actions"><button type="button" onClick={() => printInvoice(order)}><Download size={15} /> Invoice</button>{cancellable && <button type="button" className="danger" onClick={() => cancelOrder(order)}><XCircle size={15} /> Request cancellation</button>}</div>
               </article>;
             })}
