@@ -13,7 +13,7 @@ const {
 } = require('../lib/auth');
 const { assertProductionConfig, configurationProblems } = require('../lib/config');
 const {
-  getDeliveryEstimate, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendWelcomeEmail,
+  getDeliveryEstimate, sendAdminOrderEmail, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendRefundAdminEmail, sendWelcomeEmail,
 } = require('../lib/orderEmail');
 const {
   captureRazorpayPayment,
@@ -253,6 +253,9 @@ const sendCapturedOrderConfirmation = async (db, order, context) => {
         $set: {
           deliveryEstimate: estimate,
           confirmationEmail: { status: 'sent', ...result, sentAt: nowIso() },
+          adminPurchaseEmail: result.adminEmailError
+            ? { status: 'failed', error: result.adminEmailError, attemptedAt: nowIso() }
+            : { status: 'sent', emailId: result.adminEmailId, sentAt: nowIso() },
           updatedAt: nowIso(),
         },
       },
@@ -272,6 +275,34 @@ const sendCapturedOrderConfirmation = async (db, order, context) => {
     );
     return db.collection('orders').findOne({ id: order.id });
   }
+};
+
+const sendRefundNotifications = async (db, order, type, context) => {
+  if (!order?.id || !process.env.RESEND_API_KEY) return order;
+  const field = type === 'requested' ? 'cancellationNotification' : `refundNotifications.${type}`;
+  const attemptedAt = nowIso();
+  const token = crypto.randomUUID();
+  const claim = await db.collection('orders').updateOne(
+    { id: order.id, [`${field}.status`]: { $nin: ['sending', 'sent'] } },
+    { $set: { [field]: { status: 'sending', token, attemptedAt }, updatedAt: attemptedAt } },
+  );
+  if (claim.modifiedCount !== 1) return db.collection('orders').findOne({ id: order.id });
+  try {
+    const customerOrAdmin = await sendCancellationEmail(order, type);
+    let admin = null;
+    if (type !== 'requested') admin = await sendRefundAdminEmail(order, type);
+    await db.collection('orders').updateOne(
+      { id: order.id, [`${field}.token`]: token },
+      { $set: { [field]: { status: 'sent', emailId: customerOrAdmin.id, adminEmailId: admin?.id || null, sentAt: nowIso() }, updatedAt: nowIso() } },
+    );
+  } catch (error) {
+    context.error(`[${type}-email]`, error);
+    await db.collection('orders').updateOne(
+      { id: order.id, [`${field}.token`]: token },
+      { $set: { [field]: { status: 'failed', error: cleanText(error.message, 300), attemptedAt }, updatedAt: nowIso() } },
+    );
+  }
+  return db.collection('orders').findOne({ id: order.id });
 };
 
 registerHttp('health', {
@@ -923,10 +954,13 @@ registerHttp('razorpay-webhook', {
       const refund = event.payload?.refund?.entity;
       if (refund?.payment_id && ['refund.processed', 'refund.failed'].includes(event.event)) {
         const db = await getDb();
+        const refundType = event.event === 'refund.processed' ? 'processed' : 'failed';
         await db.collection('orders').updateOne(
           { razorpayPaymentId: refund.payment_id },
-          { $set: { refundStatus: event.event === 'refund.processed' ? 'processed' : 'failed', status: event.event === 'refund.processed' ? 'Refunded' : 'Refund failed — review required', updatedAt: nowIso() } },
+          { $set: { refundStatus: refundType, status: refundType === 'processed' ? 'Refunded' : 'Refund failed — review required', updatedAt: nowIso() } },
         );
+        const refundedOrder = await db.collection('orders').findOne({ razorpayPaymentId: refund.payment_id });
+        if (refundedOrder) await sendRefundNotifications(db, refundedOrder, refundType, context);
         return json({ ok: true });
       }
       const payment = event.payload?.payment?.entity;
@@ -981,10 +1015,9 @@ registerHttp('customer-orders', {
         { $set: { cancellation: { status: 'requested', reason, requestedAt: nowIso() }, status: 'Cancellation requested', updatedAt: nowIso() } },
       );
       const updatedOrder = await orders.findOne({ id: orderId });
-      if (process.env.RESEND_API_KEY) {
-        sendCancellationEmail(updatedOrder, 'requested').catch((error) => context.error('[cancellation-email]', error));
-      }
-      return json({ ok: true, order: cleanDocument(updatedOrder) });
+      await sendRefundNotifications(db, updatedOrder, 'requested', context);
+      const notifiedOrder = await orders.findOne({ id: orderId });
+      return json({ ok: true, order: cleanDocument(notifiedOrder) });
     } catch (error) {
       return handleError(context, error);
     }
@@ -1055,8 +1088,8 @@ registerHttp('orders', {
             { $set: { 'cancellation.status': 'approved', 'cancellation.approvedAt': nowIso(), razorpayRefundId: refund.id, refundStatus, inventoryStatus: 'restored', status: refundStatus === 'processed' ? 'Refunded' : 'Refund initiated', updatedAt: nowIso() }, $unset: { 'cancellation.refundStartedAt': '', 'cancellation.refundError': '' } },
           );
           const updatedOrder = await collection.findOne({ id: orderId });
-          if (process.env.RESEND_API_KEY) sendCancellationEmail(updatedOrder, 'approved').catch((error) => context.error('[refund-email]', error));
-          return json({ ok: true, order: cleanDocument(updatedOrder) });
+          const notifiedOrder = await sendRefundNotifications(db, updatedOrder, 'initiated', context);
+          return json({ ok: true, order: cleanDocument(notifiedOrder) });
         }
         const fulfillmentStatus = cleanText(body?.fulfillmentStatus, 30).toLowerCase();
         const allowedStatuses = ['processing', 'packed', 'shipped', 'delivered'];
@@ -1134,6 +1167,15 @@ registerHttp('email-retries', {
       for (const order of failedOrders) await sendCapturedOrderConfirmation(db, order, context);
       const failedWelcomes = await db.collection('customers').find({ 'welcomeEmail.status': 'failed', email: { $exists: true, $ne: '' } }).limit(25).toArray();
       for (const customer of failedWelcomes) await sendWelcomeEmailOnce(db, customer, context);
+      const failedAdminPurchases = await db.collection('orders').find({ paymentStatus: 'captured', 'adminPurchaseEmail.status': 'failed' }).limit(25).toArray();
+      for (const order of failedAdminPurchases) {
+        try {
+          const result = await sendAdminOrderEmail(order, order.deliveryEstimate || getDeliveryEstimate(order.paidAt));
+          await db.collection('orders').updateOne({ id: order.id }, { $set: { adminPurchaseEmail: { status: 'sent', emailId: result.id, sentAt: nowIso() }, updatedAt: nowIso() } });
+        } catch (error) {
+          await db.collection('orders').updateOne({ id: order.id }, { $set: { adminPurchaseEmail: { status: 'failed', error: cleanText(error.message, 300), attemptedAt: nowIso() }, updatedAt: nowIso() } });
+        }
+      }
       const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['shipped', 'delivered'] } }).limit(50).toArray();
       let fulfillmentRetried = 0;
       for (const order of failedFulfillment) {
@@ -1144,7 +1186,15 @@ registerHttp('email-retries', {
           fulfillmentRetried += 1;
         } catch (error) { context.error('[fulfillment-email-retry]', error); }
       }
-      return json({ ok: true, orderEmailsRetried: failedOrders.length, welcomeEmailsRetried: failedWelcomes.length, fulfillmentRetried });
+      const failedCancellationNotifications = await db.collection('orders').find({ 'cancellationNotification.status': 'failed' }).limit(25).toArray();
+      for (const order of failedCancellationNotifications) await sendRefundNotifications(db, order, 'requested', context);
+      let refundNotificationsRetried = 0;
+      for (const type of ['initiated', 'processed', 'failed']) {
+        const failedRefunds = await db.collection('orders').find({ [`refundNotifications.${type}.status`]: 'failed' }).limit(25).toArray();
+        for (const order of failedRefunds) await sendRefundNotifications(db, order, type, context);
+        refundNotificationsRetried += failedRefunds.length;
+      }
+      return json({ ok: true, orderEmailsRetried: failedOrders.length, adminPurchaseEmailsRetried: failedAdminPurchases.length, welcomeEmailsRetried: failedWelcomes.length, fulfillmentRetried, cancellationEmailsRetried: failedCancellationNotifications.length, refundNotificationsRetried });
     } catch (error) { return handleError(context, error); }
   },
 });

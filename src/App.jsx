@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import CategoryPage from './pages/CategoryPage';
 import Contact from './pages/Contact';
 import ProductDetails from './pages/ProductDetails';
-import ProductManager from './pages/ProductManager';
 import Cart from './pages/Cart';
 import SearchResults from './pages/SearchResults';
 import ReturnPolicy from './pages/ReturnPolicy';
@@ -20,6 +19,8 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductCatalogProvider } from './context/ProductCatalogContext';
 import { ReviewProvider } from './context/ReviewContext';
+
+const ProductManager = lazy(() => import('./pages/ProductManager'));
 
 function App() {
   return (
@@ -44,7 +45,7 @@ function App() {
               <Route path="/shipping-policy" element={<ShippingPolicy />} />
               <Route path="/terms-conditions" element={<TermsConditions />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/product-manager" element={<ProductManager />} />
+              <Route path="/product-manager" element={<Suspense fallback={<div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>Loading admin workspace…</div>}><ProductManager /></Suspense>} />
               <Route path="/account" element={<Account />} />
             </Routes>
           </Layout>

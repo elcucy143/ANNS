@@ -114,6 +114,13 @@ const customerHtml = (order, estimate) => `<!doctype html><html><body style="mar
     </div>
   </div></body></html>`;
 
+const sendAdminOrderEmail = async (order, estimate) => sendEmail({
+  to: process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL,
+  subject: `New paid order — ${order.id}`,
+  html: customerHtml(order, estimate),
+  text: orderText(order, estimate),
+});
+
 const sendOrderEmails = async (order, estimate) => {
   const customerResult = await sendEmail({
     to: order.customer.email,
@@ -127,12 +134,7 @@ const sendOrderEmails = async (order, estimate) => {
   let adminEmailError = null;
   if (adminEmail && adminEmail.toLowerCase() !== order.customer.email.toLowerCase()) {
     try {
-      adminResult = await sendEmail({
-        to: adminEmail,
-        subject: `New paid order — ${order.id}`,
-        html: customerHtml(order, estimate),
-        text: orderText(order, estimate),
-      });
+      adminResult = await sendAdminOrderEmail(order, estimate);
     } catch (error) {
       // The customer receipt has already succeeded. Do not retry it and risk a
       // duplicate merely because the internal notification was rejected.
@@ -195,15 +197,24 @@ const sendPasswordResetEmail = async (customer, resetUrl) => sendEmail({
 
 const sendCancellationEmail = async (order, type) => {
   const isRequest = type === 'requested';
+  const processed = type === 'processed';
+  const failed = type === 'failed';
   const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL;
   return sendEmail({
     to: isRequest ? adminEmail : order.customer.email,
-    subject: isRequest ? `Cancellation requested — ${order.id}` : `Refund initiated — ${order.id}`,
-    html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p><h1 style="font-family:Georgia,serif;font-weight:500">${isRequest ? 'Cancellation requested' : 'Your refund has been initiated'}</h1><p>Order <strong>${escapeHtml(order.id)}</strong></p><p>${isRequest ? `Customer: ${escapeHtml(order.customer.name)} (${escapeHtml(order.customer.email)})<br>Reason: ${escapeHtml(order.cancellation?.reason || 'Not provided')}` : `We initiated a refund of ${escapeHtml(formatCurrency(order.total))}. Your bank may take several business days to show it.`}</p></div></div></body></html>`,
-    text: isRequest ? `Cancellation requested\nOrder: ${order.id}\nCustomer: ${order.customer.name}\nReason: ${order.cancellation?.reason || 'Not provided'}` : `Refund initiated\nOrder: ${order.id}\nAmount: ${formatCurrency(order.total)}`,
+    subject: isRequest ? `Cancellation requested — ${order.id}` : failed ? `Refund needs attention — ${order.id}` : processed ? `Refund completed — ${order.id}` : `Refund initiated — ${order.id}`,
+    html: `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:640px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p><h1 style="font-family:Georgia,serif;font-weight:500">${isRequest ? 'Cancellation requested' : failed ? 'Your refund needs attention' : processed ? 'Your refund is complete' : 'Your refund has been initiated'}</h1><p>Order <strong>${escapeHtml(order.id)}</strong></p><p>${isRequest ? `Customer: ${escapeHtml(order.customer.name)} (${escapeHtml(order.customer.email)})<br>Reason: ${escapeHtml(order.cancellation?.reason || 'Not provided')}` : failed ? 'The payment provider could not complete this refund automatically. The ANNS team has been notified and will review it.' : processed ? `Razorpay confirmed your refund of ${escapeHtml(formatCurrency(order.total))}. Your bank may take several business days to display it.` : `We initiated a refund of ${escapeHtml(formatCurrency(order.total))}. Your bank may take several business days to show it.`}</p></div></div></body></html>`,
+    text: isRequest ? `Cancellation requested\nOrder: ${order.id}\nCustomer: ${order.customer.name}\nReason: ${order.cancellation?.reason || 'Not provided'}` : `${failed ? 'Refund needs attention' : processed ? 'Refund completed' : 'Refund initiated'}\nOrder: ${order.id}\nAmount: ${formatCurrency(order.total)}`,
   });
 };
 
+const sendRefundAdminEmail = async (order, type) => sendEmail({
+  to: process.env.ORDER_NOTIFICATION_EMAIL || DEFAULT_ADMIN_EMAIL,
+  subject: `${type === 'failed' ? 'Refund failed' : type === 'processed' ? 'Refund completed' : 'Refund initiated'} — ${order.id}`,
+  html: `<!doctype html><html><body style="font-family:Arial,sans-serif"><h1>Refund ${escapeHtml(type)}</h1><p>Order <strong>${escapeHtml(order.id)}</strong></p><p>Customer: ${escapeHtml(order.customer.name)} (${escapeHtml(order.customer.email)})</p><p>Amount: ${escapeHtml(formatCurrency(order.total))}</p><p>Razorpay refund: ${escapeHtml(order.razorpayRefundId || 'Check Razorpay dashboard')}</p></body></html>`,
+  text: `Refund ${type}\nOrder: ${order.id}\nCustomer: ${order.customer.name}\nAmount: ${formatCurrency(order.total)}\nRazorpay refund: ${order.razorpayRefundId || 'Check Razorpay dashboard'}`,
+});
+
 module.exports = {
-  getDeliveryEstimate, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendWelcomeEmail,
+  getDeliveryEstimate, sendAdminOrderEmail, sendCancellationEmail, sendContactMessage, sendFulfillmentUpdateEmail, sendOrderEmails, sendPasswordResetEmail, sendRefundAdminEmail, sendWelcomeEmail,
 };
