@@ -4,9 +4,11 @@ import { ShoppingBag, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './CartPopup.css';
 import images from '../assets/images';
+import { useAuth } from '../context/AuthContext';
 
 const CartPopup = () => {
     const { isPopupVisible, setIsPopupVisible, lastAddedItem, getCartTotal, cartItems } = useCart();
+    const { user, isLoading } = useAuth();
     const [isClosing, setIsClosing] = useState(false);
 
     const handleClose = useCallback(() => {
@@ -60,7 +62,14 @@ const CartPopup = () => {
                 </div>
                 <div className="popup-actions">
                     <Link to="/cart" className="view-cart-btn" onClick={handleClose}>View Cart</Link>
-                    <Link to="/checkout" className="checkout-btn-small" onClick={handleClose}>Checkout</Link>
+                    <Link
+                        to={user ? '/checkout' : '/account'}
+                        state={user ? undefined : { from: '/checkout' }}
+                        className="checkout-btn-small"
+                        onClick={handleClose}
+                    >
+                        {isLoading ? 'Checking…' : user ? 'Checkout' : 'Sign in to Checkout'}
+                    </Link>
                 </div>
             </div>
         </div>

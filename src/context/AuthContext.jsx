@@ -23,23 +23,32 @@ const readStoredSession = () => {
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(readStoredSession);
+  const [isChecking, setIsChecking] = useState(Boolean(readStoredSession()));
   const user = session?.user || null;
   const sessionToken = session?.token;
 
   useEffect(() => {
-    if (!sessionToken) return;
+    let active = true;
+    if (!sessionToken) {
+      return () => { active = false; };
+    }
     getAuthSession()
       .then(({ user: verifiedUser }) => {
+        if (!active) return;
         setSession((currentSession) => {
+          if (currentSession?.token !== sessionToken) return currentSession;
           const verifiedSession = { ...currentSession, user: verifiedUser };
           localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(verifiedSession));
           return verifiedSession;
         });
       })
       .catch(() => {
+        if (!active) return;
         localStorage.removeItem(AUTH_SESSION_STORAGE);
         setSession(null);
-      });
+      })
+      .finally(() => { if (active) setIsChecking(false); });
+    return () => { active = false; };
   }, [sessionToken]);
 
   const signInWithGoogle = async (credential) => {
@@ -52,6 +61,7 @@ export const AuthProvider = ({ children }) => {
   const storeAuthenticatedSession = (authenticatedSession) => {
     localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(authenticatedSession));
     setSession(authenticatedSession);
+    setIsChecking(false);
     return authenticatedSession.user;
   };
 
@@ -77,11 +87,12 @@ export const AuthProvider = ({ children }) => {
     if (session?.token) closeAuthSession().catch(() => {});
     localStorage.removeItem(AUTH_SESSION_STORAGE);
     setSession(null);
+    setIsChecking(false);
   };
 
   const value = {
     user,
-    isLoading: Boolean(sessionToken && !user),
+    isLoading: isChecking,
     signInWithGoogle,
     signInWithCredentials,
     signInWithPhone,

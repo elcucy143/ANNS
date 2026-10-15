@@ -30,9 +30,15 @@ const cleanDocument = (document) => {
   return cleaned;
 };
 const cleanCustomerDocument = (document) => {
-  const cleaned = cleanDocument(document);
-  delete cleaned.passwordHash;
-  return cleaned;
+  if (!document) return null;
+  return {
+    id: document.id,
+    name: document.name || '',
+    email: document.email || '',
+    phone: document.phone || '',
+    picture: document.picture || '',
+    provider: document.provider || '',
+  };
 };
 const nowIso = () => new Date().toISOString();
 const cleanText = (value, maxLength = 200) => String(value || '').trim().slice(0, maxLength);
@@ -99,6 +105,11 @@ const paymentError = (context, error) => {
   const status = Number.isInteger(error.status) ? error.status : 500;
   const message = status === 502 ? 'Payment service rejected the request' : error.message || 'Payment request failed';
   return json({ error: message }, status);
+};
+
+const getActiveCustomer = async (db, session) => {
+  if (!session?.sub || session.sub === 'admin') return null;
+  return db.collection('customers').findOne({ id: session.sub, sessionActive: true });
 };
 
 const finalizeCapturedOrder = async (db, order, payment) => {
@@ -433,16 +444,11 @@ registerHttp('customer-session', {
     try {
       const session = authenticateRequest(request);
       if (!session) return json({ error: 'Authentication required' }, 401);
-      const user = {
-        id: session.sub,
-        name: session.name,
-        email: session.email,
-        phone: session.phone,
-        picture: session.picture,
-        provider: session.provider,
-      };
       const operationTime = nowIso();
       const db = await getDb();
+      const customer = await getActiveCustomer(db, session);
+      if (!customer) return json({ error: 'Your session has expired. Please sign in again' }, 401);
+      const user = cleanCustomerDocument(customer);
       await db.collection('customers').updateOne(
         { id: user.id },
         { $set: { sessionActive: request.method !== 'DELETE', lastSeenAt: operationTime, updatedAt: operationTime } },
@@ -644,16 +650,18 @@ registerHttp('razorpay-create-order', {
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
       if (!session) return json({ error: 'Sign in before checkout' }, 401);
+      const db = await getDb();
+      const activeCustomer = await getActiveCustomer(db, session);
+      if (!activeCustomer) return json({ error: 'Your session has expired. Please sign in again' }, 401);
       if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
-      const customerName = cleanText(session.name || customer.name, 120);
-      const customerEmail = cleanText(session.email || customer.email, 254).toLowerCase();
+      const customerName = cleanText(activeCustomer.name || session.name || customer.name, 120);
+      const customerEmail = cleanText(activeCustomer.email || session.email || customer.email, 254).toLowerCase();
       const customerPhone = cleanText(customer.phone, 30);
       if (!customerName || !customerEmail || !customerPhone) return json({ error: 'Name, email and mobile number are required' }, 400);
       if (!shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postalCode) {
         return json({ error: 'Complete shipping address is required' }, 400);
       }
 
-      const db = await getDb();
       const productIds = [...new Set(requestedItems.map((item) => cleanText(item.id, 100)).filter(Boolean))];
       const products = await db.collection('products').find({ id: { $in: productIds } }).toArray();
       const productsById = new Map(products.map((product) => [String(product.id), product]));

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, Minus, Plus, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useProductCatalog } from '../context/ProductCatalogContext';
+import { useAuth } from '../context/AuthContext';
 import './Cart.css';
 
 import images from '../assets/images';
@@ -10,6 +11,7 @@ import images from '../assets/images';
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
     const { products } = useProductCatalog();
+    const { user, isLoading } = useAuth();
 
     if (cartItems.length === 0) {
         return (
@@ -80,7 +82,14 @@ const Cart = () => {
                         <span>Total</span>
                         <span>₹ {getCartTotal().toFixed(2)}</span>
                     </div>
-                    <Link to="/checkout" className="checkout-btn">Proceed to Checkout</Link>
+                    <Link
+                        to={user ? '/checkout' : '/account'}
+                        state={user ? undefined : { from: '/checkout' }}
+                        className="checkout-btn"
+                        aria-disabled={isLoading}
+                    >
+                        {isLoading ? 'Checking account…' : user ? 'Proceed to Checkout' : 'Sign in to Checkout'}
+                    </Link>
                     <Link to="/" className="continue-link">Continue Shopping</Link>
                 </div>
             </div>

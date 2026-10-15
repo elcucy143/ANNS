@@ -50,7 +50,14 @@ const sensitiveLimiter = rateLimit({
   message: { error: 'Too many attempts. Please wait before trying again.' },
 });
 server.use('/api', apiLimiter);
-server.use(['/api/admin-login', '/api/auth/google', '/api/auth/firebase', '/api/payments/razorpay/create-order'], sensitiveLimiter);
+server.use([
+  '/api/admin-login',
+  '/api/auth/google',
+  '/api/auth/firebase',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/payments/razorpay/create-order',
+], sensitiveLimiter);
 server.use(express.raw({ type: '*/*', limit: '4mb' }));
 
 for (const route of registeredRoutes) {
