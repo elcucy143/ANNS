@@ -287,7 +287,7 @@ registerHttp('products', {
 });
 
 registerHttp('customers', {
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',
   route: 'customers',
   handler: async (request, context) => {
@@ -300,6 +300,20 @@ registerHttp('customers', {
         if (unauthorized) return unauthorized;
         const customers = await collection.find({}).sort({ lastSeenAt: -1 }).toArray();
         return json(customers.map(cleanDocument));
+      }
+
+      if (request.method === 'DELETE') {
+        const unauthorized = requireAdmin(request);
+        if (unauthorized) return unauthorized;
+        const body = await parseJson(request);
+        const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 150)).filter(Boolean) : [];
+        if (!ids.length) return json({ error: 'At least one customer ID is required' }, 400);
+        const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        return json({
+          ok: true,
+          deleted: result.deletedCount,
+          note: 'Paid orders were retained for payment reconciliation and fulfilment.',
+        });
       }
 
       const session = authenticateRequest(request);

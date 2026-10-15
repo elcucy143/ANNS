@@ -30,6 +30,7 @@ import categoriesData from '../assets/json/categories.json';
 import { isCustomerActive, readCustomers, readOrders } from '../services/customerStore';
 import {
     clearAdminKey,
+    deleteCustomersFromDatabase,
     deleteProductsFromDatabase,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
@@ -279,6 +280,25 @@ const ProductManager = () => {
             setNotification('Database unavailable—showing this browser’s local data.');
         }
         window.setTimeout(() => setNotification(''), 3000);
+    };
+
+    const removeCustomer = async (customer) => {
+        const orderNote = customer.orders?.length
+            ? ` Their ${customer.orders.length} paid order record${customer.orders.length === 1 ? '' : 's'} will be retained for accounting and fulfilment.`
+            : '';
+        if (!window.confirm(`Delete ${customer.name || customer.email || 'this customer'} from registered contacts?${orderNote}`)) return;
+
+        setNotification('Removing customer…');
+        try {
+            await deleteCustomersFromDatabase([customer.id]);
+            setCustomers((current) => current.filter((item) => item.id !== customer.id));
+            if (selectedCustomerId === customer.id) setSelectedCustomerId('');
+            setDatabaseStatus('connected');
+            setNotification('Customer contact removed. Paid order history was preserved.');
+        } catch (error) {
+            setNotification(error.message || 'The customer could not be removed.');
+        }
+        window.setTimeout(() => setNotification(''), 3500);
     };
 
     const refreshProductsFromDatabase = async () => {
@@ -878,7 +898,7 @@ const ProductManager = () => {
                             </div>
                             <div className="admin-table-wrap">
                                 <table className="admin-table customer-table">
-                                    <thead><tr><th>Customer</th><th>Contact</th><th>Sign-in</th><th>Activity</th><th>Orders</th><th>Total spent</th><th aria-label="Purchase history" /></tr></thead>
+                                    <thead><tr><th>Customer</th><th>Contact</th><th>Sign-in</th><th>Activity</th><th>Orders</th><th>Total spent</th><th aria-label="Customer actions" /></tr></thead>
                                     <tbody>
                                         {filteredCustomers.map((customer) => (
                                             <tr key={customer.id}>
@@ -888,7 +908,7 @@ const ProductManager = () => {
                                                 <td><span className={`activity-badge ${customer.active ? 'active' : 'inactive'}`}><i /> {customer.active ? 'Active now' : 'Inactive'}</span><small>{customer.lastSeenAt ? new Date(customer.lastSeenAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'No activity'}</small></td>
                                                 <td>{customer.orders.length}</td>
                                                 <td><strong>{formatCurrency(customer.totalSpent)}</strong></td>
-                                                <td><button type="button" className="history-button" onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> History</button></td>
+                                                <td><div className="customer-actions"><button type="button" className="history-button" onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> History</button><button type="button" className="customer-delete-button" onClick={() => removeCustomer(customer)} aria-label={`Delete ${customer.name || 'customer'}`} title="Delete customer contact"><Trash2 size={15} /></button></div></td>
                                             </tr>
                                         ))}
                                     </tbody>

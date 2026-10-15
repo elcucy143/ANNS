@@ -279,6 +279,9 @@
 .activity-badge.active i { background: #4c9a69; box-shadow: 0 0 0 3px #e3f2e8; }
 .customer-table td:nth-child(4) > small { display: block; margin-top: 3px; }
 .history-button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid #dfd9d3; border-radius: 5px; color: #61574f; background: #fff; font: 0.68rem var(--font-main); cursor: pointer; }
+.customer-actions { display: flex; align-items: center; gap: 7px; }
+.customer-delete-button { width: 31px; height: 31px; display: grid; place-items: center; padding: 0; border: 1px solid #efcfcb; border-radius: 5px; color: #b84d45; background: #fff9f8; cursor: pointer; }
+.customer-delete-button:hover { color: #fff; background: #b84d45; }
 .purchase-history-panel { overflow: hidden; }
 .order-history-list { display: flex; flex-direction: column; }
 .order-history-list article { display: grid; grid-template-columns: 1fr 110px 1.4fr auto; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid #eeeae6; }

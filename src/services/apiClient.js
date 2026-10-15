@@ -48,6 +48,12 @@ export const getProductsFromDatabase = () => request('products');
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
 
+export const deleteCustomersFromDatabase = (ids) => request('customers', {
+  method: 'DELETE',
+  admin: true,
+  body: JSON.stringify({ ids }),
+});
+
 export const authenticateWithGoogle = (credential) => request('auth/google', {
   method: 'POST',
   body: JSON.stringify({ credential }),
