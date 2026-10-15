@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { signOut as signOutFirebase } from '@firebase/auth';
 import {
   AUTH_SESSION_STORAGE,
   authenticateWithFirebase,
@@ -6,6 +7,7 @@ import {
   closeAuthSession,
   getAuthSession,
 } from '../services/apiClient';
+import { firebaseAuth } from '../config/firebase';
 
 const AuthContext = createContext(null);
 const readStoredSession = () => {
@@ -46,8 +48,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signInWithPhone = async (firebaseUser) => {
-    const idToken = await firebaseUser.getIdToken();
-    const authenticatedSession = await authenticateWithFirebase(idToken);
+    const idToken = await firebaseUser.getIdToken(true);
+    const authenticatedSession = await authenticateWithFirebase(idToken, firebaseUser.phoneNumber);
     localStorage.setItem(AUTH_SESSION_STORAGE, JSON.stringify(authenticatedSession));
     setSession(authenticatedSession);
     return authenticatedSession.user;
@@ -55,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = () => {
     window.google?.accounts?.id?.disableAutoSelect();
+    if (firebaseAuth) signOutFirebase(firebaseAuth).catch(() => {});
     if (session?.token) closeAuthSession().catch(() => {});
     localStorage.removeItem(AUTH_SESSION_STORAGE);
     setSession(null);

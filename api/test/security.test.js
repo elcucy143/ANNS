@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const test = require('node:test');
 const {
-  signAdminSession, signSession, verifyAdminSession, verifySession,
+  signAdminSession, signSession, verifyAdminSession, verifyFirebaseCredential, verifySession,
 } = require('../src/lib/auth');
 const { configurationProblems } = require('../src/lib/config');
 const { verifyPaymentSignature, verifyWebhookSignature } = require('../src/lib/razorpay');
@@ -30,6 +30,38 @@ test('Razorpay signatures use timing-safe HMAC verification', () => {
     .update(payload).digest('hex');
   assert.equal(verifyWebhookSignature(payload, webhookSignature), true);
   assert.equal(verifyWebhookSignature(`${payload}x`, webhookSignature), false);
+});
+
+test('phone sessions require a fresh Firebase phone verification for the same number', async () => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.FIREBASE_API_KEY;
+  process.env.FIREBASE_API_KEY = 'firebase-test-api-key-12345';
+  global.fetch = async () => ({
+    ok: true,
+    json: async () => ({ users: [{ localId: 'firebase-user', phoneNumber: '+919876543210' }] }),
+  });
+  const token = (claims) => `header.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.signature`;
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    const user = await verifyFirebaseCredential(token({ auth_time: now, firebase: { sign_in_provider: 'phone' } }), '+919876543210');
+    assert.equal(user.phone, '+919876543210');
+    await assert.rejects(
+      verifyFirebaseCredential(token({ auth_time: now, firebase: { sign_in_provider: 'phone' } }), '+919999999999'),
+      /could not verify/,
+    );
+    await assert.rejects(
+      verifyFirebaseCredential(token({ auth_time: now - 600, firebase: { sign_in_provider: 'phone' } }), '+919876543210'),
+      /could not verify/,
+    );
+    await assert.rejects(
+      verifyFirebaseCredential(token({ auth_time: now, firebase: { sign_in_provider: 'google.com' } }), '+919876543210'),
+      /could not verify/,
+    );
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) delete process.env.FIREBASE_API_KEY;
+    else process.env.FIREBASE_API_KEY = originalApiKey;
+  }
 });
 
 test('production readiness rejects missing and placeholder values', () => {

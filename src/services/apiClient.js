@@ -73,9 +73,9 @@ export const authenticateWithGoogle = (credential) => request('auth/google', {
   body: JSON.stringify({ credential }),
 });
 
-export const authenticateWithFirebase = (idToken) => request('auth/firebase', {
+export const authenticateWithFirebase = (idToken, phone) => request('auth/firebase', {
   method: 'POST',
-  body: JSON.stringify({ idToken }),
+  body: JSON.stringify({ idToken, phone }),
 });
 
 export const getAuthSession = () => request('auth/session', { auth: true });

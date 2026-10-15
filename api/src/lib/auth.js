@@ -6,7 +6,7 @@ const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const getGoogleClientId = () => process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
-const verifyFirebaseCredential = async (idToken) => {
+const verifyFirebaseCredential = async (idToken, expectedPhone) => {
   const apiKey = process.env.FIREBASE_API_KEY;
   if (!idToken || !apiKey) {
     const error = new Error('Phone authentication is not configured');
@@ -20,7 +20,19 @@ const verifyFirebaseCredential = async (idToken) => {
   });
   const result = await response.json().catch(() => ({}));
   const profile = result.users?.[0];
-  if (!response.ok || !profile?.localId || !profile.phoneNumber) {
+  let claims = {};
+  try {
+    claims = JSON.parse(Buffer.from(String(idToken).split('.')[1], 'base64url').toString('utf8'));
+  } catch {
+    claims = {};
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const authenticatedRecently = Number.isFinite(claims.auth_time)
+    && claims.auth_time <= now + 60
+    && claims.auth_time >= now - 5 * 60;
+  const phoneProvider = claims.firebase?.sign_in_provider === 'phone';
+  const phoneMatches = String(expectedPhone || '') === String(profile?.phoneNumber || '');
+  if (!response.ok || !profile?.localId || !profile.phoneNumber || !authenticatedRecently || !phoneProvider || !phoneMatches) {
     const error = new Error('Firebase could not verify this phone number');
     error.status = 401;
     throw error;

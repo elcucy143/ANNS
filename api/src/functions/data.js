@@ -293,7 +293,7 @@ registerHttp('firebase-auth', {
   handler: async (request, context) => {
     try {
       const body = await parseJson(request);
-      const user = await verifyFirebaseCredential(body?.idToken);
+      const user = await verifyFirebaseCredential(body?.idToken, body?.phone);
       const operationTime = nowIso();
       const db = await getDb();
       await db.collection('customers').updateOne(
