@@ -14,6 +14,7 @@ import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Account from './pages/Account';
 import Checkout from './pages/Checkout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -36,7 +37,7 @@ function App() {
               <Route path="/sale" element={<CategoryPage title="Sale" />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/return-policy" element={<ReturnPolicy />} />

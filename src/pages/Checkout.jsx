@@ -147,7 +147,6 @@ const Checkout = () => {
         <div><p className="checkout-kicker">SECURE CHECKOUT</p><h1>Delivery & payment</h1></div>
         <span><ShieldCheck size={18} /> Razorpay protected</span>
       </div>
-      {!user && <div className="guest-checkout-note"><LockKeyhole size={17} /><span><strong>Guest checkout</strong> — sign-in is optional. Enter your contact and delivery details to continue securely.</span></div>}
       <div className="checkout-layout">
         <form className="checkout-form" onSubmit={handlePayment}>
           <section>

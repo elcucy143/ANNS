@@ -531,9 +531,10 @@ registerHttp('razorpay-create-order', {
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Sign in before checkout' }, 401);
       if (!requestedItems.length) return json({ error: 'Cart items are required' }, 400);
-      const customerName = cleanText(session?.name || customer.name, 120);
-      const customerEmail = cleanText(session?.email || customer.email, 254).toLowerCase();
+      const customerName = cleanText(session.name || customer.name, 120);
+      const customerEmail = cleanText(session.email || customer.email, 254).toLowerCase();
       const customerPhone = cleanText(customer.phone, 30);
       if (!customerName || !customerEmail || !customerPhone) return json({ error: 'Name, email and mobile number are required' }, 400);
       if (!shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postalCode) {
@@ -579,7 +580,7 @@ registerHttp('razorpay-create-order', {
       }
 
       const localOrderId = `ANNS-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-      const customerId = session?.sub || `guest:${crypto.createHash('sha256').update(customerEmail).digest('hex').slice(0, 24)}`;
+      const customerId = session.sub;
       const razorpayOrder = await createRazorpayOrder({
         amount,
         currency: 'INR',
@@ -594,7 +595,7 @@ registerHttp('razorpay-create-order', {
       const order = {
         id: localOrderId,
         customerId,
-        checkoutMode: session ? 'account' : 'guest',
+        checkoutMode: 'account',
         customer: {
           name: customerName,
           email: customerEmail,
