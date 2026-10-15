@@ -1,14 +1,17 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './ProductCarousel.css';
 
 import images from '../assets/images';
 import { useProductCatalog } from '../context/ProductCatalogContext';
+import { useCart } from '../context/CartContext';
 
 // Flatten products from all categories and filter those marked as featured
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
     const { products: catalogProducts } = useProductCatalog();
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
     const products = inputProducts || catalogProducts.filter((product) => product.featured === 'yes').slice(0, 6);
 
     return (
@@ -28,7 +31,9 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                                                 className="add-to-cart-btn"
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    // Add to cart logic can be added here later
+                                                    e.stopPropagation();
+                                                    addToCart(product);
+                                                    navigate('/cart');
                                                 }}
                                             >
                                                 Add to Cart

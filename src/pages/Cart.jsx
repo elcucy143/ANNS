@@ -2,12 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Minus, Plus, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useProductCatalog } from '../context/ProductCatalogContext';
 import './Cart.css';
 
 import images from '../assets/images';
 
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+    const { products } = useProductCatalog();
 
     if (cartItems.length === 0) {
         return (
@@ -28,11 +30,13 @@ const Cart = () => {
             <div className="cart-grid">
                 <div className="cart-items">
                     {cartItems.map((item) => {
-                        const filename = item.image ? item.image.split('/').pop() : '';
+                        const currentProduct = products.find((product) => String(product.id) === String(item.id));
+                        const currentImage = currentProduct?.image || item.image;
+                        const filename = currentImage ? currentImage.split('/').pop() : '';
                         return (
                             <div key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
                                 <div className="cart-item-image">
-                                    <img src={images[filename] || item.image} alt={item.name} />
+                                    {currentImage ? <img src={images[filename] || currentImage} alt={item.name} /> : <div aria-hidden="true">ANNS</div>}
                                 </div>
                                 <div className="cart-item-details">
                                     <h3>{item.name}</h3>
