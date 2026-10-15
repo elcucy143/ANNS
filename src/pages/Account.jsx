@@ -152,7 +152,7 @@ const Account = () => {
             <div className="account-heading">
               <p className="account-eyebrow">WELCOME TO ANNS</p>
               <h2>{mode === 'login' ? 'Sign in to your account' : 'Create your account'}</h2>
-              <p>Sign in with your mobile number or Google account before shopping.</p>
+              <p>Sign in with your mobile number or Google account to continue to checkout.</p>
             </div>
             <div className="account-tabs" role="tablist" aria-label="Account action">
               <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setGoogleError(''); }}>Sign in</button>
