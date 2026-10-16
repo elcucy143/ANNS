@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingBag, Search, User } from 'lucide-react';
+import { ChevronDown, Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
@@ -83,16 +83,37 @@ const Navbar = () => {
                 >
                   <Link
                     to={link.path}
-                    onClick={() => {
+                    onClick={(event) => {
+                      if (categoryData && window.matchMedia('(max-width: 768px)').matches) {
+                        event.preventDefault();
+                        setActiveDropdown((current) => current === link.name ? null : link.name);
+                        return;
+                      }
                       setIsOpen(false);
                       setActiveDropdown(null);
                     }}
+                    aria-expanded={categoryData ? activeDropdown === link.name : undefined}
                   >
                     {link.name}
                   </Link>
 
+                  {categoryData && <button
+                    type="button"
+                    className="submenu-toggle"
+                    onClick={() => setActiveDropdown((current) => current === link.name ? null : link.name)}
+                    aria-label={`${activeDropdown === link.name ? 'Close' : 'Open'} ${link.name} subcategories`}
+                    aria-expanded={activeDropdown === link.name}
+                  ><ChevronDown size={18} /></button>}
+
                   {categoryData && activeDropdown === link.name && (
                     <div className="dropdown-menu">
+                      <Link
+                        to={link.path}
+                        className="dropdown-item dropdown-view-all"
+                        onClick={() => { setIsOpen(false); setActiveDropdown(null); }}
+                      >
+                        View all {link.name}
+                      </Link>
                       {categoryData.subCategories.map((sub) => (
                         <Link
                           key={sub}
