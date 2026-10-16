@@ -126,7 +126,10 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
     storedValues.push(productImageUrl(productId, index, version));
   });
 
-  if (imageOperations.length) await db.collection('productImages').bulkWrite(imageOperations, { ordered: false });
+  if (imageOperations.length) await db.collection('productImages').bulkWrite(imageOperations, {
+    ordered: false,
+    writeConcern: { w: 'majority', wtimeoutMS: 10000 },
+  });
   await db.collection('productImages').deleteMany({ productId, index: { $gte: storedValues.length } });
   product.image = storedValues[0] || '';
   product.otherImages = storedValues.slice(1).filter(Boolean);
@@ -698,9 +701,13 @@ registerHttp('products', {
       const productList = Array.isArray(body) ? body : body?.products;
       if (!Array.isArray(productList) || !productList.length) return json({ error: 'Products array is required' }, 400);
 
+      const invalidProductIndex = productList.findIndex((product) => !cleanText(product?.id, 100) || !cleanText(product?.name, 200) || !cleanText(product?.category, 100));
+      if (invalidProductIndex >= 0) return json({ error: `Product ${invalidProductIndex + 1} requires an ID, name and category` }, 400);
+      const suppliedIds = productList.map((product) => cleanText(product.id, 100));
+      if (new Set(suppliedIds).size !== suppliedIds.length) return json({ error: 'Every product in an upload must have a unique product ID' }, 400);
+
       const operationTime = nowIso();
       const preparedProducts = await Promise.all(productList
-        .filter((product) => product?.id && product?.name && product?.category)
         .map((rawProduct) => externalizeProductImages(db, normalizeProduct(rawProduct), operationTime)));
       const operations = preparedProducts
         .map((product) => {
@@ -713,8 +720,13 @@ registerHttp('products', {
           });
         });
       if (!operations.length) return json({ error: 'No valid products supplied' }, 400);
-      const result = await collection.bulkWrite(operations, { ordered: false });
-      return json({ ok: true, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
+      const result = await collection.bulkWrite(operations, {
+        ordered: false,
+        writeConcern: { w: 'majority', wtimeoutMS: 10000 },
+      });
+      const persisted = await collection.countDocuments({ id: { $in: suppliedIds } });
+      if (persisted !== suppliedIds.length) throw new Error('Product persistence verification failed');
+      return json({ ok: true, saved: persisted, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
     } catch (error) {
       return handleError(context, error);
     }

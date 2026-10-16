@@ -416,6 +416,15 @@ const ProductManager = () => {
         void refreshProductsFromDatabase();
         void refreshCustomerData();
         void refreshReviews();
+        const interval = window.setInterval(() => { void refreshProductsFromDatabase(); }, 30000);
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') void refreshProductsFromDatabase();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => {
+            window.clearInterval(interval);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
         // Refresh is intentionally performed when a stored admin session is restored.
     }, [isAuthenticated]);
 
@@ -443,9 +452,10 @@ const ProductManager = () => {
         setNotification(message);
         if (hasAdminKey()) {
             try {
-                await saveProductsToDatabase(changedProducts);
+                const result = await saveProductsToDatabase(changedProducts);
+                if (result.saved !== changedProducts.length) throw new Error('MongoDB did not confirm every product. Nothing was removed; please retry the upload.');
                 setDatabaseStatus('connected');
-                setNotification(`${message} Synced to MongoDB Atlas.`);
+                setNotification(`${message} ${result.saved} product${result.saved === 1 ? '' : 's'} verified in MongoDB Atlas.`);
             } catch (error) {
                 setDatabaseStatus('local');
                 setNotification(error.message || 'The product could not be saved to MongoDB Atlas.');

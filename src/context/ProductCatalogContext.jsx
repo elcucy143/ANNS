@@ -19,8 +19,8 @@ export const ProductCatalogProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const refreshProducts = useCallback(async () => {
-    setLoading(true);
+  const refreshProducts = useCallback(async ({ background = false } = {}) => {
+    if (!background) setLoading(true);
     try {
       const catalog = await getProductsFromDatabase();
       const normalized = (Array.isArray(catalog) ? catalog : []).map(normalizeCatalogProduct);
@@ -36,11 +36,21 @@ export const ProductCatalogProvider = ({ children }) => {
         setError('The catalog is temporarily unavailable. Please try again shortly.');
       }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void refreshProducts(); }, [refreshProducts]);
+  useEffect(() => {
+    void refreshProducts();
+    const refreshInBackground = () => { void refreshProducts({ background: true }); };
+    const interval = window.setInterval(refreshInBackground, 30000);
+    const onVisibilityChange = () => { if (document.visibilityState === 'visible') refreshInBackground(); };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [refreshProducts]);
 
   return <ProductCatalogContext.Provider value={{ products, loading, error, refreshProducts }}>{children}</ProductCatalogContext.Provider>;
 };
