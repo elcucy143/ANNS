@@ -14,6 +14,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Account from './pages/Account';
 import Checkout from './pages/Checkout';
 import ProtectedRoute from './components/ProtectedRoute';
+import RouteScrollManager from './components/RouteScrollManager';
 
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -29,6 +30,7 @@ function App() {
       <ReviewProvider>
       <CartProvider>
         <Router>
+          <RouteScrollManager />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />

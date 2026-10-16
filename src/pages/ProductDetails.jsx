@@ -33,17 +33,25 @@ const ProductDetails = () => {
     };
 
     const { product: productData, category } = findProductAndCategory(id);
+    const productSizeKey = normalizeSizeList(productData?.sizes).join('|');
+    const productColor = productData?.color || 'Red';
 
-    // Reset selected image and size when product changes
+    // Reset transient choices only when navigating to a different product.
     React.useEffect(() => {
+        setQuantity(1);
         setSelectedImage(null);
-        const sizes = normalizeSizeList(productData?.sizes);
+        setCustomization({ nameOrText: '', instructions: '' });
+    }, [id]);
+
+    React.useEffect(() => {
+        setSelectedColor(productColor);
+        const sizes = productSizeKey ? productSizeKey.split('|') : [];
         if (sizes.length > 0) {
             setSelectedSize(sizes[0]);
         } else {
             setSelectedSize(null);
         }
-    }, [id, productData]);
+    }, [id, productColor, productSizeKey]);
 
     if (loading) {
         return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>Loading product…</div>;
