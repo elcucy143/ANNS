@@ -127,6 +127,7 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
   });
 
   if (imageOperations.length) await db.collection('productImages').bulkWrite(imageOperations, { ordered: false });
+  await db.collection('productImages').deleteMany({ productId, index: { $gte: storedValues.length } });
   product.image = storedValues[0] || '';
   product.otherImages = storedValues.slice(1).filter(Boolean);
   return product;
@@ -688,7 +689,9 @@ registerHttp('products', {
       if (request.method === 'DELETE') {
         const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 100)).filter(Boolean) : [];
         if (!ids.length) return json({ error: 'At least one product ID is required' }, 400);
-        const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        const uniqueIds = [...new Set(ids)];
+        const result = await collection.deleteMany({ id: { $in: uniqueIds } });
+        await db.collection('productImages').deleteMany({ productId: { $in: uniqueIds } });
         return json({ ok: true, deleted: result.deletedCount });
       }
 
@@ -727,9 +730,10 @@ registerHttp('product-image', {
       const url = new URL(request.url);
       const productId = cleanText(url.searchParams.get('id'), 100);
       const index = Number(url.searchParams.get('index'));
-      if (!productId || !Number.isInteger(index) || index < 0 || index > 4) return json({ error: 'Image was not found' }, 404);
+      const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
+      if (!productId || !Number.isInteger(index) || index < 0 || index > 4 || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
       const db = await getDb();
-      const image = await db.collection('productImages').findOne({ productId, index });
+      const image = await db.collection('productImages').findOne({ productId, index, version });
       if (!image?.data) return json({ error: 'Image was not found' }, 404);
       const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
       return {
