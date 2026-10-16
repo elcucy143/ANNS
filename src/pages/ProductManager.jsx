@@ -896,8 +896,9 @@ const ProductManager = () => {
         if (!popup) return setNotification('Allow pop-ups to download the PDF report.');
         popup.opener = null;
         const body = rows.map((row) => `<tr><td>${escape(row.customerName)}<br><small>${escape(row.email)}</small></td><td>${escape(row.orderId)}<br><small>${escape(new Date(row.paidAt).toLocaleDateString('en-IN'))}</small></td><td>${escape(row.productName)}<br><small>${escape(row.productCode)} · ${escape(row.size)}</small></td><td>${escape(row.quantity)}</td><td>₹${escape(row.lineTotal.toFixed(2))}</td><td>${escape(row.fulfillmentStatus)}${row.trackingNumber ? `<br><small>${escape(row.trackingNumber)}</small>` : ''}</td></tr>`).join('');
-        popup.document.write(`<!doctype html><title>ANNS Customer Order History</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial;color:#29231f}h1{font:24px Georgia}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ddd;text-align:left;vertical-align:top}th{background:#f1ece7}small{color:#6f6862}</style><h1>ANNS Customer Order History</h1><p>Generated ${new Date().toLocaleString('en-IN')} · Paid orders only</p><table><thead><tr><th>Customer</th><th>Order</th><th>Product / code</th><th>Qty</th><th>Amount</th><th>Status / tracking</th></tr></thead><tbody>${body}</tbody></table><script>window.print()</script>`);
+        popup.document.write(`<!doctype html><title>ANNS Customer Order History</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial;color:#29231f}h1{font:24px Georgia}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ddd;text-align:left;vertical-align:top}th{background:#f1ece7}small{color:#6f6862}</style><h1>ANNS Customer Order History</h1><p>Generated ${new Date().toLocaleString('en-IN')} · Paid orders only</p><table><thead><tr><th>Customer</th><th>Order</th><th>Product / code</th><th>Qty</th><th>Amount</th><th>Status / tracking</th></tr></thead><tbody>${body}</tbody></table>`);
         popup.document.close();
+        window.setTimeout(() => popup.print(), 100);
     };
 
     const downloadJson = () => {
