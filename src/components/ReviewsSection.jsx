@@ -39,7 +39,7 @@ const ReviewsSection = ({ featured = false, productId = '', title = 'What our cu
         )
         : visibleReviews;
 
-    if (!loading && !visibleReviews.length) return null;
+    if (!loading && !visibleReviews.length && !featured) return null;
 
     return (
         <section id="customer-reviews" className="testimonials-section" aria-labelledby="testimonials-title">
@@ -49,7 +49,13 @@ const ReviewsSection = ({ featured = false, productId = '', title = 'What our cu
                     <h2 id="testimonials-title">{title}</h2>
                     <span>Testimonials shared directly with A.S. Trends &amp; Gifts.</span>
                 </div>
-                {loading ? <div className="testimonials-loading">Loading customer reviews…</div> : featured ? (
+                {loading ? <div className="testimonials-loading">Loading customer reviews…</div> : !visibleReviews.length ? (
+                    <div className="testimonials-empty">
+                        <span className="testimonials-empty-stars" aria-hidden="true">★★★★★</span>
+                        <h3>Customer stories are coming soon</h3>
+                        <p>Real experiences shared by our customers will appear here.</p>
+                    </div>
+                ) : featured ? (
                     <div className="testimonials-marquee" role="region" aria-label="Sliding customer reviews">
                         <div className="testimonials-track">
                             <div className="testimonials-group">
