@@ -1,0 +1,28 @@
+.flash-sale-section { padding: 78px 0; background: #241814; color: #fff; }
+.flash-sale-header { display: flex; min-height: 210px; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 28px; padding: clamp(28px, 5vw, 58px); border: 1px solid rgba(255,255,255,.15); border-radius: 20px; background: radial-gradient(circle at 85% 15%, #8d4425 0, transparent 34%), linear-gradient(135deg, #3b2118, #191210); background-position: center; background-size: cover; }
+.flash-sale-badge { display: inline-flex; align-items: center; gap: 7px; color: #ffd1a3; font-size: .72rem; font-weight: 700; letter-spacing: .18em; }
+.flash-sale-header h2 { margin: 12px 0 8px; color: #fff; font: 400 clamp(2.25rem, 5vw, 4.3rem)/1 var(--font-heading); }
+.flash-sale-header p { max-width: 620px; margin: 0; color: rgba(255,255,255,.75); line-height: 1.65; }
+.flash-sale-ends { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; background: rgba(0,0,0,.22); color: #fff1e4; font-size: .8rem; }
+.flash-sale-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.flash-sale-card { overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,.11); border-radius: 14px; background: #fff; color: #2a211d; }
+.flash-sale-product-link { color: inherit; text-decoration: none; }
+.flash-sale-image { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #eee9e5; }
+.flash-sale-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
+.flash-sale-card:hover .flash-sale-image img { transform: scale(1.04); }
+.flash-sale-image > span { position: absolute; top: 12px; left: 12px; padding: 7px 10px; border-radius: 5px; background: #b4372b; color: #fff; font-size: .72rem; font-weight: 800; letter-spacing: .05em; }
+.flash-sale-copy { padding: 18px 18px 14px; }
+.flash-sale-copy > small { color: #a4765f; font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; }
+.flash-sale-copy h3 { min-height: 2.5em; margin: 6px 0 12px; color: #2c2521; font-size: .95rem; font-weight: 500; line-height: 1.25; }
+.flash-sale-prices { display: flex; align-items: baseline; gap: 9px; }
+.flash-sale-prices strong { color: #a72c25; font-size: 1.18rem; }
+.flash-sale-prices del { color: #8f8580; font-size: .86rem; }
+.flash-sale-saving { display: block; margin-top: 5px; color: #317348; font-size: .72rem; font-weight: 600; }
+.flash-sale-card > button { display: flex; width: calc(100% - 36px); align-items: center; justify-content: center; gap: 8px; margin: 0 18px 18px; padding: 11px; border: 0; border-radius: 7px; background: #281e1a; color: #fff; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 600; }
+@media (max-width: 980px) { .flash-sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+    .flash-sale-section { padding: 58px 0; }
+    .flash-sale-header { min-height: 240px; align-items: flex-start; flex-direction: column; justify-content: flex-end; }
+    .flash-sale-grid { display: flex; overflow-x: auto; margin-right: -15px; padding-right: 15px; scrollbar-width: none; }
+    .flash-sale-card { width: min(76vw, 290px); flex: 0 0 auto; }
+}

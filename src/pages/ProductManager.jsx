@@ -20,6 +20,7 @@ import {
     Users,
     Mail,
     MessageSquareQuote,
+    BadgePercent,
     ImagePlus,
     Star,
     Phone,
@@ -37,6 +38,8 @@ import {
     deleteCustomersFromDatabase,
     deleteProductsFromDatabase,
     deleteReviewsFromDatabase,
+    deleteFlashSale,
+    getAdminFlashSale,
     getAdminReviews,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
@@ -44,6 +47,7 @@ import {
     hasAdminKey,
     saveProductsToDatabase,
     saveReviewToDatabase,
+    saveFlashSale,
     updateOrderFulfillment,
     verifyAdminKey,
 } from '../services/apiClient';
@@ -69,6 +73,24 @@ const getInitialReviewForm = () => ({
     featured: true,
     published: true,
 });
+const getInitialFlashSaleForm = () => ({
+    id: 'homepage',
+    title: 'Festival Flash Sale',
+    subtitle: 'Limited-time prices on selected favourites.',
+    badge: 'LIMITED TIME',
+    bannerImage: '',
+    startsAt: '',
+    endsAt: '',
+    active: false,
+    items: [],
+});
+const toLocalDateTimeInput = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
 
 const getInitialFormData = () => ({
     id: '',
@@ -211,7 +233,7 @@ const ProductManager = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const initialParams = new URLSearchParams(window.location.search);
-    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'import', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
     const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -235,8 +257,12 @@ const ProductManager = () => {
     const [reviewForm, setReviewForm] = useState(getInitialReviewForm);
     const [reviewSearch, setReviewSearch] = useState('');
     const [reviewSaving, setReviewSaving] = useState(false);
+    const [flashSale, setFlashSale] = useState(getInitialFlashSaleForm);
+    const [flashSaleProductId, setFlashSaleProductId] = useState('');
+    const [flashSaleSaving, setFlashSaleSaving] = useState(false);
     const fileInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
+    const flashSaleImageInputRef = useRef(null);
     const linkedOrderId = initialParams.get('order') || '';
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
@@ -320,6 +346,22 @@ const ProductManager = () => {
             setDatabaseStatus('connected');
         } catch (error) {
             setNotification(error.message || 'Reviews could not be loaded.');
+        }
+    };
+
+    const refreshFlashSale = async () => {
+        try {
+            const sale = await getAdminFlashSale();
+            setFlashSale({
+                ...getInitialFlashSaleForm(),
+                ...(sale || {}),
+                startsAt: toLocalDateTimeInput(sale?.startsAt),
+                endsAt: toLocalDateTimeInput(sale?.endsAt),
+                items: Array.isArray(sale?.items) ? sale.items : [],
+            });
+            setDatabaseStatus('connected');
+        } catch (error) {
+            setNotification(error.message || 'Flash sale could not be loaded.');
         }
     };
 
@@ -416,6 +458,7 @@ const ProductManager = () => {
         void refreshProductsFromDatabase();
         void refreshCustomerData();
         void refreshReviews();
+        void refreshFlashSale();
         const interval = window.setInterval(() => { void refreshProductsFromDatabase(); }, 30000);
         const onVisibilityChange = () => {
             if (document.visibilityState === 'visible') void refreshProductsFromDatabase();
@@ -475,7 +518,7 @@ const ProductManager = () => {
             setIsAuthenticated(true);
             setLoginError('');
             setDatabaseStatus('connected');
-            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews()]);
+            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews(), refreshFlashSale()]);
         } catch {
             setLoginError('Incorrect admin password.');
         }
@@ -547,6 +590,59 @@ const ProductManager = () => {
             setNotification(error.message || 'The review could not be deleted.');
         }
         window.setTimeout(() => setNotification(''), 3000);
+    };
+
+    const handleFlashSaleImage = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setNotification('Choose a JPG, PNG or WebP banner smaller than 12 MB.');
+            return;
+        }
+        try {
+            setNotification('Preparing sale banner…');
+            const bannerImage = await compressImageFile(file);
+            setFlashSale((current) => ({ ...current, bannerImage }));
+            setNotification('Sale banner is ready. Save the sale to publish it.');
+        } catch (error) { setNotification(error.message || 'The banner could not be prepared.'); }
+    };
+
+    const addFlashSaleProduct = () => {
+        if (!flashSaleProductId || flashSale.items.some((item) => item.productId === flashSaleProductId)) return;
+        const product = allProducts.find((item) => item.id === flashSaleProductId);
+        if (!product) return;
+        const regularPrice = toNumber(product.price);
+        setFlashSale((current) => ({
+            ...current,
+            items: [...current.items, { productId: flashSaleProductId, salePrice: Math.max(1, Math.round(regularPrice * .9)) }],
+        }));
+        setFlashSaleProductId('');
+    };
+
+    const submitFlashSale = async (event) => {
+        event.preventDefault();
+        setFlashSaleSaving(true);
+        try {
+            const payload = {
+                ...flashSale,
+                startsAt: flashSale.startsAt ? new Date(flashSale.startsAt).toISOString() : '',
+                endsAt: flashSale.endsAt ? new Date(flashSale.endsAt).toISOString() : '',
+            };
+            const result = await saveFlashSale(payload);
+            setFlashSale((current) => ({ ...current, ...result.sale, startsAt: toLocalDateTimeInput(result.sale.startsAt), endsAt: toLocalDateTimeInput(result.sale.endsAt) }));
+            setNotification(result.sale.active ? 'Flash sale saved and published on the homepage.' : 'Flash sale saved as inactive.');
+        } catch (error) { setNotification(error.message || 'The flash sale could not be saved.'); }
+        finally { setFlashSaleSaving(false); window.setTimeout(() => setNotification(''), 4000); }
+    };
+
+    const clearFlashSale = async () => {
+        if (!window.confirm('Remove the flash sale configuration from the website?')) return;
+        try {
+            await deleteFlashSale();
+            setFlashSale(getInitialFlashSaleForm());
+            setNotification('Flash sale removed. Regular product prices remain unchanged.');
+        } catch (error) { setNotification(error.message || 'The flash sale could not be removed.'); }
     };
 
     const openProduct = (product) => {
@@ -942,6 +1038,7 @@ const ProductManager = () => {
         { id: 'orders', label: 'Orders', icon: ReceiptText },
         { id: 'customers', label: 'Customers', icon: Users },
         { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
+        { id: 'flash-sale', label: 'Flash sale', icon: BadgePercent },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
         { id: 'editor', label: selectedProductId === 'new' ? 'Add product' : 'Edit product', icon: Edit3 },
     ];
@@ -951,6 +1048,7 @@ const ProductManager = () => {
         if (view === 'customers') refreshCustomerData();
         if (view === 'orders') refreshCustomerData();
         if (view === 'reviews') refreshReviews();
+        if (view === 'flash-sale') refreshFlashSale();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
     };
 
@@ -1286,6 +1384,58 @@ const ProductManager = () => {
                             </section>
                         </section>
                     </div>
+                )}
+
+                {activeView === 'flash-sale' && (
+                    <form className="admin-view-stack" onSubmit={submitFlashSale}>
+                        <section className="admin-panel flash-sale-editor">
+                            <div className="admin-panel-heading">
+                                <div><p className="admin-kicker">HOMEPAGE CAMPAIGN</p><h2>Festival flash sale</h2></div>
+                                <label className="flash-sale-active"><input type="checkbox" checked={flashSale.active} onChange={(event) => setFlashSale((current) => ({ ...current, active: event.target.checked }))} /><span>{flashSale.active ? 'Active' : 'Inactive'}</span></label>
+                            </div>
+                            <p className="review-editor-intro">Choose existing products and set a lower sale price. Checkout verifies the active discount on the server before creating the Razorpay order.</p>
+                            <div className="editor-form-grid">
+                                <label>Sale title<input value={flashSale.title} maxLength="120" required onChange={(event) => setFlashSale((current) => ({ ...current, title: event.target.value }))} placeholder="Diwali Flash Sale" /></label>
+                                <label>Badge text<input value={flashSale.badge} maxLength="40" onChange={(event) => setFlashSale((current) => ({ ...current, badge: event.target.value }))} placeholder="DIWALI DEALS" /></label>
+                                <label className="full-width">Short message<input value={flashSale.subtitle} maxLength="240" onChange={(event) => setFlashSale((current) => ({ ...current, subtitle: event.target.value }))} placeholder="Celebrate with limited-time festive prices" /></label>
+                                <label>Starts<input type="datetime-local" value={flashSale.startsAt} onChange={(event) => setFlashSale((current) => ({ ...current, startsAt: event.target.value }))} /></label>
+                                <label>Ends<input type="datetime-local" value={flashSale.endsAt} onChange={(event) => setFlashSale((current) => ({ ...current, endsAt: event.target.value }))} /></label>
+                            </div>
+                            <div className="flash-sale-banner-uploader">
+                                <input ref={flashSaleImageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFlashSaleImage} />
+                                {flashSale.bannerImage ? <div className="flash-sale-banner-preview"><img src={flashSale.bannerImage} alt="Flash sale banner preview" /><button type="button" onClick={() => setFlashSale((current) => ({ ...current, bannerImage: '' }))}><Trash2 size={16} /> Remove banner</button></div> : <button type="button" className="review-upload-button" onClick={() => flashSaleImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add festival banner image</strong><small>Optional · the layout also works without an image</small></button>}
+                            </div>
+                        </section>
+
+                        <section className="admin-panel flash-sale-products-editor">
+                            <div className="admin-panel-heading"><div><p className="admin-kicker">DISCOUNTED PRODUCTS</p><h2>{flashSale.items.length} sale item{flashSale.items.length === 1 ? '' : 's'}</h2></div></div>
+                            <div className="flash-sale-product-picker">
+                                <select value={flashSaleProductId} onChange={(event) => setFlashSaleProductId(event.target.value)}>
+                                    <option value="">Select a product</option>
+                                    {allProducts.filter((product) => !flashSale.items.some((item) => item.productId === product.id)).map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id} · {formatCurrency(product.price)}</option>)}
+                                </select>
+                                <button type="button" className="admin-secondary-button" onClick={addFlashSaleProduct} disabled={!flashSaleProductId}><Plus size={17} /> Add product</button>
+                            </div>
+                            <div className="flash-sale-admin-list">
+                                {flashSale.items.map((item) => {
+                                    const product = allProducts.find((entry) => entry.id === item.productId);
+                                    const regularPrice = toNumber(product?.price);
+                                    const salePrice = toNumber(item.salePrice);
+                                    const percent = regularPrice > salePrice && regularPrice ? Math.round((1 - salePrice / regularPrice) * 100) : 0;
+                                    return <article key={item.productId}>
+                                        {product?.image && <img src={product.image} alt="" />}
+                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · Regular {formatCurrency(regularPrice)}</small></div>
+                                        <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value } : entry) }))} /></label>
+                                        <span className={percent > 0 ? 'valid' : 'invalid'}>{percent > 0 ? `${percent}% off` : 'Must be lower'}</span>
+                                        <button type="button" className="delete" title="Remove from sale" onClick={() => setFlashSale((current) => ({ ...current, items: current.items.filter((entry) => entry.productId !== item.productId) }))}><Trash2 size={17} /></button>
+                                    </article>;
+                                })}
+                            </div>
+                            {!flashSale.items.length && <div className="admin-empty-state"><BadgePercent size={29} /><p>Add products and enter their sale prices. Original catalog prices remain unchanged.</p></div>}
+                        </section>
+
+                        <div className="editor-save-bar"><p>Only an active sale within its scheduled dates appears on the homepage.</p><div className="editor-save-actions"><button type="button" className="admin-danger-button" onClick={clearFlashSale}><Trash2 size={18} /> Clear sale</button><button type="submit" className="admin-primary-button" disabled={flashSaleSaving}><Save size={18} /> {flashSaleSaving ? 'Saving…' : 'Save flash sale'}</button></div></div>
+                    </form>
                 )}
 
                 {activeView === 'import' && (

@@ -57,6 +57,8 @@ export const approveOrderCancellation = (id) => request('orders', {
 });
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
+export const getFlashSale = () => request('flash-sale');
+export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true });
 
 export const sendContactMessage = (message) => request('contact', {
   method: 'POST',
@@ -73,6 +75,17 @@ export const deleteReviewsFromDatabase = (ids) => request('admin/reviews', {
   method: 'DELETE',
   admin: true,
   body: JSON.stringify({ ids }),
+});
+
+export const saveFlashSale = (sale) => request('admin/flash-sale', {
+  method: 'POST',
+  admin: true,
+  body: JSON.stringify({ sale }),
+});
+
+export const deleteFlashSale = () => request('admin/flash-sale', {
+  method: 'DELETE',
+  admin: true,
 });
 
 export const deleteCustomersFromDatabase = (ids) => request('customers', {

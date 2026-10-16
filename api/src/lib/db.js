@@ -45,6 +45,8 @@ const ensureIndexes = async (db) => {
       db.collection('reviews').createIndex({ id: 1 }, { unique: true }),
       db.collection('reviews').createIndex({ published: 1, featured: 1, reviewDate: -1 }),
       db.collection('reviews').createIndex({ productId: 1, published: 1, reviewDate: -1 }),
+      db.collection('flashSales').createIndex({ id: 1 }, { unique: true }),
+      db.collection('flashSales').createIndex({ active: 1, startsAt: 1, endsAt: 1 }),
     ]).catch((error) => {
       indexesPromise = undefined;
       throw error;

@@ -84,6 +84,28 @@ const normalizeReview = (review = {}) => ({
   published: review.published !== false,
   source: 'customer',
 });
+const normalizeFlashSale = (sale = {}) => ({
+  id: 'homepage',
+  title: cleanText(sale.title, 120) || 'Flash Sale',
+  subtitle: cleanText(sale.subtitle, 240),
+  badge: cleanText(sale.badge, 40) || 'LIMITED TIME',
+  bannerImage: normalizeReviewImage(sale.bannerImage),
+  startsAt: cleanText(sale.startsAt, 30),
+  endsAt: cleanText(sale.endsAt, 30),
+  active: sale.active === true,
+  items: (Array.isArray(sale.items) ? sale.items : []).slice(0, 24).map((item) => ({
+    productId: cleanText(item.productId, 100),
+    salePrice: Number(numericPrice(item.salePrice).toFixed(2)),
+  })).filter((item) => item.productId && Number.isFinite(item.salePrice) && item.salePrice > 0),
+});
+const isFlashSaleActive = (sale, at = new Date()) => {
+  if (!sale?.active) return false;
+  const startsAt = sale.startsAt ? new Date(sale.startsAt) : null;
+  const endsAt = sale.endsAt ? new Date(sale.endsAt) : null;
+  if (startsAt && !Number.isNaN(startsAt.getTime()) && at < startsAt) return false;
+  if (endsAt && !Number.isNaN(endsAt.getTime()) && at > endsAt) return false;
+  return true;
+};
 const normalizeProduct = (product) => {
   const stock = nonNegativeInteger(product.stock ?? product.totalStock ?? product.quantity);
   const sold = Math.min(stock, nonNegativeInteger(product.sold ?? product.unitsSold));
@@ -824,6 +846,69 @@ registerHttp('admin-reviews', {
   },
 });
 
+registerHttp('flash-sale', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'flash-sale',
+  handler: async (_request, context) => {
+    try {
+      const db = await getDb();
+      const sale = await db.collection('flashSales').findOne({ id: 'homepage' });
+      return json(sale && isFlashSaleActive(sale) ? cleanDocument(sale) : null);
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('admin-flash-sale', {
+  methods: ['GET', 'POST', 'DELETE'],
+  authLevel: 'anonymous',
+  route: 'admin/flash-sale',
+  handler: async (request, context) => {
+    try {
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+      const db = await getDb();
+      const collection = db.collection('flashSales');
+
+      if (request.method === 'GET') {
+        return json(cleanDocument(await collection.findOne({ id: 'homepage' }) || normalizeFlashSale()));
+      }
+      if (request.method === 'DELETE') {
+        await collection.deleteOne({ id: 'homepage' });
+        return json({ ok: true });
+      }
+
+      const body = await parseJson(request);
+      const sale = normalizeFlashSale(body?.sale || body);
+      const productIds = [...new Set(sale.items.map((item) => item.productId))];
+      const products = productIds.length
+        ? await db.collection('products').find({ id: { $in: productIds } }, { projection: { id: 1, price: 1 } }).toArray()
+        : [];
+      const prices = new Map(products.map((product) => [String(product.id), numericPrice(product.price)]));
+      for (const item of sale.items) {
+        const originalPrice = prices.get(item.productId);
+        if (!Number.isFinite(originalPrice)) return json({ error: `Product ${item.productId} was not found` }, 400);
+        if (item.salePrice >= originalPrice) return json({ error: `Sale price for ${item.productId} must be lower than its regular price` }, 400);
+      }
+      if (sale.active && !sale.items.length) return json({ error: 'Add at least one product before activating the flash sale' }, 400);
+      if (sale.startsAt && sale.endsAt && new Date(sale.startsAt) >= new Date(sale.endsAt)) {
+        return json({ error: 'The sale end must be after its start' }, 400);
+      }
+      const operationTime = nowIso();
+      await collection.updateOne(
+        { id: 'homepage' },
+        { $set: { ...sale, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        { upsert: true },
+      );
+      return json({ ok: true, sale: cleanDocument(await collection.findOne({ id: 'homepage' })) });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('customers', {
   methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',
@@ -908,11 +993,21 @@ registerHttp('razorpay-create-order', {
       const productIds = [...new Set(requestedItems.map((item) => cleanText(item.id, 100)).filter(Boolean))];
       const products = await db.collection('products').find({ id: { $in: productIds } }).toArray();
       const productsById = new Map(products.map((product) => [String(product.id), product]));
+      const flashSale = await db.collection('flashSales').findOne({ id: 'homepage' });
+      const activeSalePrices = new Map(
+        isFlashSaleActive(flashSale)
+          ? flashSale.items.map((item) => [String(item.productId), numericPrice(item.salePrice)])
+          : [],
+      );
       const items = requestedItems.map((requestedItem) => {
         const id = cleanText(requestedItem.id, 100);
         const product = productsById.get(id);
         const quantity = Math.max(1, Math.min(20, Math.trunc(Number(requestedItem.quantity) || 1)));
-        const price = numericPrice(product?.price);
+        const regularPrice = numericPrice(product?.price);
+        const configuredSalePrice = activeSalePrices.get(id);
+        const price = Number.isFinite(configuredSalePrice) && configuredSalePrice > 0 && configuredSalePrice < regularPrice
+          ? configuredSalePrice
+          : regularPrice;
         if (!product || !Number.isFinite(price) || price <= 0) {
           const error = new Error(`Product ${id || 'unknown'} is unavailable`);
           error.status = 400;
