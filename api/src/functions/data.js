@@ -97,6 +97,40 @@ const normalizeProduct = (product) => {
     available: stock > sold ? 'In Stock' : 'Out of Stock',
   };
 };
+const dataImagePattern = /^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=\r\n]+)$/i;
+const productImageUrl = (productId, index, version) => `/api/product-image?id=${encodeURIComponent(productId)}&index=${index}&v=${version}`;
+const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()) => {
+  const product = { ...rawProduct };
+  const productId = cleanText(product.id, 100);
+  if (!productId) return product;
+  const values = [product.image, ...normalizeList(product.otherImages)].slice(0, 5);
+  const storedValues = [];
+  const imageOperations = [];
+
+  values.forEach((value, index) => {
+    const image = String(value || '').trim();
+    const match = image.match(dataImagePattern);
+    if (!match) {
+      storedValues.push(image);
+      return;
+    }
+    const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
+    const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
+    imageOperations.push({
+      updateOne: {
+        filter: { productId, index },
+        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        upsert: true,
+      },
+    });
+    storedValues.push(productImageUrl(productId, index, version));
+  });
+
+  if (imageOperations.length) await db.collection('productImages').bulkWrite(imageOperations, { ordered: false });
+  product.image = storedValues[0] || '';
+  product.otherImages = storedValues.slice(1).filter(Boolean);
+  return product;
+};
 const registeredRoutes = [];
 const registerHttp = (name, config) => {
   registeredRoutes.push({ name, ...config });
@@ -628,7 +662,22 @@ registerHttp('products', {
       const collection = db.collection('products');
 
       if (request.method === 'GET') {
-        const products = await collection.find({}).sort({ category: 1, id: 1 }).toArray();
+        // Do not ask MongoDB to sort image-heavy legacy documents in memory.
+        // Older uploads stored base64 data directly in the product record and
+        // can exceed Atlas' 32 MB sort limit. Move those images into a dedicated
+        // collection on read, then return a small, cacheable catalog payload.
+        let products = await collection.find({}).toArray();
+        const migrated = await Promise.all(products.map(async (rawProduct) => {
+          if (!String(rawProduct.image || '').startsWith('data:image/')
+            && !normalizeList(rawProduct.otherImages).some((image) => String(image).startsWith('data:image/'))) return rawProduct;
+          const product = await externalizeProductImages(db, rawProduct);
+          await collection.updateOne(
+            { _id: rawProduct._id },
+            { $set: { image: product.image, otherImages: product.otherImages, updatedAt: nowIso() } },
+          );
+          return { ...rawProduct, image: product.image, otherImages: product.otherImages };
+        }));
+        products = migrated.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
         return json(products.map(cleanDocument));
       }
 
@@ -647,10 +696,11 @@ registerHttp('products', {
       if (!Array.isArray(productList) || !productList.length) return json({ error: 'Products array is required' }, 400);
 
       const operationTime = nowIso();
-      const operations = productList
+      const preparedProducts = await Promise.all(productList
         .filter((product) => product?.id && product?.name && product?.category)
-        .map((rawProduct) => {
-          const product = normalizeProduct(rawProduct);
+        .map((rawProduct) => externalizeProductImages(db, normalizeProduct(rawProduct), operationTime)));
+      const operations = preparedProducts
+        .map((product) => {
           return ({
           updateOne: {
             filter: { id: String(product.id) },
@@ -662,6 +712,36 @@ registerHttp('products', {
       if (!operations.length) return json({ error: 'No valid products supplied' }, 400);
       const result = await collection.bulkWrite(operations, { ordered: false });
       return json({ ok: true, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('product-image', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'product-image',
+  handler: async (request, context) => {
+    try {
+      const url = new URL(request.url);
+      const productId = cleanText(url.searchParams.get('id'), 100);
+      const index = Number(url.searchParams.get('index'));
+      if (!productId || !Number.isInteger(index) || index < 0 || index > 4) return json({ error: 'Image was not found' }, 404);
+      const db = await getDb();
+      const image = await db.collection('productImages').findOne({ productId, index });
+      if (!image?.data) return json({ error: 'Image was not found' }, 404);
+      const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+      return {
+        status: 200,
+        body: data,
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'Content-Type': image.contentType || 'image/jpeg',
+          'Content-Length': String(data.length),
+          'X-Content-Type-Options': 'nosniff',
+        },
+      };
     } catch (error) {
       return handleError(context, error);
     }

@@ -30,6 +30,8 @@ const ensureIndexes = async (db) => {
   if (!indexesPromise) {
     indexesPromise = Promise.all([
       db.collection('products').createIndex({ id: 1 }, { unique: true }),
+      db.collection('products').createIndex({ category: 1, id: 1 }),
+      db.collection('productImages').createIndex({ productId: 1, index: 1 }, { unique: true }),
       db.collection('customers').createIndex({ id: 1 }, { unique: true }),
       db.collection('customers').createIndex(
         { normalizedEmail: 1 },
