@@ -14,6 +14,7 @@ import { businessContact } from '../config/contact';
 import { useReviews } from '../context/ReviewContext';
 import ReviewsSection from '../components/ReviewsSection';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
+import { productImageVariant } from '../utils/imageUrl';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -114,6 +115,10 @@ const ProductDetails = () => {
         const filename = path.split('/').pop();
         return images[filename] || path;
     };
+    const getImageVariant = (path, variant) => {
+        const resolved = getImageSrc(path);
+        return resolved === path ? productImageVariant(path, variant) : resolved;
+    };
 
     return (
         <div className="product-details-page container">
@@ -153,7 +158,7 @@ const ProductDetails = () => {
                             e.currentTarget.style.setProperty('--bg-y', `${bgY}%`);
                         }}
                     >
-                        <img src={getImageSrc(selectedImage || product.images[0])} alt={product.name} decoding="async" />
+                        <img src={getImageVariant(selectedImage || product.images[0], 'listing')} alt={product.name} decoding="async" />
                         <div className="magnifier-lens"></div>
                         <div
                             className="zoom-window"
@@ -166,7 +171,7 @@ const ProductDetails = () => {
                         {product.images.map((img, index) => (
                             <img
                                 key={index}
-                                src={getImageSrc(img)}
+                                src={getImageVariant(img, 'thumbnail')}
                                 alt={`View ${index + 1}`}
                                 loading="lazy"
                                 decoding="async"

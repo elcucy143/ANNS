@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock3, ShoppingBag, Sparkles } from 'lucide-react';
 import images from '../assets/images';
-import { productImageVariant } from '../utils/imageUrl';
+import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
 import { useCart } from '../context/CartContext';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
@@ -70,7 +70,14 @@ const FlashSaleSection = () => {
                             <article className="flash-sale-card" key={product.id}>
                                 <Link to={`/product/${product.id}`} className="flash-sale-product-link">
                                     <div className="flash-sale-image">
-                                        <img src={images[filename] || productImageVariant(product.image, 'card')} alt={product.name} loading="lazy" decoding="async" />
+                                        <img
+                                            src={images[filename] || productImageVariant(product.image, 'card')}
+                                            srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}
+                                            sizes="(max-width: 600px) 88vw, (max-width: 900px) 44vw, 280px"
+                                            alt={product.name}
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
                                         <span>{product.discountPercent}% OFF</span>
                                     </div>
                                     <div className="flash-sale-copy">

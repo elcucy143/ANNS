@@ -6,7 +6,7 @@ import './ProductCarousel.css';
 import images from '../assets/images';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { useCart } from '../context/CartContext';
-import { productImageVariant } from '../utils/imageUrl';
+import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
 
 // Flatten products from all categories and filter those marked as featured
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
@@ -27,7 +27,14 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                                 <div key={product.id} className="carousel-card">
                                     <Link to={`/product/${product.id}`} className="carousel-product-link">
                                         <div className="product-image">
-                                            <img src={images[filename] || productImageVariant(product.image, 'card')} alt={product.name} loading="lazy" decoding="async" />
+                                            <img
+                                                src={images[filename] || productImageVariant(product.image, 'card')}
+                                                srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}
+                                                sizes="(max-width: 600px) 72vw, (max-width: 1000px) 38vw, 280px"
+                                                alt={product.name}
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
                                             <button
                                                 className="add-to-cart-btn"
                                                 onClick={(e) => {
