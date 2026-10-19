@@ -62,9 +62,9 @@ const MAX_PRODUCT_IMAGES = 5;
 const PRODUCT_SAVE_BATCH_SIZE = 100;
 const MAX_SOURCE_IMAGE_BYTES = 75 * 1024 * 1024;
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
-const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 const isSupportedImageFile = (file) => SUPPORTED_IMAGE_TYPES.has(String(file?.type || '').toLowerCase())
-    || /\.(?:jpe?g|png|webp)$/i.test(String(file?.name || ''));
+    || /\.(?:jpe?g|png|webp|heic|heif)$/i.test(String(file?.name || ''));
 const getInitialReviewForm = () => ({
     id: '',
     reviewerName: '',
@@ -200,7 +200,7 @@ const readBlobAsDataUrl = (blob) => new Promise((resolve, reject) => {
 });
 
 const compressImageFile = (file) => new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
+    let objectUrl = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => {
         URL.revokeObjectURL(objectUrl);
@@ -222,9 +222,24 @@ const compressImageFile = (file) => new Promise((resolve, reject) => {
         }, 'image/jpeg', quality);
         encode(0.84);
     };
-    image.onerror = () => {
+    image.onerror = async () => {
         URL.revokeObjectURL(objectUrl);
-        reject(new Error(`${file.name} is not a supported image`));
+        try {
+            // Some WhatsApp/iPhone downloads keep a .jpeg filename while the
+            // bytes are HEIC/HEIF. Normalize that encoding before compression.
+            const { default: heic2any } = await import('heic2any');
+            const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+            const normalizedBlob = Array.isArray(converted) ? converted[0] : converted;
+            if (!(normalizedBlob instanceof Blob)) throw new Error('Conversion produced no image');
+            objectUrl = URL.createObjectURL(normalizedBlob);
+            image.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error(`${file.name} could not be decoded. Ask the sender to resend it as a photo or PNG.`));
+            };
+            image.src = objectUrl;
+        } catch {
+            reject(new Error(`${file.name} could not be decoded. Ask the sender to resend it as a photo or PNG.`));
+        }
     };
     image.src = objectUrl;
 });
@@ -562,7 +577,7 @@ const ProductManager = () => {
         event.target.value = '';
         if (!file) return;
         if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPEG, PNG or WebP review image smaller than 75 MB.');
+            setNotification('Choose a JPEG, PNG, WebP or iPhone/HEIC review image smaller than 75 MB.');
             return;
         }
         try {
@@ -609,7 +624,7 @@ const ProductManager = () => {
         event.target.value = '';
         if (!file) return;
         if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPEG, PNG or WebP banner smaller than 75 MB.');
+            setNotification('Choose a JPEG, PNG, WebP or iPhone/HEIC banner smaller than 75 MB.');
             return;
         }
         try {
@@ -710,7 +725,7 @@ const ProductManager = () => {
         }
         if (!files.length) return;
         if (files.some((file) => !isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES)) {
-            setNotification('Choose JPEG, PNG or WebP images smaller than 75 MB each.');
+            setNotification('Choose JPEG, PNG, WebP or iPhone/HEIC images smaller than 75 MB each.');
             window.setTimeout(() => setNotification(''), 3000);
             return;
         }
@@ -1380,7 +1395,7 @@ const ProductManager = () => {
                                     <label className="full-width">Related product (optional)<select value={reviewForm.productId} onChange={(event) => setReviewForm((current) => ({ ...current, productId: event.target.value }))}><option value="">General store review</option>{allProducts.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id}</option>)}</select><small>Product-linked reviews also appear on that product page.</small></label>
                                 </div>
                                 <div className="review-image-uploader">
-                                    <input ref={reviewImageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleReviewImage} />
+                                    <input ref={reviewImageInputRef} className="visually-hidden" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={handleReviewImage} />
                                     {reviewForm.image ? <div className="review-image-preview"><img src={reviewForm.image} alt="Review preview" /><button type="button" onClick={() => setReviewForm((current) => ({ ...current, image: '' }))}><Trash2 size={16} /> Remove image</button></div> : <button type="button" className="review-upload-button" onClick={() => reviewImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add screenshot or customer photo</strong><small>Optional · WhatsApp screenshots are optimized automatically</small></button>}
                                 </div>
                                 <div className="review-publish-options">
@@ -1429,7 +1444,7 @@ const ProductManager = () => {
                                 <label>Ends<input type="datetime-local" value={flashSale.endsAt} onChange={(event) => setFlashSale((current) => ({ ...current, endsAt: event.target.value }))} /></label>
                             </div>
                             <div className="flash-sale-banner-uploader">
-                                <input ref={flashSaleImageInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFlashSaleImage} />
+                                <input ref={flashSaleImageInputRef} className="visually-hidden" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={handleFlashSaleImage} />
                                 {flashSale.bannerImage ? <div className="flash-sale-banner-preview"><img src={flashSale.bannerImage} alt="Flash sale banner preview" /><button type="button" onClick={() => setFlashSale((current) => ({ ...current, bannerImage: '' }))}><Trash2 size={16} /> Remove banner</button></div> : <button type="button" className="review-upload-button" onClick={() => flashSaleImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add festival banner image</strong><small>Optional · the layout also works without an image</small></button>}
                             </div>
                         </section>
@@ -1543,7 +1558,7 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
-                                    <label className="full-width image-upload-control">Upload images<input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={handleImageFiles} /><small>Select up to five JPEG, PNG or WebP images. HD files up to 75 MB each are resized and optimized automatically; the first image is the main product photo.</small></label>
+                                    <label className="full-width image-upload-control">Upload images<input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={handleImageFiles} /><small>Select up to five JPEG, PNG, WebP or iPhone/HEIC images. HD files up to 75 MB each are converted, resized and optimized automatically; the first image is the main product photo.</small></label>
                                     {[formData.image, ...formData.otherImages].filter(Boolean).length > 0 && <div className="editor-image-preview full-width">{[formData.image, ...formData.otherImages].filter(Boolean).map((image, index) => <figure key={`${image.slice(0, 40)}-${index}`}><img src={image} alt={`${formData.name || 'Product'} ${index + 1}`} /><figcaption>{index === 0 ? 'Main image' : `Gallery ${index}`}</figcaption><button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove ${index === 0 ? 'main image' : `gallery image ${index}`}`}><XCircle size={17} /></button></figure>)}</div>}
                                     <label className="full-width">Additional image URLs<textarea value={formData.otherImages.filter((image) => !image.startsWith('data:image/')).join('\n')} onChange={handleOtherImageUrls} rows="3" placeholder="One public image URL per line (optional)" /></label>
                                     <fieldset className="size-selector-control full-width">
