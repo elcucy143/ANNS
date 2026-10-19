@@ -1,6 +1,7 @@
 export const MAX_SOURCE_IMAGE_BYTES = 75 * 1024 * 1024;
 export const IMAGE_FILE_ACCEPT = 'image/*,.heic,.heif';
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
+const MAX_PASSTHROUGH_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export const isSupportedImageFile = (file) => Boolean(file) && (
   String(file.type || '').toLowerCase().startsWith('image/')
@@ -13,6 +14,24 @@ const readBlobAsDataUrl = (blob) => new Promise((resolve, reject) => {
   reader.onerror = () => reject(new Error('The prepared image could not be read.'));
   reader.readAsDataURL(blob);
 });
+
+const detectImageType = async (file) => {
+  const bytes = new Uint8Array(await file.slice(0, 32).arrayBuffer());
+  const ascii = String.fromCharCode(...bytes);
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  if (bytes[0] === 0x89 && ascii.slice(1, 4) === 'PNG') return 'image/png';
+  if (ascii.slice(0, 4) === 'RIFF' && ascii.slice(8, 12) === 'WEBP') return 'image/webp';
+  if (ascii.slice(0, 6) === 'GIF87a' || ascii.slice(0, 6) === 'GIF89a') return 'image/gif';
+  if (ascii.slice(0, 2) === 'BM') return 'image/bmp';
+  if (ascii.slice(4, 8) === 'ftyp') {
+    const brand = ascii.slice(8, 16).toLowerCase();
+    if (brand.includes('avif') || brand.includes('avis')) return 'image/avif';
+    if (/heic|heix|hevc|hevx|mif1|msf1/.test(brand)) return 'image/heic';
+  }
+  const prefix = new TextDecoder().decode(bytes).trimStart().toLowerCase();
+  if (prefix.startsWith('<svg') || prefix.startsWith('<?xml')) return 'image/svg+xml';
+  return '';
+};
 
 const loadDrawable = (blob) => new Promise((resolve, reject) => {
   const objectUrl = URL.createObjectURL(blob);
@@ -37,13 +56,17 @@ const normalizeHeic = async (file) => {
 };
 
 const decodeImage = async (file) => {
+  const detectedType = await detectImageType(file);
+  const normalizedFile = detectedType && detectedType !== file.type
+    ? new Blob([file], { type: detectedType })
+    : file;
   try {
-    return await loadDrawable(file);
+    return await loadDrawable(normalizedFile);
   } catch {
     // WhatsApp/iPhone downloads can have a .jpeg filename while their actual
     // bytes are HEIC/HEIF. A conversion attempt is safe for both explicit HEIC
     // files and mislabeled images; unsupported data is rejected afterwards.
-    return loadDrawable(await normalizeHeic(file));
+    return loadDrawable(await normalizeHeic(normalizedFile));
   }
 };
 
@@ -56,7 +79,15 @@ export const prepareImageFile = async (file) => {
   try {
     image = await decodeImage(file);
   } catch {
-    throw new Error(`${file.name} is damaged or uses an unsupported camera format. Resend it as a photo, JPEG or PNG.`);
+    // Review screenshots received through WhatsApp are occasionally wrapped in
+    // a way Safari cannot decode locally. Preserve their original bytes so the
+    // admin can still save them instead of blocking the workflow. The small
+    // ceiling keeps the MongoDB/API document safely below platform limits.
+    if (file.size <= MAX_PASSTHROUGH_IMAGE_BYTES) {
+      const detectedType = await detectImageType(file);
+      return readBlobAsDataUrl(new Blob([file], { type: detectedType || file.type || 'image/jpeg' }));
+    }
+    throw new Error(`${file.name} could not be compressed by this browser. Send the original file under 2 MB or export it once as JPEG/PNG.`);
   }
 
   const scale = Math.min(1, 1800 / image.naturalWidth, 2200 / image.naturalHeight);
