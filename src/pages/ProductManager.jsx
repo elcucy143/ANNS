@@ -62,6 +62,7 @@ const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
 const PRODUCT_SAVE_BATCH_SIZE = 100;
+const PRODUCT_SAVE_BATCH_BYTES = 2.5 * 1024 * 1024;
 const INVENTORY_PAGE_SIZE = 20;
 const FLASH_SALE_PAGE_SIZE = 10;
 const ORDERS_PAGE_SIZE = 10;
@@ -230,6 +231,9 @@ const ProductManager = () => {
     const [flashSale, setFlashSale] = useState(getInitialFlashSaleForm);
     const [flashSaleProductId, setFlashSaleProductId] = useState('');
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
+    const [bulkImageBusy, setBulkImageBusy] = useState(false);
+    const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [bulkStockValue, setBulkStockValue] = useState('');
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
     const [ordersPage, setOrdersPage] = useState(1);
@@ -237,6 +241,7 @@ const ProductManager = () => {
     const [reviewsPage, setReviewsPage] = useState(1);
     const [customerHistoryPage, setCustomerHistoryPage] = useState(1);
     const fileInputRef = useRef(null);
+    const bulkImageInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
     const flashSaleImageInputRef = useRef(null);
     const linkedOrderId = initialParams.get('order') || '';
@@ -491,10 +496,21 @@ const ProductManager = () => {
         if (hasAdminKey()) {
             try {
                 let saved = 0;
-                for (let offset = 0; offset < changedProducts.length; offset += PRODUCT_SAVE_BATCH_SIZE) {
-                    const batch = changedProducts.slice(offset, offset + PRODUCT_SAVE_BATCH_SIZE);
+                const batches = changedProducts.reduce((groups, product) => {
+                    const size = new Blob([JSON.stringify(product)]).size;
+                    const current = groups.at(-1);
+                    if (!current || current.items.length >= PRODUCT_SAVE_BATCH_SIZE || (current.bytes + size > PRODUCT_SAVE_BATCH_BYTES && current.items.length)) {
+                        groups.push({ items: [product], bytes: size });
+                    } else {
+                        current.items.push(product);
+                        current.bytes += size;
+                    }
+                    return groups;
+                }, []);
+                for (const [batchIndex, group] of batches.entries()) {
+                    const batch = group.items;
                     setNotification(changedProducts.length > PRODUCT_SAVE_BATCH_SIZE
-                        ? `Saving products ${offset + 1}–${Math.min(offset + batch.length, changedProducts.length)} of ${changedProducts.length}…`
+                        ? `Saving batch ${batchIndex + 1} of ${batches.length}…`
                         : message);
                     const result = await saveProductsToDatabase(batch);
                     if (result.saved !== batch.length) throw new Error(`MongoDB confirmed ${saved + result.saved} of ${changedProducts.length} products. Retry the import; existing product IDs will update safely without creating duplicates.`);
@@ -827,6 +843,37 @@ const ProductManager = () => {
         window.setTimeout(() => setNotification(''), 3500);
     };
 
+    const applyBulkStock = async () => {
+        const stock = Number(bulkStockValue);
+        if (!selectedProductIds.length || !Number.isFinite(stock) || stock < 0) return setNotification('Select products and enter a valid total stock value.');
+        const selected = new Set(selectedProductIds);
+        const changedProducts = [];
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+            if (!selected.has(product.id)) return product;
+            const updated = { ...product, stock, available: Math.max(0, stock - toNumber(product.sold)) > 0 ? 'In Stock' : 'Out of Stock' };
+            changedProducts.push({ ...updated, category });
+            return updated;
+        })]));
+        await saveProducts(nextProducts, `Stock updated for ${changedProducts.length} products.`, changedProducts);
+        setSelectedProductIds([]);
+        setBulkStockValue('');
+    };
+
+    const addSelectedToFlashSale = () => {
+        if (!selectedProductIds.length) return;
+        const selected = new Set(selectedProductIds);
+        setFlashSale((current) => ({
+            ...current,
+            items: [...current.items, ...allProducts
+                .filter((product) => selected.has(product.id) && !current.items.some((item) => item.productId === product.id))
+                .map((product) => ({ productId: product.id, salePrice: Math.max(1, Math.round(toNumber(product.price) * .9)) }))],
+        }));
+        setSelectedProductIds([]);
+        setFlashSalePage(1);
+        setActiveView('flash-sale');
+        setNotification('Selected products were added with a suggested 10% discount. Review prices and save the flash sale.');
+    };
+
     const mapImportedRow = (rawRow, index) => {
         const row = normalizeHeaders(rawRow);
         const category = normalizeCategory(valueFrom(row, 'category'));
@@ -923,6 +970,60 @@ const ProductManager = () => {
         setActiveView('inventory');
     };
 
+    const handleBulkImageZip = async (event) => {
+        const zipFile = event.target.files?.[0];
+        if (!zipFile) return;
+        setBulkImageBusy(true);
+        setImportError('');
+        try {
+            const { default: JSZip } = await import('jszip');
+            const archive = await JSZip.loadAsync(zipFile);
+            const productById = new Map(allProducts.map((product) => [product.id.toLowerCase(), product]));
+            const productIds = [...productById.keys()].sort((first, second) => second.length - first.length);
+            const groupedFiles = new Map();
+            Object.values(archive.files)
+                .filter((entry) => !entry.dir && isSupportedImageFile({ name: entry.name, type: '' }))
+                .sort((first, second) => first.name.localeCompare(second.name, undefined, { numeric: true }))
+                .forEach((entry) => {
+                    const filename = entry.name.split('/').pop() || '';
+                    const stem = filename.replace(/\.[^.]+$/, '').toLowerCase();
+                    const productId = productIds.find((id) => stem === id || stem.startsWith(`${id}-`) || stem.startsWith(`${id}_`) || stem.startsWith(`${id}.`));
+                    if (productId) groupedFiles.set(productId, [...(groupedFiles.get(productId) || []), { entry, filename }]);
+                });
+
+            if (!groupedFiles.size) throw new Error('No images matched a product code. Name files like WW30111-1.jpg, WW30111-2.jpg.');
+            const replacements = new Map();
+            let preparedCount = 0;
+            for (const [productId, files] of groupedFiles) {
+                const prepared = [];
+                for (const { entry, filename } of files.slice(0, MAX_PRODUCT_IMAGES)) {
+                    const blob = await entry.async('blob');
+                    const imageFile = new File([blob], filename, { type: blob.type });
+                    prepared.push(await prepareImageFile(imageFile));
+                    preparedCount += 1;
+                    setNotification(`Preparing image ${preparedCount}…`);
+                }
+                if (prepared.length) replacements.set(productId, prepared);
+            }
+
+            const changedProducts = [];
+            const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+                const images = replacements.get(product.id.toLowerCase());
+                if (!images) return product;
+                const updated = { ...product, image: images[0], otherImages: images.slice(1) };
+                changedProducts.push({ ...updated, category });
+                return updated;
+            })]));
+            await saveProducts(nextProducts, `${preparedCount} images matched to ${changedProducts.length} products.`, changedProducts);
+            setNotification(`${preparedCount} images uploaded and matched to ${changedProducts.length} products.`);
+        } catch (error) {
+            setImportError(error.message || 'The image ZIP could not be processed.');
+        } finally {
+            setBulkImageBusy(false);
+            if (bulkImageInputRef.current) bulkImageInputRef.current.value = '';
+        }
+    };
+
     const downloadTemplate = async () => {
         const { utils, writeFileXLSX } = await import('xlsx');
         const templateRows = [{
@@ -975,6 +1076,17 @@ const ProductManager = () => {
         status: product.remainingValue === 0 ? 'Out of stock' : product.remainingValue <= LOW_STOCK_LIMIT ? 'Low stock' : 'Available',
         subcategories: parseList(product.subcategory).join(', '),
     })));
+
+    const downloadImportErrorsCsv = () => downloadCsv('ANNS-import-errors.csv', importRows
+        .filter((row) => !row.valid)
+        .map((row) => ({
+            row: row.rowNumber,
+            errors: row.errors.join('; '),
+            category: row.category,
+            productCode: row.product.id,
+            productName: row.product.name,
+            price: row.product.price,
+        })));
 
     const exportCustomersCsv = () => downloadCsv('ANNS-customers.csv', filteredCustomers.map((customer) => ({
         customerId: customer.id,
@@ -1241,14 +1353,16 @@ const ProductManager = () => {
                             <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
+                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
                         <div className="admin-table-wrap">
                             <table className="admin-table">
-                                <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+                                <thead><tr><th><input type="checkbox" aria-label="Select this page" checked={pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id))} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedProducts.map((product) => product.id)])] : current.filter((id) => !pagedProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
                                 <tbody>
                                     {pagedProducts.map((product) => {
                                         const status = product.remainingValue === 0 ? 'out' : product.remainingValue <= LOW_STOCK_LIMIT ? 'low' : 'available';
                                         return (
                                             <tr key={`${product.category}-${product.id}`}>
+                                                <td><input type="checkbox" aria-label={`Select ${product.name}`} checked={selectedProductIds.includes(product.id)} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} /></td>
                                                 <td><strong>{product.name}</strong><small>{product.id}</small></td>
                                                 <td>{product.category}</td>
                                                 <td>{formatCurrency(product.price)}</td>
@@ -1522,11 +1636,20 @@ const ProductManager = () => {
                             </button>
                             {importError && <div className="import-error"><XCircle size={18} /> {importError}</div>}
                         </section>
+                        <section className="admin-panel import-intro">
+                            <div>
+                                <p className="admin-kicker">BULK PRODUCT IMAGES</p>
+                                <h2>Match images from a ZIP</h2>
+                                <p>Name files with the product code: <strong>WW30111-1.jpg</strong>, <strong>WW30111-2.png</strong>. Up to five naturally sorted images are attached to each matching product.</p>
+                            </div>
+                            <input ref={bulkImageInputRef} className="visually-hidden" type="file" accept=".zip,application/zip" onChange={handleBulkImageZip} />
+                            <button type="button" className="admin-secondary-button" disabled={bulkImageBusy} onClick={() => bulkImageInputRef.current?.click()}><ImagePlus size={18} /> {bulkImageBusy ? 'Processing ZIP…' : 'Upload image ZIP'}</button>
+                        </section>
                         {importRows.length > 0 && (
                             <section className="admin-panel">
                                 <div className="admin-panel-heading">
                                     <div><p className="admin-kicker">IMPORT PREVIEW</p><h2>{importRows.length} rows detected</h2></div>
-                                    <div className="import-validation-summary"><span className="valid"><CheckCircle2 size={16} /> {importRows.filter((row) => row.valid).length} ready</span><span className="invalid"><XCircle size={16} /> {importRows.filter((row) => !row.valid).length} issues</span></div>
+                                    <div className="import-validation-summary"><span className="valid"><CheckCircle2 size={16} /> {importRows.filter((row) => row.valid).length} ready</span><span className="invalid"><XCircle size={16} /> {importRows.filter((row) => !row.valid).length} issues</span>{importRows.some((row) => !row.valid) && <button type="button" className="admin-secondary-button" onClick={downloadImportErrorsCsv}><Download size={15} /> Error CSV</button>}</div>
                                 </div>
                                 <div className="admin-table-wrap import-preview-table">
                                     <table className="admin-table">
