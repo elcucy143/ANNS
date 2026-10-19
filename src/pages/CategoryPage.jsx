@@ -10,6 +10,19 @@ import { getFlashSale } from '../services/apiClient';
 
 const EMPTY_PRODUCTS = [];
 const PRODUCTS_PER_PAGE = 12;
+const CatalogPagination = ({ page, pageCount, total, onChange, label }) => {
+    const start = Math.max(1, Math.min(page - 2, pageCount - 4));
+    const end = Math.min(pageCount, start + 4);
+    const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index);
+    return <nav className="catalog-pagination" aria-label={`${label} product pages`}>
+        <button type="button" onClick={() => onChange(page - 1)} disabled={page === 1} aria-label="Previous page"><ChevronLeft size={19} /></button>
+        {start > 1 && <><button type="button" onClick={() => onChange(1)}>1</button>{start > 2 && <span>…</span>}</>}
+        {pages.map((number) => <button type="button" key={number} className={number === page ? 'active' : ''} aria-current={number === page ? 'page' : undefined} onClick={() => onChange(number)}>{number}</button>)}
+        {end < pageCount && <>{end < pageCount - 1 && <span>…</span>}<button type="button" onClick={() => onChange(pageCount)}>{pageCount}</button></>}
+        <button type="button" onClick={() => onChange(page + 1)} disabled={page === pageCount} aria-label="Next page"><ChevronRight size={19} /></button>
+        <span className="catalog-pagination-count">{total} products</span>
+    </nav>;
+};
 const getCategoryKey = (title) => {
     if (title === "Women's Wear") return "Womens Wear";
     if (title === "Men's Wear") return "Mens Wear";
@@ -295,11 +308,7 @@ const CategoryPage = ({ title }) => {
                         )}
                     </div>
                     {!loading && !error && products.length > PRODUCTS_PER_PAGE && (
-                        <nav className="catalog-pagination" aria-label={`${displayTitle} product pages`}>
-                            <button type="button" onClick={() => changePage(activePage - 1)} disabled={activePage === 1} aria-label="Previous page"><ChevronLeft size={19} /></button>
-                            <span>Page <strong>{activePage}</strong> of {totalPages} · {products.length} products</span>
-                            <button type="button" onClick={() => changePage(activePage + 1)} disabled={activePage === totalPages} aria-label="Next page"><ChevronRight size={19} /></button>
-                        </nav>
+                        <CatalogPagination page={activePage} pageCount={totalPages} total={products.length} onChange={changePage} label={displayTitle} />
                     )}
                 </div>
             </div>

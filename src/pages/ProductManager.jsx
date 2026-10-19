@@ -22,6 +22,7 @@ import {
     Mail,
     MessageSquareQuote,
     BadgePercent,
+    BookOpenCheck,
     ImagePlus,
     Star,
     Phone,
@@ -196,6 +197,21 @@ const productsForDatabase = (products) => Object.entries(products).flatMap(([cat
 
 const formatCurrency = (value) => `₹${toNumber(value).toLocaleString('en-IN')}`;
 
+const AdminPagination = ({ page, pageCount, onChange, total, noun }) => {
+    if (pageCount <= 1) return null;
+    const start = Math.max(1, Math.min(page - 2, pageCount - 4));
+    const end = Math.min(pageCount, start + 4);
+    const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index);
+    return <nav className="admin-pagination" aria-label={`${noun} pages`}>
+        <button type="button" disabled={page === 1} onClick={() => onChange(page - 1)} aria-label="Previous page"><ChevronLeft size={17} /></button>
+        {start > 1 && <><button type="button" onClick={() => onChange(1)}>1</button>{start > 2 && <span>…</span>}</>}
+        {pages.map((number) => <button type="button" key={number} className={number === page ? 'active' : ''} aria-current={number === page ? 'page' : undefined} onClick={() => onChange(number)}>{number}</button>)}
+        {end < pageCount && <>{end < pageCount - 1 && <span>…</span>}<button type="button" onClick={() => onChange(pageCount)}>{pageCount}</button></>}
+        <button type="button" disabled={page === pageCount} onClick={() => onChange(page + 1)} aria-label="Next page"><ChevronRight size={17} /></button>
+        <span className="pagination-count">{total} {noun}</span>
+    </nav>;
+};
+
 const ProductManager = () => {
     const [products, setProducts] = useState(readProductDraft);
     const [isAuthenticated, setIsAuthenticated] = useState(() => (
@@ -204,7 +220,7 @@ const ProductManager = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const initialParams = new URLSearchParams(window.location.search);
-    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
     const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -1210,6 +1226,7 @@ const ProductManager = () => {
         { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
         { id: 'flash-sale', label: 'Flash sale', icon: BadgePercent },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
+        { id: 'instructions', label: 'Instructions', icon: BookOpenCheck },
         { id: 'editor', label: selectedProductId === 'new' ? 'Add product' : 'Edit product', icon: Edit3 },
     ];
 
@@ -1377,7 +1394,7 @@ const ProductManager = () => {
                                 </tbody>
                             </table>
                         </div>
-                        {filteredProducts.length > INVENTORY_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeInventoryPage === 1} onClick={() => setInventoryPage(activeInventoryPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeInventoryPage}</strong> of {inventoryPageCount} · {filteredProducts.length} products</span><button type="button" disabled={activeInventoryPage === inventoryPageCount} onClick={() => setInventoryPage(activeInventoryPage + 1)}><ChevronRight size={17} /></button></div>}
+                        <AdminPagination page={activeInventoryPage} pageCount={inventoryPageCount} onChange={setInventoryPage} total={filteredProducts.length} noun="products" />
                         {!filteredProducts.length && <div className="admin-empty-state"><Search size={27} /><p>No products match these filters.</p></div>}
                     </section>
                 )}
@@ -1426,7 +1443,7 @@ const ProductManager = () => {
                                 })}
                                 {!filteredOrders.length && <div className="admin-empty-state"><ReceiptText size={28} /><p>No paid orders match this search.</p></div>}
                             </div>
-                            {filteredOrders.length > ORDERS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeOrdersPage === 1} onClick={() => setOrdersPage(activeOrdersPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeOrdersPage}</strong> of {ordersPageCount} · {filteredOrders.length} paid orders</span><button type="button" disabled={activeOrdersPage === ordersPageCount} onClick={() => setOrdersPage(activeOrdersPage + 1)}><ChevronRight size={17} /></button></div>}
+                            <AdminPagination page={activeOrdersPage} pageCount={ordersPageCount} onChange={setOrdersPage} total={filteredOrders.length} noun="paid orders" />
                         </section>
                     </div>
                 )}
@@ -1465,7 +1482,7 @@ const ProductManager = () => {
                                     </tbody>
                                 </table>
                             </div>
-                            {filteredCustomers.length > CUSTOMERS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeCustomersPage === 1} onClick={() => setCustomersPage(activeCustomersPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeCustomersPage}</strong> of {customersPageCount} · {filteredCustomers.length} customers</span><button type="button" disabled={activeCustomersPage === customersPageCount} onClick={() => setCustomersPage(activeCustomersPage + 1)}><ChevronRight size={17} /></button></div>}
+                            <AdminPagination page={activeCustomersPage} pageCount={customersPageCount} onChange={setCustomersPage} total={filteredCustomers.length} noun="customers" />
                             {!filteredCustomers.length && <div className="admin-empty-state"><Users size={28} /><p>No registered customers yet. New Google, email and mobile sign-ins will appear here.</p></div>}
                         </section>
 
@@ -1504,7 +1521,7 @@ const ProductManager = () => {
                                         );
                                     })}</div>
                                 ) : <div className="admin-empty-state"><ReceiptText size={28} /><p>No purchases recorded for this customer.</p></div>}
-                                {selectedCustomer.orders.length > CUSTOMER_HISTORY_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeCustomerHistoryPage === 1} onClick={() => setCustomerHistoryPage(activeCustomerHistoryPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeCustomerHistoryPage}</strong> of {customerHistoryPageCount} · {selectedCustomer.orders.length} orders</span><button type="button" disabled={activeCustomerHistoryPage === customerHistoryPageCount} onClick={() => setCustomerHistoryPage(activeCustomerHistoryPage + 1)}><ChevronRight size={17} /></button></div>}
+                                <AdminPagination page={activeCustomerHistoryPage} pageCount={customerHistoryPageCount} onChange={setCustomerHistoryPage} total={selectedCustomer.orders.length} noun="orders" />
                             </section>
                         )}
 
@@ -1557,7 +1574,7 @@ const ProductManager = () => {
                                         </article>
                                     ))}
                                 </div>
-                                {filteredReviews.length > REVIEWS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeReviewsPage === 1} onClick={() => setReviewsPage(activeReviewsPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeReviewsPage}</strong> of {reviewsPageCount} · {filteredReviews.length} reviews</span><button type="button" disabled={activeReviewsPage === reviewsPageCount} onClick={() => setReviewsPage(activeReviewsPage + 1)}><ChevronRight size={17} /></button></div>}
+                                <AdminPagination page={activeReviewsPage} pageCount={reviewsPageCount} onChange={setReviewsPage} total={filteredReviews.length} noun="reviews" />
                                 {!filteredReviews.length && <div className="admin-empty-state"><MessageSquareQuote size={28} /><p>No reviews yet. Add the first customer testimonial using the form.</p></div>}
                             </section>
                         </section>
@@ -1609,12 +1626,28 @@ const ProductManager = () => {
                                     </article>;
                                 })}
                             </div>
-                            {flashSale.items.length > FLASH_SALE_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeFlashSalePage === 1} onClick={() => setFlashSalePage(activeFlashSalePage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeFlashSalePage}</strong> of {flashSalePageCount} · {flashSale.items.length} sale products</span><button type="button" disabled={activeFlashSalePage === flashSalePageCount} onClick={() => setFlashSalePage(activeFlashSalePage + 1)}><ChevronRight size={17} /></button></div>}
+                            <AdminPagination page={activeFlashSalePage} pageCount={flashSalePageCount} onChange={setFlashSalePage} total={flashSale.items.length} noun="sale products" />
                             {!flashSale.items.length && <div className="admin-empty-state"><BadgePercent size={29} /><p>Add products and enter their sale prices. Original catalog prices remain unchanged.</p></div>}
                         </section>
 
                         <div className="editor-save-bar"><p>Only an active sale within its scheduled dates appears on the homepage.</p><div className="editor-save-actions"><button type="button" className="admin-danger-button" onClick={clearFlashSale}><Trash2 size={18} /> Clear sale</button><button type="submit" className="admin-primary-button" disabled={flashSaleSaving}><Save size={18} /> {flashSaleSaving ? 'Saving…' : 'Save flash sale'}</button></div></div>
                     </form>
+                )}
+
+                {activeView === 'instructions' && (
+                    <div className="admin-view-stack admin-instructions">
+                        <section className="admin-panel instructions-hero"><BookOpenCheck size={30} /><div><p className="admin-kicker">ADMIN HANDBOOK</p><h2>How to manage ANNS safely</h2><p>Follow these rules so products, images, stock, orders and sale prices remain accurate on the live website.</p></div></section>
+                        <section className="instructions-grid">
+                            <article className="admin-panel"><span>1</span><h3>Product codes</h3><p>Give every colour or design its own unique ID. Never reuse or change an existing ID because orders, emails and Flash Sale entries use it.</p><small>Example: WW30111, WW30112</small></article>
+                            <article className="admin-panel"><span>2</span><h3>Excel or JSON import</h3><p>Download the Excel template first. Required fields are category, ID, name and price. Review every warning before clicking Import.</p><button type="button" onClick={() => handleNavigation('import')}>Open Bulk Import</button></article>
+                            <article className="admin-panel"><span>3</span><h3>Bulk images</h3><p>Create a ZIP and name images using the exact product code. The first numbered image becomes the main image; up to five are saved.</p><small>WW30111-1.jpg, WW30111-2.jpg</small></article>
+                            <article className="admin-panel"><span>4</span><h3>Stock</h3><p>Total stock means all units received. Sold units are recorded from paid orders. Remaining stock is calculated automatically.</p><small>Never count cancelled or failed payments as sold.</small></article>
+                            <article className="admin-panel"><span>5</span><h3>Flash Sale</h3><p>Add existing products, enter a price lower than the regular price, check start/end times and click Save Flash Sale. Unsaved changes are not live.</p><button type="button" onClick={() => handleNavigation('flash-sale')}>Open Flash Sale</button></article>
+                            <article className="admin-panel"><span>6</span><h3>Orders and tracking</h3><p>Update status in order: Processing, Packed, Shipped, Out for delivery, Delivered. Add courier, tracking number and link before marking shipped.</p><button type="button" onClick={() => handleNavigation('orders')}>Open Orders</button></article>
+                            <article className="admin-panel"><span>7</span><h3>Customer data</h3><p>Use CSV exports for backup and reporting. Delete a customer only when the record is genuinely unnecessary and purchase history has been checked.</p></article>
+                            <article className="admin-panel"><span>8</span><h3>Before finishing</h3><p>Confirm “Atlas connected”, refresh the inventory, search the product code, and open the live category page to verify the product and images.</p><small>Do not close the tab while an upload is processing.</small></article>
+                        </section>
+                    </div>
                 )}
 
                 {activeView === 'import' && (
