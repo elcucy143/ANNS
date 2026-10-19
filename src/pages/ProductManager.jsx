@@ -59,6 +59,7 @@ const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
 const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
+const PRODUCT_SAVE_BATCH_SIZE = 100;
 const MAX_SOURCE_IMAGE_BYTES = 75 * 1024 * 1024;
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
@@ -498,10 +499,18 @@ const ProductManager = () => {
         setNotification(message);
         if (hasAdminKey()) {
             try {
-                const result = await saveProductsToDatabase(changedProducts);
-                if (result.saved !== changedProducts.length) throw new Error('MongoDB did not confirm every product. Nothing was removed; please retry the upload.');
+                let saved = 0;
+                for (let offset = 0; offset < changedProducts.length; offset += PRODUCT_SAVE_BATCH_SIZE) {
+                    const batch = changedProducts.slice(offset, offset + PRODUCT_SAVE_BATCH_SIZE);
+                    setNotification(changedProducts.length > PRODUCT_SAVE_BATCH_SIZE
+                        ? `Saving products ${offset + 1}–${Math.min(offset + batch.length, changedProducts.length)} of ${changedProducts.length}…`
+                        : message);
+                    const result = await saveProductsToDatabase(batch);
+                    if (result.saved !== batch.length) throw new Error(`MongoDB confirmed ${saved + result.saved} of ${changedProducts.length} products. Retry the import; existing product IDs will update safely without creating duplicates.`);
+                    saved += result.saved;
+                }
                 setDatabaseStatus('connected');
-                setNotification(`${message} ${result.saved} product${result.saved === 1 ? '' : 's'} verified in MongoDB Atlas.`);
+                setNotification(`${message} ${saved} product${saved === 1 ? '' : 's'} verified in MongoDB Atlas.`);
             } catch (error) {
                 setDatabaseStatus('local');
                 setNotification(error.message || 'The product could not be saved to MongoDB Atlas.');
