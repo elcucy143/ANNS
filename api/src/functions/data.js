@@ -72,6 +72,7 @@ const normalizeReviewImage = (value) => {
   if (!image) return '';
   if (image.startsWith('data:image/') && image.length <= 700000) return image;
   if (/^https:\/\//i.test(image) && image.length <= 2000) return image;
+  if (/^\/api\/media-image\?/i.test(image) && image.length <= 2000) return image;
   return '';
 };
 const normalizeBannerImage = (value) => {
@@ -164,6 +165,12 @@ const externalizeMediaImage = async (db, key, value, operationTime = nowIso()) =
     { upsert: true },
   );
   return mediaImageUrl(key, version);
+};
+const externalizeReviewImage = async (db, review, operationTime = nowIso()) => {
+  const normalized = { ...review };
+  const key = `review-${cleanText(normalized.id, 100)}`;
+  normalized.image = await externalizeMediaImage(db, key, normalized.image, operationTime);
+  return normalized;
 };
 const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()) => {
   const product = { ...rawProduct };
@@ -906,12 +913,24 @@ registerHttp('reviews', {
   handler: async (_request, context) => {
     try {
       const db = await getDb();
-      const reviews = await db.collection('reviews')
+      const collection = db.collection('reviews');
+      const reviews = await collection
         .find({ published: true })
         .sort({ featured: -1, reviewDate: -1, createdAt: -1 })
         .limit(100)
         .toArray();
-      return json(reviews.map(cleanDocument));
+      const migrated = await Promise.all(reviews.map(async (rawReview) => {
+        if (!String(rawReview.image || '').startsWith('data:image/')) return rawReview;
+        const review = await externalizeReviewImage(db, rawReview);
+        await collection.updateOne(
+          { _id: rawReview._id },
+          { $set: { image: review.image, updatedAt: nowIso() } },
+        );
+        return { ...rawReview, image: review.image };
+      }));
+      const response = json(migrated.map(cleanDocument));
+      response.headers['Cache-Control'] = 'public, max-age=15, s-maxage=60, stale-while-revalidate=300';
+      return response;
     } catch (error) {
       return handleError(context, error);
     }
@@ -939,15 +958,18 @@ registerHttp('admin-reviews', {
         const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 100)).filter(Boolean) : [];
         if (!ids.length) return json({ error: 'At least one review ID is required' }, 400);
         const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        await db.collection('mediaImages').deleteMany({ key: { $in: ids.map((id) => `review-${id}`) } });
         await recordAdminAudit(db, request, 'reviews.deleted', ids.join(','), { count: result.deletedCount });
         return json({ ok: true, deleted: result.deletedCount });
       }
 
-      const review = normalizeReview(body?.review || body);
+      let review = normalizeReview(body?.review || body);
       if (!review.reviewerName || !review.comment) {
         return json({ error: 'Customer name and review text are required' }, 400);
       }
       const operationTime = nowIso();
+      review = await externalizeReviewImage(db, review, operationTime);
+      if (!review.image) await db.collection('mediaImages').deleteOne({ key: `review-${review.id}` });
       await collection.updateOne(
         { id: review.id },
         { $set: { ...review, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
