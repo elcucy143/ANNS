@@ -398,6 +398,10 @@
 .flash-sale-admin-list article > span.valid { background: #49805d; }
 .flash-sale-admin-list article > span.invalid { background: #b34b43; }
 .flash-sale-admin-list article > button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid #efd0cc; border-radius: 5px; color: #b34b43; background: #fff; cursor: pointer; }
+.admin-pagination { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 24px; color: #776d66; font-size: .72rem; }
+.admin-pagination button { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #dcd4cd; border-radius: 50%; color: #3d342f; background: #fff; cursor: pointer; }
+.admin-pagination button:disabled { opacity: .35; cursor: not-allowed; }
+.admin-pagination button:not(:disabled):hover { color: #fff; background: #2b2420; }
 
 @media (max-width: 1100px) {
     .admin-stat-grid { grid-template-columns: repeat(2, 1fr); }

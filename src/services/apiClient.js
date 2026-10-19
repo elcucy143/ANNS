@@ -44,7 +44,7 @@ export const clearAdminKey = () => sessionStorage.removeItem(ADMIN_SESSION_STORA
 export const hasAdminKey = () => Boolean(sessionStorage.getItem(ADMIN_SESSION_STORAGE));
 
 export const getDatabaseHealth = () => request('health');
-export const getProductsFromDatabase = () => request('products');
+export const getProductsFromDatabase = () => request('products', { cache: 'no-store' });
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
 export const updateOrderFulfillment = (order) => request('orders', {
@@ -57,8 +57,8 @@ export const approveOrderCancellation = (id) => request('orders', {
 });
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
-export const getFlashSale = () => request('flash-sale');
-export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true });
+export const getFlashSale = () => request('flash-sale', { cache: 'no-store' });
+export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true, cache: 'no-store' });
 
 export const sendContactMessage = (message) => request('contact', {
   method: 'POST',

@@ -200,6 +200,10 @@
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 30px;
 }
+.catalog-pagination { display:flex; justify-content:center; align-items:center; gap:16px; margin:42px 0 10px; color:#6d645e; }
+.catalog-pagination button { width:44px; height:44px; display:grid; place-items:center; border:1px solid #d8cfc8; border-radius:50%; background:#fff; color:#29231f; cursor:pointer; }
+.catalog-pagination button:disabled { opacity:.35; cursor:not-allowed; }
+.catalog-pagination button:not(:disabled):hover { background:#29231f; color:#fff; }
 
 /* Scroll reveal animation styles */
 .products-list .product-card {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Filter, ChevronDown, X } from 'lucide-react';
+import { Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import './CategoryPage.css';
 
@@ -9,6 +9,7 @@ import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
 
 const EMPTY_PRODUCTS = [];
+const PRODUCTS_PER_PAGE = 12;
 const getCategoryKey = (title) => {
     if (title === "Women's Wear") return "Womens Wear";
     if (title === "Men's Wear") return "Mens Wear";
@@ -32,6 +33,7 @@ const CategoryPage = ({ title }) => {
         sizes: []
     });
     const [flashSale, setFlashSale] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const categoryKey = getCategoryKey(displayTitle);
     const { products: catalogProducts, loading, error } = useProductCatalog();
@@ -44,7 +46,7 @@ const CategoryPage = ({ title }) => {
 
     const categoryProducts = (() => {
         if (categoryKey !== 'Flash Sale') {
-            return catalogProducts.filter((product) => product.category === categoryKey && product.showOnCategory !== false);
+            return catalogProducts.filter((product) => product.category === categoryKey);
         }
         const salePrices = new Map((flashSale?.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
         return catalogProducts.map((product) => {
@@ -148,8 +150,17 @@ const CategoryPage = ({ title }) => {
 
         return result;
     }, [categoryProducts, subcategoryFilter, filters, sortBy, effectiveMaxPrice]);
+    const totalPages = Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE));
+    const activePage = Math.min(currentPage, totalPages);
+    const visibleProducts = products.slice((activePage - 1) * PRODUCTS_PER_PAGE, activePage * PRODUCTS_PER_PAGE);
+
+    const changePage = (page) => {
+        setCurrentPage(Math.max(1, Math.min(totalPages, page)));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleFilterChange = (type, value) => {
+        setCurrentPage(1);
         setFilters(prev => {
             if (type === 'colors' || type === 'sizes') {
                 const current = prev[type];
@@ -200,7 +211,7 @@ const CategoryPage = ({ title }) => {
 
                 <div className="sort-container">
                     <label htmlFor="sort-by">Sort by: </label>
-                    <select id="sort-by" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <select id="sort-by" value={sortBy} onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}>
                         <option value="featured">Featured</option>
                         <option value="best-selling">Best selling</option>
                         <option value="a-z">Alphabetically, A-Z</option>
@@ -274,7 +285,7 @@ const CategoryPage = ({ title }) => {
                 <div className="products-container">
                     <div className="products-list">
                         {loading ? <div className="empty-state"><p>Loading collection…</p></div> : error ? <div className="empty-state"><p>{error}</p></div> : products.length > 0 ? (
-                            products.map(product => (
+                            visibleProducts.map(product => (
                                 <ProductCard key={product.id} product={product} />
                             ))
                         ) : (
@@ -283,6 +294,13 @@ const CategoryPage = ({ title }) => {
                             </div>
                         )}
                     </div>
+                    {!loading && !error && products.length > PRODUCTS_PER_PAGE && (
+                        <nav className="catalog-pagination" aria-label={`${displayTitle} product pages`}>
+                            <button type="button" onClick={() => changePage(activePage - 1)} disabled={activePage === 1} aria-label="Previous page"><ChevronLeft size={19} /></button>
+                            <span>Page <strong>{activePage}</strong> of {totalPages} · {products.length} products</span>
+                            <button type="button" onClick={() => changePage(activePage + 1)} disabled={activePage === totalPages} aria-label="Next page"><ChevronRight size={19} /></button>
+                        </nav>
+                    )}
                 </div>
             </div>
         </div>

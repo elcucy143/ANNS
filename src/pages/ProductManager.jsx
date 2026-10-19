@@ -3,6 +3,7 @@ import {
     AlertTriangle,
     Boxes,
     CheckCircle2,
+    ChevronLeft,
     ChevronRight,
     Download,
     Edit3,
@@ -61,6 +62,8 @@ const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
 const PRODUCT_SAVE_BATCH_SIZE = 100;
+const INVENTORY_PAGE_SIZE = 20;
+const FLASH_SALE_PAGE_SIZE = 10;
 const getInitialReviewForm = () => ({
     id: '',
     reviewerName: '',
@@ -223,6 +226,8 @@ const ProductManager = () => {
     const [flashSale, setFlashSale] = useState(getInitialFlashSaleForm);
     const [flashSaleProductId, setFlashSaleProductId] = useState('');
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
+    const [inventoryPage, setInventoryPage] = useState(1);
+    const [flashSalePage, setFlashSalePage] = useState(1);
     const fileInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
     const flashSaleImageInputRef = useRef(null);
@@ -453,6 +458,12 @@ const ProductManager = () => {
             return matchesQuery && matchesCategory && matchesStock;
         });
     }, [allProducts, searchQuery, categoryFilter, stockFilter]);
+    const inventoryPageCount = Math.max(1, Math.ceil(filteredProducts.length / INVENTORY_PAGE_SIZE));
+    const activeInventoryPage = Math.min(inventoryPage, inventoryPageCount);
+    const pagedProducts = filteredProducts.slice((activeInventoryPage - 1) * INVENTORY_PAGE_SIZE, activeInventoryPage * INVENTORY_PAGE_SIZE);
+    const flashSalePageCount = Math.max(1, Math.ceil(flashSale.items.length / FLASH_SALE_PAGE_SIZE));
+    const activeFlashSalePage = Math.min(flashSalePage, flashSalePageCount);
+    const pagedFlashSaleItems = flashSale.items.slice((activeFlashSalePage - 1) * FLASH_SALE_PAGE_SIZE, activeFlashSalePage * FLASH_SALE_PAGE_SIZE);
 
     const saveProducts = async (nextProducts, message, changedProducts = productsForDatabase(nextProducts)) => {
         setNotification(message);
@@ -1158,12 +1169,12 @@ const ProductManager = () => {
                 {activeView === 'inventory' && (
                     <section className="admin-panel inventory-panel">
                         <div className="inventory-toolbar">
-                            <div className="admin-search"><Search size={18} /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search by name, ID or subcategory" /></div>
-                            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Filter by category">
+                            <div className="admin-search"><Search size={18} /><input value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setInventoryPage(1); }} placeholder="Search by name, ID or subcategory" /></div>
+                            <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setInventoryPage(1); }} aria-label="Filter by category">
                                 <option value="all">All categories</option>
                                 {Object.keys(products).map((category) => <option key={category} value={category}>{category}</option>)}
                             </select>
-                            <select value={stockFilter} onChange={(event) => setStockFilter(event.target.value)} aria-label="Filter by stock status">
+                            <select value={stockFilter} onChange={(event) => { setStockFilter(event.target.value); setInventoryPage(1); }} aria-label="Filter by stock status">
                                 <option value="all">All stock</option>
                                 <option value="available">Available</option>
                                 <option value="low">Low stock</option>
@@ -1177,7 +1188,7 @@ const ProductManager = () => {
                             <table className="admin-table">
                                 <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
                                 <tbody>
-                                    {filteredProducts.map((product) => {
+                                    {pagedProducts.map((product) => {
                                         const status = product.remainingValue === 0 ? 'out' : product.remainingValue <= LOW_STOCK_LIMIT ? 'low' : 'available';
                                         return (
                                             <tr key={`${product.category}-${product.id}`}>
@@ -1195,6 +1206,7 @@ const ProductManager = () => {
                                 </tbody>
                             </table>
                         </div>
+                        {filteredProducts.length > INVENTORY_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeInventoryPage === 1} onClick={() => setInventoryPage(activeInventoryPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeInventoryPage}</strong> of {inventoryPageCount} · {filteredProducts.length} products</span><button type="button" disabled={activeInventoryPage === inventoryPageCount} onClick={() => setInventoryPage(activeInventoryPage + 1)}><ChevronRight size={17} /></button></div>}
                         {!filteredProducts.length && <div className="admin-empty-state"><Search size={27} /><p>No products match these filters.</p></div>}
                     </section>
                 )}
@@ -1407,7 +1419,7 @@ const ProductManager = () => {
                                 <button type="button" className="admin-secondary-button" onClick={addFlashSaleProduct} disabled={!flashSaleProductId}><Plus size={17} /> Add product</button>
                             </div>
                             <div className="flash-sale-admin-list">
-                                {flashSale.items.map((item) => {
+                                {pagedFlashSaleItems.map((item) => {
                                     const product = allProducts.find((entry) => entry.id === item.productId);
                                     const regularPrice = toNumber(product?.price);
                                     const salePrice = toNumber(item.salePrice);
@@ -1421,6 +1433,7 @@ const ProductManager = () => {
                                     </article>;
                                 })}
                             </div>
+                            {flashSale.items.length > FLASH_SALE_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeFlashSalePage === 1} onClick={() => setFlashSalePage(activeFlashSalePage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeFlashSalePage}</strong> of {flashSalePageCount} · {flashSale.items.length} sale products</span><button type="button" disabled={activeFlashSalePage === flashSalePageCount} onClick={() => setFlashSalePage(activeFlashSalePage + 1)}><ChevronRight size={17} /></button></div>}
                             {!flashSale.items.length && <div className="admin-empty-state"><BadgePercent size={29} /><p>Add products and enter their sale prices. Original catalog prices remain unchanged.</p></div>}
                         </section>
 
@@ -1498,7 +1511,7 @@ const ProductManager = () => {
                                     <label>Units sold<input name="sold" type="number" min="0" value={formData.sold} onChange={handleInputChange} /></label>
                                     <div className="editor-inventory-result full-width"><span>Remaining stock</span><strong>{Math.max(0, toNumber(formData.stock) - toNumber(formData.sold)).toLocaleString('en-IN')}</strong><small>Calculated automatically</small></div>
                                     <label>Featured<select name="featured" value={formData.featured} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes</option></select></label>
-                                    <label className="editor-checkbox"><input type="checkbox" checked={formData.showOnCategory !== false} onChange={(event) => setFormData((current) => ({ ...current, showOnCategory: event.target.checked }))} /> Show in category page</label>
+                                    <div className="editor-inventory-result"><span>Storefront visibility</span><strong>Visible</strong><small>Every saved product appears in its category automatically.</small></div>
                                     <label>Color<input name="color" value={formData.color} onChange={handleInputChange} /></label>
                                 </div>
                             </section>
