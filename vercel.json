@@ -10,7 +10,10 @@
       "maxDuration": 30
     }
   },
-  "crons": [{ "path": "/api/maintenance/email-retries", "schedule": "0 3 * * *" }],
+  "crons": [
+    { "path": "/api/maintenance/payment-reconciliation", "schedule": "30 2 * * *" },
+    { "path": "/api/maintenance/email-retries", "schedule": "0 3 * * *" }
+  ],
   "headers": [
     {
       "source": "/((?!assets/).*)",

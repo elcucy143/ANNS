@@ -110,6 +110,20 @@
     color: var(--color-primary);
 }
 
+.wishlist-button {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    border: 1px solid #d8ccc3;
+    border-radius: 999px;
+    background: #fff;
+    color: #4a4039;
+    cursor: pointer;
+}
+.wishlist-button.saved { color: #a14135; border-color: #d7a79f; background: #fff8f7; }
+
 .product-rating {
     display: flex;
     align-items: center;

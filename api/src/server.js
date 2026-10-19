@@ -49,6 +49,13 @@ const sensitiveLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many attempts. Please wait before trying again.' },
 });
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 40,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many checkout attempts. Please wait before trying again.' },
+});
 server.use('/api', apiLimiter);
 server.use([
   '/api/admin-login',
@@ -59,8 +66,12 @@ server.use([
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/contact',
-  '/api/payments/razorpay/create-order',
 ], sensitiveLimiter);
+server.use([
+  '/api/payments/razorpay/create-order',
+  '/api/payments/razorpay/verify',
+  '/api/account/orders',
+], checkoutLimiter);
 server.use(express.raw({ type: '*/*', limit: '4mb' }));
 
 for (const route of registeredRoutes) {

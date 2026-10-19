@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import './ProductCard.css';
 
 import images from '../assets/images';
+import { productImageVariant } from '../utils/imageUrl';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
@@ -21,7 +22,7 @@ const ProductCard = ({ product }) => {
         <div className="product-card">
             <Link to={`/product/${product.id}`} className="product-link">
                 <div className="product-image">
-                    <img src={images[filename] || product.image} alt={product.name} loading="lazy" decoding="async" />
+                    <img src={images[filename] || productImageVariant(product.image, 'listing')} alt={product.name} loading="lazy" decoding="async" />
                     <button className="add-to-cart-btn" onClick={handleAddToCart}>Add to Cart</button>
                 </div>
                 <div className="product-info">

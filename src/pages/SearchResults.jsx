@@ -11,12 +11,14 @@ const SearchResults = () => {
     const results = useMemo(() => {
         if (!query) return [];
 
-        const lowerQuery = query.toLowerCase();
-        return catalogProducts.filter(product =>
-            product.name.toLowerCase().includes(lowerQuery) ||
-            product.description.toLowerCase().includes(lowerQuery) ||
-            (product.category && product.category.toLowerCase().includes(lowerQuery))
-        );
+        const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        return catalogProducts.filter((product) => {
+            const searchable = [
+                product.id, product.name, product.description, product.category,
+                product.color, ...(Array.isArray(product.subcategory) ? product.subcategory : []),
+            ].filter(Boolean).join(' ').toLowerCase();
+            return terms.every((term) => searchable.includes(term));
+        });
     }, [query, catalogProducts]);
 
     return (

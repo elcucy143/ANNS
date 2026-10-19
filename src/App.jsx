@@ -20,6 +20,7 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProductCatalogProvider } from './context/ProductCatalogContext';
 import { ReviewProvider } from './context/ReviewContext';
+import { ShoppingHistoryProvider } from './context/ShoppingHistoryContext';
 
 const ProductManager = lazy(() => import('./pages/ProductManager'));
 
@@ -28,6 +29,7 @@ function App() {
     <AuthProvider>
       <ProductCatalogProvider>
       <ReviewProvider>
+      <ShoppingHistoryProvider>
       <CartProvider>
         <Router>
           <RouteScrollManager />
@@ -54,6 +56,7 @@ function App() {
           </Layout>
         </Router>
       </CartProvider>
+      </ShoppingHistoryProvider>
       </ReviewProvider>
       </ProductCatalogProvider>
     </AuthProvider>

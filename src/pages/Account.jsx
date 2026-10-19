@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { GOOGLE_CLIENT_ID, GOOGLE_IDENTITY_SCRIPT_ID } from '../config/auth';
 import { getMyOrders, requestOrderCancellation, requestPasswordReset, resetPassword } from '../services/apiClient';
 import './Account.css';
+import ProductCarousel from '../components/ProductCarousel';
+import { useProductCatalog } from '../context/ProductCatalogContext';
+import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 
 const Account = () => {
   const { user, registerWithAccount, signInWithCredentials, signInWithGoogle, signOut } = useAuth();
@@ -20,6 +23,9 @@ const Account = () => {
   const [notice, setNotice] = useState('');
   const googleButtonRef = useRef(null);
   const resetToken = new URLSearchParams(location.search).get('reset') || '';
+  const { products } = useProductCatalog();
+  const { wishlistIds } = useShoppingHistory();
+  const wishlistProducts = wishlistIds.map((id) => products.find((product) => String(product.id) === id)).filter(Boolean);
 
   useEffect(() => {
     if (!user) return;
@@ -132,7 +138,7 @@ const Account = () => {
     if (!popup) return setOrdersError('Allow pop-ups to download or print the invoice.');
     popup.opener = null;
     const rows = (order.items || []).map((item) => `<tr><td>${escapeInvoice(item.name)}</td><td>${Number(item.quantity) || 0}</td><td>₹${Number(item.lineTotal).toFixed(2)}</td></tr>`).join('');
-    popup.document.write(`<!doctype html><title>ANNS Invoice ${escapeInvoice(order.id)}</title><style>body{font:14px Arial;max-width:760px;margin:40px auto;color:#29231f}h1{font-family:Georgia}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{text-align:right;font-size:20px}</style><h1>ANNS Order Invoice</h1><p><strong>Invoice / Order:</strong> ${escapeInvoice(order.id)}<br><strong>Paid:</strong> ${new Date(order.paidAt).toLocaleDateString('en-IN')}<br><strong>Payment ID:</strong> ${escapeInvoice(order.razorpayPaymentId)}</p><p><strong>Bill to:</strong> ${escapeInvoice(order.customer.name)}<br>${escapeInvoice(order.customer.email)}<br>${escapeInvoice(order.customer.phone || '')}</p><table><thead><tr><th>Item</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total ₹${Number(order.total).toFixed(2)}</strong></p><p>A.S. Trends & Gifts<br>#36 Sri Sai Anjaneya Nilayam, Jesus Krupa, Block 3, Kodichikknahalli, Bengaluru, Karnataka 560076</p>`);
+    popup.document.write(`<!doctype html><title>ANNS Invoice ${escapeInvoice(order.id)}</title><style>body{font:14px Arial;max-width:760px;margin:40px auto;color:#29231f}h1{font-family:Georgia}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #ddd;text-align:left}.total{text-align:right;font-size:20px}</style><h1>ANNS Order Invoice</h1><p><strong>Invoice / Order:</strong> ${escapeInvoice(order.id)}<br><strong>Paid:</strong> ${new Date(order.paidAt).toLocaleDateString('en-IN')}<br><strong>Payment ID:</strong> ${escapeInvoice(order.razorpayPaymentId)}</p><p><strong>Bill to:</strong> ${escapeInvoice(order.customer.name)}<br>${escapeInvoice(order.customer.email)}<br>${escapeInvoice(order.customer.phone || '')}</p><table><thead><tr><th>Item</th><th>Quantity</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p class="total"><strong>Total ₹${Number(order.total).toFixed(2)}</strong></p><p>A.S. Trends & Gifts<br>#36 Sri Sai Anjaneya Nilayam, Jesus Krupa, Block 3, Kodichikknahalli, Bengaluru, Karnataka 560076</p><p>Support: <a href="https://www.annsonline.shop/contact">Contact Us</a> · WhatsApp +91 98497 92562</p>`);
     popup.document.close();
     window.setTimeout(() => popup.print(), 100);
   };
@@ -152,11 +158,11 @@ const Account = () => {
           <div className="account-orders">
             <h2><Package size={22} /> My Orders</h2>
             {orders.map((order) => {
-              const cancellable = !['shipped', 'delivered'].includes(order.fulfillmentStatus) && !order.cancellation?.status && !order.refundStatus;
+              const cancellable = !['shipped', 'out_for_delivery', 'delivered'].includes(order.fulfillmentStatus) && !order.cancellation?.status && !order.refundStatus;
               return <article key={order.id} className="account-order-card">
                 <div><strong>{order.id}</strong><span>{new Date(order.paidAt || order.createdAt).toLocaleDateString('en-IN')} · ₹{Number(order.total).toLocaleString('en-IN')}</span></div>
                 <p>Status: <strong>{order.status || order.fulfillmentStatus || 'Processing'}</strong></p>
-                {order.deliveryEstimate?.end && <p>Estimated delivery: {new Date(order.deliveryEstimate.start).toLocaleDateString('en-IN')} – {new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN')}</p>}
+                {order.deliveryEstimate?.end && <p>Estimated delivery: {new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN')}</p>}
                 {order.trackingNumber && <p>Tracking: <strong>{order.courier || 'Courier'} · {order.trackingNumber}</strong></p>}
                 {order.trackingUrl
                   ? <a href={order.trackingUrl} target="_blank" rel="noreferrer">Track shipment with {order.courier || 'courier'}</a>
@@ -167,6 +173,7 @@ const Account = () => {
             {!orders.length && !ordersError && <p>No paid orders yet.</p>}
             {ordersError && <p className="account-error">{ordersError}</p>}
           </div>
+          {wishlistProducts.length > 0 && <ProductCarousel products={wishlistProducts} title="My wishlist" />}
           <a href="/" className="account-primary-link">Continue shopping</a>
           <button type="button" className="account-signout" onClick={signOut}>
             <LogOut size={17} /> Sign out

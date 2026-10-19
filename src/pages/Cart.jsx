@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import './Cart.css';
 
 import images from '../assets/images';
+import { productImageVariant } from '../utils/imageUrl';
 
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
@@ -38,7 +39,7 @@ const Cart = () => {
                         return (
                             <div key={`${item.id}-${item.size}-${item.color}`} className="cart-item">
                                 <div className="cart-item-image">
-                                    {currentImage ? <img src={images[filename] || currentImage} alt={item.name} /> : <div aria-hidden="true">ANNS</div>}
+                                    {currentImage ? <img src={images[filename] || productImageVariant(currentImage, 'thumbnail')} alt={item.name} /> : <div aria-hidden="true">ANNS</div>}
                                 </div>
                                 <div className="cart-item-details">
                                     <h3>{item.name}</h3>

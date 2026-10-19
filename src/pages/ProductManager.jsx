@@ -1204,7 +1204,7 @@ const ProductManager = () => {
                         <section className="customer-stat-grid">
                             <article className="customer-stat"><ReceiptText size={21} /><div><span>Paid orders</span><strong>{customerInsights.orderCount}</strong><small>Captured by Razorpay</small></div></article>
                             <article className="customer-stat"><ShoppingBag size={21} /><div><span>Paid revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>Verified payments only</small></div></article>
-                            <article className="customer-stat"><Package size={21} /><div><span>To process</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && !order.refundStatus && order.cancellation?.status !== 'requested' && !['shipped', 'delivered'].includes(order.fulfillmentStatus)).length}</strong><small>Processing or packed</small></div></article>
+                            <article className="customer-stat"><Package size={21} /><div><span>To process</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && !order.refundStatus && order.cancellation?.status !== 'requested' && !['shipped', 'out_for_delivery', 'delivered'].includes(order.fulfillmentStatus)).length}</strong><small>Processing or packed</small></div></article>
                             <article className="customer-stat"><CheckCircle2 size={21} /><div><span>Delivered</span><strong>{orders.filter((order) => order.fulfillmentStatus === 'delivered').length}</strong><small>Completed orders</small></div></article>
                         </section>
                         <section className="admin-panel order-management-panel">
@@ -1216,7 +1216,7 @@ const ProductManager = () => {
                                 {filteredOrders.map((order) => {
                                     const address = order.shippingAddress || {};
                                     const currentStatus = order.fulfillmentStatus || 'processing';
-                                    const statusOrder = ['processing', 'packed', 'shipped', 'delivered'];
+                                    const statusOrder = ['processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'];
                                     const currentStatusIndex = statusOrder.indexOf(currentStatus);
                                     return (
                                         <article className={`fulfillment-order ${linkedOrderId === order.id ? 'linked-order' : ''}`} id={`order-${order.id}`} key={order.id}>
@@ -1230,7 +1230,7 @@ const ProductManager = () => {
                                             <div className="fulfillment-meta"><span><strong>Delivery:</strong> {[address.addressLine1, address.addressLine2, address.city, address.state, address.postalCode].filter(Boolean).join(', ')}</span><span><strong>Payment:</strong> {order.razorpayPaymentId || 'Captured'}</span></div>
                                             {order.cancellation?.status && <div className="admin-alert"><strong>Cancellation: {order.cancellation.status}</strong><span>{order.cancellation.reason}</span>{order.cancellation.status === 'requested' && <button type="button" className="admin-primary-button" disabled={orderUpdatingId === order.id} onClick={() => approveCancellation(order)}>Approve & refund</button>}{order.refundStatus && <span>Refund status: {order.refundStatus}</span>}</div>}
                                             <form key={order.updatedAt} className="fulfillment-form" onSubmit={(event) => submitFulfillmentUpdate(event, order.id)}>
-                                                <label>Status<select name="fulfillmentStatus" defaultValue={currentStatus}>{statusOrder.map((status, index) => <option key={status} value={status} disabled={index < currentStatusIndex}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></label>
+                                                <label>Status<select name="fulfillmentStatus" defaultValue={currentStatus}>{statusOrder.map((status, index) => <option key={status} value={status} disabled={index < currentStatusIndex}>{status.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ')}</option>)}</select></label>
                                                 <label>Courier<input name="courier" defaultValue={order.courier || ''} maxLength="100" placeholder="For example: Delhivery" /></label>
                                                 <label>Tracking number<input name="trackingNumber" defaultValue={order.trackingNumber || ''} maxLength="120" placeholder="Courier tracking ID" /></label>
                                                 <label>Tracking link<input name="trackingUrl" type="url" defaultValue={order.trackingUrl || ''} maxLength="1000" placeholder="https://…" /></label>
@@ -1312,7 +1312,7 @@ const ProductManager = () => {
                                                 <footer className="order-history-details">
                                                     <div><span>Delivery address</span><strong>{addressText || 'Not recorded'}</strong></div>
                                                     <div><span>Razorpay payment ID</span><strong>{order.razorpayPaymentId || 'Captured by Razorpay'}</strong></div>
-                                                    <div><span>Estimated delivery</span><strong>{order.deliveryEstimate?.start && order.deliveryEstimate?.end ? `${new Date(order.deliveryEstimate.start).toLocaleDateString('en-IN', { dateStyle: 'medium' })} – ${new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN', { dateStyle: 'medium' })}` : 'Not recorded'}</strong></div>
+                                                    <div><span>Estimated delivery</span><strong>{order.deliveryEstimate?.end ? new Date(order.deliveryEstimate.end).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : 'Not recorded'}</strong></div>
                                                 </footer>
                                             </article>
                                         );

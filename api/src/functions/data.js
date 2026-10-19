@@ -1,5 +1,6 @@
 const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
+const sharp = require('sharp');
 const { getClient, getDb } = require('../lib/db');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
@@ -20,6 +21,7 @@ const {
   createRazorpayOrder,
   getCredentials,
   getRazorpayPayment,
+  getRazorpayOrderPayments,
   refundRazorpayPayment,
   verifyPaymentSignature,
   verifyWebhookSignature,
@@ -171,24 +173,29 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
   const storedValues = [];
   const imageOperations = [];
 
-  values.forEach((value, index) => {
+  for (const [index, value] of values.entries()) {
     const image = String(value || '').trim();
     const match = image.match(dataImagePattern);
     if (!match) {
       storedValues.push(image);
-      return;
+      continue;
     }
     const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
     const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
+    const optimized = sharp(data, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate();
+    const [thumbnail, listing] = await Promise.all([
+      optimized.clone().resize({ width: 320, height: 420, fit: 'inside', withoutEnlargement: true }).webp({ quality: 78 }).toBuffer(),
+      optimized.clone().resize({ width: 900, height: 1200, fit: 'inside', withoutEnlargement: true }).webp({ quality: 84 }).toBuffer(),
+    ]);
     imageOperations.push({
       updateOne: {
         filter: { productId, index },
-        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, variants: { thumbnail, listing }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         upsert: true,
       },
     });
     storedValues.push(productImageUrl(productId, index, version));
-  });
+  }
 
   if (imageOperations.length) await db.collection('productImages').bulkWrite(imageOperations, {
     ordered: false,
@@ -198,6 +205,14 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
   product.image = storedValues[0] || '';
   product.otherImages = storedValues.slice(1).filter(Boolean);
   return product;
+};
+const recordAdminAudit = async (db, request, action, target = '', details = {}) => {
+  const forwarded = String(request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+  await db.collection('adminAuditLogs').insertOne({
+    id: crypto.randomUUID(), action, target: cleanText(target, 200), details,
+    ipHash: forwarded ? crypto.createHash('sha256').update(forwarded).digest('hex').slice(0, 16) : '',
+    createdAt: nowIso(),
+  });
 };
 const registeredRoutes = [];
 const registerHttp = (name, config) => {
@@ -405,6 +420,12 @@ const sendRefundNotifications = async (db, order, type, context) => {
     );
   }
   return db.collection('orders').findOne({ id: order.id });
+};
+const cronAuthorized = (request) => {
+  const supplied = String(request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  const expected = String(process.env.CRON_SECRET || '');
+  return Boolean(supplied && expected && supplied.length === expected.length
+    && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected)));
 };
 
 registerHttp('health', {
@@ -761,6 +782,7 @@ registerHttp('products', {
         const uniqueIds = [...new Set(ids)];
         const result = await collection.deleteMany({ id: { $in: uniqueIds } });
         await db.collection('productImages').deleteMany({ productId: { $in: uniqueIds } });
+        await recordAdminAudit(db, request, 'products.deleted', uniqueIds.join(','), { count: result.deletedCount });
         return json({ ok: true, deleted: result.deletedCount });
       }
 
@@ -797,6 +819,7 @@ registerHttp('products', {
       });
       const persisted = await collection.countDocuments({ id: { $in: suppliedIds } });
       if (persisted !== suppliedIds.length) throw new Error('Product persistence verification failed');
+      await recordAdminAudit(db, request, 'products.saved', suppliedIds.join(','), { count: persisted });
       return json({ ok: true, saved: persisted, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
     } catch (error) {
       return handleError(context, error);
@@ -814,17 +837,20 @@ registerHttp('product-image', {
       const productId = cleanText(url.searchParams.get('id'), 100);
       const index = Number(url.searchParams.get('index'));
       const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
+      const requestedVariant = cleanText(url.searchParams.get('size'), 20).toLowerCase();
       if (!productId || !Number.isInteger(index) || index < 0 || index > 4 || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
       const db = await getDb();
       const image = await db.collection('productImages').findOne({ productId, index, version });
       if (!image?.data) return json({ error: 'Image was not found' }, 404);
-      const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+      const variant = ['thumbnail', 'listing'].includes(requestedVariant) ? image.variants?.[requestedVariant] : null;
+      const selected = variant || image.data;
+      const data = Buffer.isBuffer(selected) ? selected : Buffer.from(selected.buffer || selected.value?.() || []);
       return {
         status: 200,
         body: data,
         headers: {
           'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-          'Content-Type': image.contentType || 'image/jpeg',
+          'Content-Type': variant ? 'image/webp' : (image.contentType || 'image/jpeg'),
           'Content-Length': String(data.length),
           'X-Content-Type-Options': 'nosniff',
         },
@@ -905,6 +931,7 @@ registerHttp('admin-reviews', {
         const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 100)).filter(Boolean) : [];
         if (!ids.length) return json({ error: 'At least one review ID is required' }, 400);
         const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        await recordAdminAudit(db, request, 'reviews.deleted', ids.join(','), { count: result.deletedCount });
         return json({ ok: true, deleted: result.deletedCount });
       }
 
@@ -918,6 +945,7 @@ registerHttp('admin-reviews', {
         { $set: { ...review, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         { upsert: true },
       );
+      await recordAdminAudit(db, request, 'review.saved', review.id, { published: review.published, featured: review.featured });
       return json({ ok: true, review: cleanDocument(await collection.findOne({ id: review.id })) });
     } catch (error) {
       return handleError(context, error);
@@ -958,6 +986,7 @@ registerHttp('admin-flash-sale', {
       }
       if (request.method === 'DELETE') {
         await collection.deleteOne({ id: 'homepage' });
+        await recordAdminAudit(db, request, 'flash_sale.deleted', 'homepage');
         return json({ ok: true });
       }
 
@@ -985,6 +1014,7 @@ registerHttp('admin-flash-sale', {
         { $set: { ...sale, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         { upsert: true },
       );
+      await recordAdminAudit(db, request, 'flash_sale.saved', 'homepage', { active: sale.active, itemCount: sale.items.length });
       return json({ ok: true, sale: cleanDocument(await collection.findOne({ id: 'homepage' })) });
     } catch (error) {
       return handleError(context, error);
@@ -1015,6 +1045,7 @@ registerHttp('customers', {
         const ids = Array.isArray(body?.ids) ? body.ids.map((id) => cleanText(id, 150)).filter(Boolean) : [];
         if (!ids.length) return json({ error: 'At least one customer ID is required' }, 400);
         const result = await collection.deleteMany({ id: { $in: [...new Set(ids)] } });
+        await recordAdminAudit(db, request, 'customers.deleted', ids.join(','), { count: result.deletedCount });
         return json({
           ok: true,
           deleted: result.deletedCount,
@@ -1069,9 +1100,12 @@ registerHttp('razorpay-create-order', {
       const customerEmail = cleanText(activeCustomer.email || session.email || customer.email, 254).toLowerCase();
       const customerPhone = cleanText(customer.phone, 30);
       if (!customerName || !customerEmail || !customerPhone) return json({ error: 'Name, email and mobile number are required' }, 400);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) return json({ error: 'Enter a valid email address' }, 400);
+      if (!/^\+?[0-9][0-9\s-]{8,14}$/.test(customerPhone)) return json({ error: 'Enter a valid mobile number' }, 400);
       if (!shippingAddress.addressLine1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postalCode) {
         return json({ error: 'Complete shipping address is required' }, 400);
       }
+      if (!/^[1-9][0-9]{5}$/.test(cleanText(shippingAddress.postalCode, 20))) return json({ error: 'Enter a valid six-digit PIN code' }, 400);
 
       const productIds = [...new Set(requestedItems.map((item) => cleanText(item.id, 100)).filter(Boolean))];
       const products = await db.collection('products').find({ id: { $in: productIds } }).toArray();
@@ -1282,7 +1316,7 @@ registerHttp('customer-orders', {
       if (!orderId || reason.length < 3) return json({ error: 'Choose an order and provide a cancellation reason' }, 400);
       const order = await orders.findOne({ id: orderId, customerId: customer.id, paymentStatus: 'captured' });
       if (!order) return json({ error: 'Paid order was not found' }, 404);
-      if (['shipped', 'delivered'].includes(order.fulfillmentStatus)) return json({ error: 'This order has already shipped and can no longer be cancelled' }, 409);
+      if (['shipped', 'out_for_delivery', 'delivered'].includes(order.fulfillmentStatus)) return json({ error: 'This order has already shipped and can no longer be cancelled' }, 409);
       if (['requested', 'approved'].includes(order.cancellation?.status) || order.refundStatus) return json({ error: 'A cancellation or refund already exists for this order' }, 409);
       await orders.updateOne(
         { id: orderId, customerId: customer.id },
@@ -1331,7 +1365,7 @@ registerHttp('orders', {
           const existing = await collection.findOne({ id: orderId, paymentStatus: 'captured' });
           if (!existing) return json({ error: 'Paid order was not found' }, 404);
           if (existing.cancellation?.status !== 'requested') return json({ error: 'The customer has not requested cancellation' }, 409);
-          if (['shipped', 'delivered'].includes(existing.fulfillmentStatus)) return json({ error: 'Shipped or delivered orders cannot be refunded through cancellation' }, 409);
+          if (['shipped', 'out_for_delivery', 'delivered'].includes(existing.fulfillmentStatus)) return json({ error: 'Shipped or delivered orders cannot be refunded through cancellation' }, 409);
           if (!existing.razorpayPaymentId) return json({ error: 'Razorpay payment ID is missing; reconcile this order manually' }, 409);
           const claim = await collection.updateOne(
             { id: orderId, 'cancellation.status': 'requested', refundStatus: { $exists: false } },
@@ -1361,12 +1395,13 @@ registerHttp('orders', {
             { id: orderId, 'cancellation.status': 'refunding' },
             { $set: { 'cancellation.status': 'approved', 'cancellation.approvedAt': nowIso(), razorpayRefundId: refund.id, refundStatus, inventoryStatus: 'restored', status: refundStatus === 'processed' ? 'Refunded' : 'Refund initiated', updatedAt: nowIso() }, $unset: { 'cancellation.refundStartedAt': '', 'cancellation.refundError': '' } },
           );
+          await recordAdminAudit(db, request, 'order.refund_initiated', orderId, { refundId: refund.id, amountPaise: existing.amountPaise });
           const updatedOrder = await collection.findOne({ id: orderId });
           const notifiedOrder = await sendRefundNotifications(db, updatedOrder, 'initiated', context);
           return json({ ok: true, order: cleanDocument(notifiedOrder) });
         }
         const fulfillmentStatus = cleanText(body?.fulfillmentStatus, 30).toLowerCase();
-        const allowedStatuses = ['processing', 'packed', 'shipped', 'delivered'];
+        const allowedStatuses = ['processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'];
         if (!orderId || !allowedStatuses.includes(fulfillmentStatus)) return json({ error: 'A valid order and fulfilment status are required' }, 400);
         const existing = await collection.findOne({ id: orderId, paymentStatus: 'captured' });
         if (!existing) return json({ error: 'Paid order was not found' }, 404);
@@ -1378,7 +1413,7 @@ registerHttp('orders', {
         const trackingNumber = cleanText(body?.trackingNumber, 120);
         const trackingUrlInput = cleanText(body?.trackingUrl, 1000);
         const trackingUrl = /^https:\/\//i.test(trackingUrlInput) ? trackingUrlInput : '';
-        if (fulfillmentStatus === 'shipped' && (!courier || !trackingNumber)) return json({ error: 'Courier and tracking number are required when an order is shipped' }, 400);
+        if (['shipped', 'out_for_delivery'].includes(fulfillmentStatus) && (!courier || !trackingNumber)) return json({ error: 'Courier and tracking number are required after an order ships' }, 400);
         const changed = fulfillmentStatus !== existing.fulfillmentStatus
           || courier !== (existing.courier || '')
           || trackingNumber !== (existing.trackingNumber || '')
@@ -1386,10 +1421,11 @@ registerHttp('orders', {
         const operationTime = nowIso();
         await collection.updateOne(
           { id: orderId, paymentStatus: 'captured' },
-          { $set: { fulfillmentStatus, courier, trackingNumber, trackingUrl, status: fulfillmentStatus[0].toUpperCase() + fulfillmentStatus.slice(1), updatedAt: operationTime } },
+          { $set: { fulfillmentStatus, courier, trackingNumber, trackingUrl, status: fulfillmentStatus.split('_').map((word) => word[0].toUpperCase() + word.slice(1)).join(' '), updatedAt: operationTime } },
         );
         let updatedOrder = await collection.findOne({ id: orderId });
-        if (changed && ['shipped', 'delivered'].includes(fulfillmentStatus) && process.env.RESEND_API_KEY) {
+        await recordAdminAudit(db, request, 'order.fulfillment_updated', orderId, { from: existing.fulfillmentStatus || 'processing', to: fulfillmentStatus, courier, trackingNumber });
+        if (changed && ['shipped', 'out_for_delivery', 'delivered'].includes(fulfillmentStatus) && process.env.RESEND_API_KEY) {
           try {
             const result = await sendFulfillmentUpdateEmail(updatedOrder);
             await collection.updateOne(
@@ -1425,16 +1461,71 @@ registerHttp('orders', {
   },
 });
 
+registerHttp('admin-audit-logs', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'admin/audit-logs',
+  handler: async (request, context) => {
+    const unauthorized = requireAdmin(request);
+    if (unauthorized) return unauthorized;
+    try {
+      const db = await getDb();
+      const logs = await db.collection('adminAuditLogs').find({}, { projection: { _id: 0, ipHash: 0 } })
+        .sort({ createdAt: -1 }).limit(250).toArray();
+      return json(logs);
+    } catch (error) { return handleError(context, error); }
+  },
+});
+
+registerHttp('payment-reconciliation', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'maintenance/payment-reconciliation',
+  handler: async (request, context) => {
+    if (!cronAuthorized(request)) return json({ error: 'Unauthorized' }, 401);
+    try {
+      const db = await getDb();
+      const cutoff = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
+      const candidates = await db.collection('orders').find({
+        paymentStatus: { $in: ['created', 'failed'] },
+        razorpayOrderId: { $exists: true, $ne: '' },
+        createdAt: { $gte: cutoff },
+      }).sort({ createdAt: -1 }).limit(50).toArray();
+      let captured = 0;
+      let checked = 0;
+      const errors = [];
+      for (const order of candidates) {
+        try {
+          const response = await getRazorpayOrderPayments(order.razorpayOrderId);
+          const payments = Array.isArray(response.items) ? response.items : [];
+          let payment = payments.find((item) => item.status === 'captured' && Number(item.amount) === order.amountPaise);
+          const authorized = payments.find((item) => item.status === 'authorized' && Number(item.amount) === order.amountPaise);
+          if (!payment && authorized) payment = await captureRazorpayPayment(authorized.id, order.amountPaise);
+          checked += 1;
+          if (payment?.status === 'captured' && payment.order_id === order.razorpayOrderId && Number(payment.amount) === order.amountPaise) {
+            let completed = await finalizeCapturedOrder(db, order, payment);
+            completed = await sendCapturedOrderConfirmation(db, completed, context);
+            captured += 1;
+          }
+          await db.collection('orders').updateOne({ id: order.id }, { $set: { lastReconciledAt: nowIso(), updatedAt: nowIso() } });
+        } catch (error) {
+          context.error('[payment-reconciliation]', order.id, error);
+          errors.push({ orderId: order.id, error: cleanText(error.message, 160) });
+        }
+      }
+      return json({ ok: errors.length === 0, checked, captured, errors });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('email-retries', {
   methods: ['GET'],
   authLevel: 'anonymous',
   route: 'maintenance/email-retries',
   handler: async (request, context) => {
-    const supplied = String(request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
-    const expected = String(process.env.CRON_SECRET || '');
-    const valid = supplied && expected && supplied.length === expected.length
-      && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
-    if (!valid) return json({ error: 'Unauthorized' }, 401);
+    if (!cronAuthorized(request)) return json({ error: 'Unauthorized' }, 401);
     try {
       const db = await getDb();
       const failedOrders = await db.collection('orders').find({ paymentStatus: 'captured', 'confirmationEmail.status': 'failed' }).limit(25).toArray();
@@ -1450,7 +1541,7 @@ registerHttp('email-retries', {
           await db.collection('orders').updateOne({ id: order.id }, { $set: { adminPurchaseEmail: { status: 'failed', error: cleanText(error.message, 300), attemptedAt: nowIso() }, updatedAt: nowIso() } });
         }
       }
-      const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['shipped', 'delivered'] } }).limit(50).toArray();
+      const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['shipped', 'out_for_delivery', 'delivered'] } }).limit(50).toArray();
       let fulfillmentRetried = 0;
       for (const order of failedFulfillment) {
         if (order.fulfillmentNotifications?.[order.fulfillmentStatus]?.status !== 'failed') continue;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, ChevronLeft, CreditCard, LoaderCircle, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, CreditCard, LoaderCircle, LockKeyhole, ShieldCheck, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/apiClient';
@@ -122,7 +122,7 @@ const Checkout = () => {
         <p>Your payment was verified and your order is now being prepared.</p>
         <div className="order-reference"><span>Order reference</span><strong>{completedOrder.id}</strong></div>
         {completedOrder.deliveryEstimate && (
-          <p>Estimated delivery: {new Date(completedOrder.deliveryEstimate.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })} – {new Date(completedOrder.deliveryEstimate.end).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          <p>Estimated delivery: {new Date(completedOrder.deliveryEstimate.end).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         )}
         <Link to="/" className="checkout-home-link">Continue shopping</Link>
       </main>
@@ -173,6 +173,7 @@ const Checkout = () => {
             {isPaying ? 'Opening secure payment…' : `Pay ₹${getCartTotal().toLocaleString('en-IN')}`}
           </button>
           <p className="checkout-payment-note"><ShieldCheck size={15} /> Payment details are securely handled by Razorpay and never stored by ANNS.</p>
+          <p className="checkout-payment-note"><Truck size={15} /> Estimated delivery is seven days after successful payment. <Link to="/shipping-policy">Shipping</Link> · <Link to="/return-policy">Cancellation and refunds</Link> · <Link to="/contact">Contact/WhatsApp support</Link></p>
         </form>
         <aside className="checkout-summary">
           <p className="checkout-kicker">YOUR ORDER</p>

@@ -39,6 +39,7 @@ const createRazorpayOrder = (order) => requestRazorpay('/orders', {
 });
 
 const getRazorpayPayment = (paymentId) => requestRazorpay(`/payments/${encodeURIComponent(paymentId)}`);
+const getRazorpayOrderPayments = (orderId) => requestRazorpay(`/orders/${encodeURIComponent(orderId)}/payments`);
 
 const captureRazorpayPayment = (paymentId, amount) => requestRazorpay(`/payments/${encodeURIComponent(paymentId)}/capture`, {
   method: 'POST',
@@ -74,6 +75,7 @@ module.exports = {
   createRazorpayOrder,
   getCredentials,
   getRazorpayPayment,
+  getRazorpayOrderPayments,
   refundRazorpayPayment,
   verifyPaymentSignature,
   verifyWebhookSignature,

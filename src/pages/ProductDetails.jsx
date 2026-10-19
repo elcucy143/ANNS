@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Star, Truck, RefreshCw, Clock, Minus, Plus, MessageCircle } from 'lucide-react';
+import { Star, Truck, RefreshCw, Clock, Minus, Plus, MessageCircle, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
 
@@ -13,6 +13,7 @@ import { normalizeSizeList } from '../utils/productOptions';
 import { businessContact } from '../config/contact';
 import { useReviews } from '../context/ReviewContext';
 import ReviewsSection from '../components/ReviewsSection';
+import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -25,6 +26,7 @@ const ProductDetails = () => {
     const [customization, setCustomization] = useState({ nameOrText: '', instructions: '' });
     const { products: catalogProducts, loading } = useProductCatalog();
     const { reviews } = useReviews();
+    const { wishlistIds, toggleWishlist, recordView } = useShoppingHistory();
 
     // Find product by ID across all categories and get category name
     const findProductAndCategory = (productId) => {
@@ -42,6 +44,8 @@ const ProductDetails = () => {
         setSelectedImage(null);
         setCustomization({ nameOrText: '', instructions: '' });
     }, [id]);
+
+    React.useEffect(() => { if (productData?.id) recordView(productData.id); }, [productData?.id, recordView]);
 
     React.useEffect(() => {
         setSelectedColor(productColor);
@@ -176,6 +180,10 @@ const ProductDetails = () => {
                 {/* Product Info */}
                 <div className="product-info-section">
                     <h1 className="product-title">{product.name}</h1>
+                    <button type="button" className={`wishlist-button ${wishlistIds.includes(String(product.id)) ? 'saved' : ''}`} onClick={() => toggleWishlist(product.id)}>
+                        <Heart size={18} fill={wishlistIds.includes(String(product.id)) ? 'currentColor' : 'none'} />
+                        {wishlistIds.includes(String(product.id)) ? 'Saved to wishlist' : 'Save to wishlist'}
+                    </button>
                     {product.reviewCount > 0 && <div className="product-rating">
                         <div className="stars">
                             {[...Array(5)].map((_, i) => (
