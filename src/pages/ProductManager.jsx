@@ -64,6 +64,10 @@ const MAX_PRODUCT_IMAGES = 5;
 const PRODUCT_SAVE_BATCH_SIZE = 100;
 const INVENTORY_PAGE_SIZE = 20;
 const FLASH_SALE_PAGE_SIZE = 10;
+const ORDERS_PAGE_SIZE = 10;
+const CUSTOMERS_PAGE_SIZE = 20;
+const REVIEWS_PAGE_SIZE = 10;
+const CUSTOMER_HISTORY_PAGE_SIZE = 5;
 const getInitialReviewForm = () => ({
     id: '',
     reviewerName: '',
@@ -228,6 +232,10 @@ const ProductManager = () => {
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [customersPage, setCustomersPage] = useState(1);
+    const [reviewsPage, setReviewsPage] = useState(1);
+    const [customerHistoryPage, setCustomerHistoryPage] = useState(1);
     const fileInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
     const flashSaleImageInputRef = useRef(null);
@@ -306,6 +314,19 @@ const ProductManager = () => {
         return reviews.filter((review) => !query || [review.reviewerName, review.title, review.comment, review.productId]
             .join(' ').toLowerCase().includes(query));
     }, [reviews, reviewSearch]);
+
+    const ordersPageCount = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PAGE_SIZE));
+    const activeOrdersPage = Math.min(ordersPage, ordersPageCount);
+    const pagedOrders = filteredOrders.slice((activeOrdersPage - 1) * ORDERS_PAGE_SIZE, activeOrdersPage * ORDERS_PAGE_SIZE);
+    const customersPageCount = Math.max(1, Math.ceil(filteredCustomers.length / CUSTOMERS_PAGE_SIZE));
+    const activeCustomersPage = Math.min(customersPage, customersPageCount);
+    const pagedCustomers = filteredCustomers.slice((activeCustomersPage - 1) * CUSTOMERS_PAGE_SIZE, activeCustomersPage * CUSTOMERS_PAGE_SIZE);
+    const reviewsPageCount = Math.max(1, Math.ceil(filteredReviews.length / REVIEWS_PAGE_SIZE));
+    const activeReviewsPage = Math.min(reviewsPage, reviewsPageCount);
+    const pagedReviews = filteredReviews.slice((activeReviewsPage - 1) * REVIEWS_PAGE_SIZE, activeReviewsPage * REVIEWS_PAGE_SIZE);
+    const customerHistoryPageCount = Math.max(1, Math.ceil((selectedCustomer?.orders.length || 0) / CUSTOMER_HISTORY_PAGE_SIZE));
+    const activeCustomerHistoryPage = Math.min(customerHistoryPage, customerHistoryPageCount);
+    const pagedCustomerHistory = (selectedCustomer?.orders || []).slice((activeCustomerHistoryPage - 1) * CUSTOMER_HISTORY_PAGE_SIZE, activeCustomerHistoryPage * CUSTOMER_HISTORY_PAGE_SIZE);
 
     const refreshReviews = async () => {
         try {
@@ -930,26 +951,62 @@ const ProductManager = () => {
         writeFileXLSX(workbook, 'ANNS-product-import-template.xlsx');
     };
 
-    const exportInventory = async () => {
-        const { utils, writeFileXLSX } = await import('xlsx');
-        const exportRows = allProducts.map((product) => ({
-            category: product.category,
-            id: product.id,
-            name: product.name,
-            price: toNumber(product.price),
-            stock: product.stockValue,
-            sold: product.soldValue,
-            remaining: product.remainingValue,
-            status: product.remainingValue === 0 ? 'Out of stock' : product.remainingValue <= LOW_STOCK_LIMIT ? 'Low stock' : 'Available',
-            subcategory: parseList(product.subcategory).join(', '),
-            featured: product.featured,
-        }));
-        const worksheet = utils.json_to_sheet(exportRows);
-        worksheet['!cols'] = [16, 15, 34, 12, 12, 12, 12, 16, 28, 12].map((wch) => ({ wch }));
-        const workbook = utils.book_new();
-        utils.book_append_sheet(workbook, worksheet, 'Inventory');
-        writeFileXLSX(workbook, 'ANNS-inventory.xlsx');
+    const downloadCsv = (filename, rows) => {
+        if (!rows.length) return setNotification('There is no data to export.');
+        const headings = Object.keys(rows[0]);
+        const quote = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+        const csv = [headings.map(quote).join(','), ...rows.map((row) => headings.map((heading) => quote(row[heading])).join(','))].join('\n');
+        const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
     };
+
+    const exportInventoryCsv = () => downloadCsv('ANNS-stock.csv', allProducts.map((product) => ({
+        category: product.category,
+        productCode: product.id,
+        productName: product.name,
+        price: toNumber(product.price),
+        totalStock: product.stockValue,
+        unitsSold: product.soldValue,
+        remainingStock: product.remainingValue,
+        status: product.remainingValue === 0 ? 'Out of stock' : product.remainingValue <= LOW_STOCK_LIMIT ? 'Low stock' : 'Available',
+        subcategories: parseList(product.subcategory).join(', '),
+    })));
+
+    const exportCustomersCsv = () => downloadCsv('ANNS-customers.csv', filteredCustomers.map((customer) => ({
+        customerId: customer.id,
+        name: customer.name,
+        email: customer.email,
+        mobile: customer.phone,
+        provider: customer.provider,
+        joinedAt: customer.createdAt,
+        lastSeenAt: customer.lastSeenAt,
+        paidOrders: customer.orders.length,
+        totalSpent: customer.totalSpent,
+    })));
+
+    const exportOrdersCsv = () => downloadCsv('ANNS-paid-orders.csv', filteredOrders.flatMap((order) => (
+        (order.items?.length ? order.items : [{}]).map((item) => ({
+            orderId: order.id,
+            paidAt: order.paidAt || order.createdAt,
+            customerName: order.customer?.name,
+            customerEmail: order.customer?.email,
+            customerMobile: order.customer?.phone,
+            paymentId: order.razorpayPaymentId,
+            productCode: item.id,
+            productName: item.name,
+            quantity: toNumber(item.quantity, 1),
+            lineTotal: toNumber(item.lineTotal),
+            orderTotal: toNumber(order.total),
+            fulfillmentStatus: order.fulfillmentStatus || 'processing',
+            refundStatus: order.refundStatus || '',
+            courier: order.courier || '',
+            trackingNumber: order.trackingNumber || '',
+        }))
+    )));
 
     const customerHistoryRows = (customerList) => customerList.flatMap((customer) => (
         customer.orders.flatMap((order) => (order.items || []).map((item) => ({
@@ -1181,7 +1238,7 @@ const ProductManager = () => {
                                 <option value="out">Out of stock</option>
                                 <option value="sold">Has sales</option>
                             </select>
-                            <button type="button" className="admin-icon-button" onClick={exportInventory} title="Export inventory to Excel"><Download size={18} /></button>
+                            <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
                         <div className="admin-table-wrap">
@@ -1221,11 +1278,12 @@ const ProductManager = () => {
                         </section>
                         <section className="admin-panel order-management-panel">
                             <div className="customer-toolbar">
-                                <div className="admin-search"><Search size={18} /><input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} placeholder="Search order, customer, email or payment ID" /></div>
+                                <div className="admin-search"><Search size={18} /><input value={orderSearch} onChange={(event) => { setOrderSearch(event.target.value); setOrdersPage(1); }} placeholder="Search order, customer, email or payment ID" /></div>
+                                <button type="button" className="admin-secondary-button" onClick={exportOrdersCsv}><FileSpreadsheet size={17} /> Download CSV</button>
                                 <button type="button" className="admin-secondary-button" onClick={refreshCustomerData}><RefreshCw size={17} /> Refresh orders</button>
                             </div>
                             <div className="fulfillment-order-list">
-                                {filteredOrders.map((order) => {
+                                {pagedOrders.map((order) => {
                                     const address = order.shippingAddress || {};
                                     const currentStatus = order.fulfillmentStatus || 'processing';
                                     const statusOrder = ['processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'];
@@ -1254,6 +1312,7 @@ const ProductManager = () => {
                                 })}
                                 {!filteredOrders.length && <div className="admin-empty-state"><ReceiptText size={28} /><p>No paid orders match this search.</p></div>}
                             </div>
+                            {filteredOrders.length > ORDERS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeOrdersPage === 1} onClick={() => setOrdersPage(activeOrdersPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeOrdersPage}</strong> of {ordersPageCount} · {filteredOrders.length} paid orders</span><button type="button" disabled={activeOrdersPage === ordersPageCount} onClick={() => setOrdersPage(activeOrdersPage + 1)}><ChevronRight size={17} /></button></div>}
                         </section>
                     </div>
                 )}
@@ -1269,16 +1328,16 @@ const ProductManager = () => {
 
                         <section className="admin-panel customer-panel">
                             <div className="customer-toolbar">
-                                <div className="admin-search"><Search size={18} /><input value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} placeholder="Search name, email or mobile" /></div>
-                                <button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryExcel()}><FileSpreadsheet size={17} /> Export Excel</button>
-                                <button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryPdf()}><Download size={17} /> Export PDF</button>
+                                <div className="admin-search"><Search size={18} /><input value={customerSearch} onChange={(event) => { setCustomerSearch(event.target.value); setCustomersPage(1); }} placeholder="Search name, email or mobile" /></div>
+                                <button type="button" className="admin-secondary-button" onClick={exportCustomersCsv}><FileSpreadsheet size={17} /> Customers CSV</button>
+                                <button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryExcel()}><Download size={17} /> Order history</button>
                                 <button type="button" className="admin-secondary-button" onClick={refreshCustomerData}><RefreshCw size={17} /> Refresh activity</button>
                             </div>
                             <div className="admin-table-wrap">
                                 <table className="admin-table customer-table">
                                     <thead><tr><th>Customer</th><th>Contact</th><th>Sign-in</th><th>Activity</th><th>Orders</th><th>Total spent</th><th aria-label="Customer actions" /></tr></thead>
                                     <tbody>
-                                        {filteredCustomers.map((customer) => (
+                                        {pagedCustomers.map((customer) => (
                                             <tr key={customer.id}>
                                                 <td><div className="customer-name-cell">{customer.picture ? <img src={customer.picture} alt="" /> : <span>{customer.name?.charAt(0)?.toUpperCase() || 'A'}</span>}<div><strong>{customer.name}</strong><small>Joined {new Date(customer.createdAt).toLocaleDateString('en-IN')}</small></div></div></td>
                                                 <td><div className="customer-contact">{customer.email && <span><Mail size={14} /> {customer.email}</span>}{customer.phone && <span><Phone size={14} /> +91 {customer.phone}</span>}{!customer.email && !customer.phone && <small>No contact recorded</small>}</div></td>
@@ -1286,12 +1345,13 @@ const ProductManager = () => {
                                                 <td><span className={`activity-badge ${customer.active ? 'active' : 'inactive'}`}><i /> {customer.active ? 'Active now' : 'Inactive'}</span><small>{customer.lastSeenAt ? new Date(customer.lastSeenAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'No activity'}</small></td>
                                                 <td>{customer.orders.length}</td>
                                                 <td><strong>{formatCurrency(customer.totalSpent)}</strong></td>
-                                                <td><div className="customer-actions"><button type="button" className={`history-button ${selectedCustomerId === customer.id ? 'selected' : ''}`} onClick={() => setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id)}><ReceiptText size={15} /> {selectedCustomerId === customer.id ? 'Close' : 'View history'}</button><button type="button" className="customer-delete-button" onClick={() => removeCustomer(customer)} aria-label={`Delete ${customer.name || 'customer'}`} title="Delete customer contact"><Trash2 size={15} /></button></div></td>
+                                                <td><div className="customer-actions"><button type="button" className={`history-button ${selectedCustomerId === customer.id ? 'selected' : ''}`} onClick={() => { setSelectedCustomerId(selectedCustomerId === customer.id ? '' : customer.id); setCustomerHistoryPage(1); }}><ReceiptText size={15} /> {selectedCustomerId === customer.id ? 'Close' : 'View history'}</button><button type="button" className="customer-delete-button" onClick={() => removeCustomer(customer)} aria-label={`Delete ${customer.name || 'customer'}`} title="Delete customer contact"><Trash2 size={15} /></button></div></td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
+                            {filteredCustomers.length > CUSTOMERS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeCustomersPage === 1} onClick={() => setCustomersPage(activeCustomersPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeCustomersPage}</strong> of {customersPageCount} · {filteredCustomers.length} customers</span><button type="button" disabled={activeCustomersPage === customersPageCount} onClick={() => setCustomersPage(activeCustomersPage + 1)}><ChevronRight size={17} /></button></div>}
                             {!filteredCustomers.length && <div className="admin-empty-state"><Users size={28} /><p>No registered customers yet. New Google, email and mobile sign-ins will appear here.</p></div>}
                         </section>
 
@@ -1299,7 +1359,7 @@ const ProductManager = () => {
                             <section className="admin-panel purchase-history-panel">
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">COMPLETE PURCHASE HISTORY</p><h2>{selectedCustomer.name}</h2><p className="history-customer-contact">{[selectedCustomer.email, selectedCustomer.phone && `+91 ${selectedCustomer.phone}`].filter(Boolean).join(' · ')}</p></div><div className="history-heading-actions"><span className="admin-count-badge">{selectedCustomer.orders.length} paid order{selectedCustomer.orders.length === 1 ? '' : 's'} · {formatCurrency(selectedCustomer.totalSpent)}</span><button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryExcel([selectedCustomer])}><FileSpreadsheet size={16} /> Excel</button><button type="button" className="admin-secondary-button" onClick={() => exportCustomerHistoryPdf([selectedCustomer])}><Download size={16} /> PDF</button><button type="button" className="history-close-button" onClick={() => setSelectedCustomerId('')} aria-label="Close purchase history"><XCircle size={20} /></button></div></div>
                                 {selectedCustomer.orders.length ? (
-                                    <div className="order-history-list">{selectedCustomer.orders.map((order) => {
+                                    <div className="order-history-list">{pagedCustomerHistory.map((order) => {
                                         const address = order.shippingAddress || {};
                                         const addressText = [address.addressLine1, address.addressLine2, address.city, address.state, address.postalCode, address.country].filter(Boolean).join(', ');
                                         const paidDate = order.paidAt || order.createdAt;
@@ -1330,6 +1390,7 @@ const ProductManager = () => {
                                         );
                                     })}</div>
                                 ) : <div className="admin-empty-state"><ReceiptText size={28} /><p>No purchases recorded for this customer.</p></div>}
+                                {selectedCustomer.orders.length > CUSTOMER_HISTORY_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeCustomerHistoryPage === 1} onClick={() => setCustomerHistoryPage(activeCustomerHistoryPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeCustomerHistoryPage}</strong> of {customerHistoryPageCount} · {selectedCustomer.orders.length} orders</span><button type="button" disabled={activeCustomerHistoryPage === customerHistoryPageCount} onClick={() => setCustomerHistoryPage(activeCustomerHistoryPage + 1)}><ChevronRight size={17} /></button></div>}
                             </section>
                         )}
 
@@ -1367,9 +1428,9 @@ const ProductManager = () => {
 
                             <section className="admin-panel review-library">
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">REVIEW LIBRARY</p><h2>{reviews.length} testimonials</h2></div><button type="button" className="admin-icon-button" onClick={refreshReviews} title="Refresh reviews"><RefreshCw size={17} /></button></div>
-                                <div className="admin-search review-search"><Search size={18} /><input value={reviewSearch} onChange={(event) => setReviewSearch(event.target.value)} placeholder="Search reviews" /></div>
+                                <div className="admin-search review-search"><Search size={18} /><input value={reviewSearch} onChange={(event) => { setReviewSearch(event.target.value); setReviewsPage(1); }} placeholder="Search reviews" /></div>
                                 <div className="review-admin-list">
-                                    {filteredReviews.map((review) => (
+                                    {pagedReviews.map((review) => (
                                         <article key={review.id}>
                                             {review.image ? <img src={review.image} alt="" /> : <span className="review-list-avatar">{review.reviewerName?.charAt(0)?.toUpperCase() || 'A'}</span>}
                                             <div className="review-list-copy">
@@ -1382,6 +1443,7 @@ const ProductManager = () => {
                                         </article>
                                     ))}
                                 </div>
+                                {filteredReviews.length > REVIEWS_PAGE_SIZE && <div className="admin-pagination"><button type="button" disabled={activeReviewsPage === 1} onClick={() => setReviewsPage(activeReviewsPage - 1)}><ChevronLeft size={17} /></button><span>Page <strong>{activeReviewsPage}</strong> of {reviewsPageCount} · {filteredReviews.length} reviews</span><button type="button" disabled={activeReviewsPage === reviewsPageCount} onClick={() => setReviewsPage(activeReviewsPage + 1)}><ChevronRight size={17} /></button></div>}
                                 {!filteredReviews.length && <div className="admin-empty-state"><MessageSquareQuote size={28} /><p>No reviews yet. Add the first customer testimonial using the form.</p></div>}
                             </section>
                         </section>
