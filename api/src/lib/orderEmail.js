@@ -2,6 +2,8 @@ const RESEND_API_URL = 'https://api.resend.com/emails';
 const DEFAULT_FROM = 'ANNS Orders <orders@annsonline.shop>';
 const DEFAULT_ADMIN_EMAIL = 'astrendsandgifts@gmail.com';
 const SITE_URL = 'https://www.annsonline.shop';
+const CONTACT_URL = `${SITE_URL}/contact`;
+const WHATSAPP_URL = 'https://wa.me/919849792562';
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -18,20 +20,23 @@ const formatDate = (value) => new Intl.DateTimeFormat('en-IN', {
   day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
 }).format(new Date(value));
 
-const addBusinessDays = (start, days) => {
+const addDays = (start, days) => {
   const date = new Date(start);
-  let remaining = days;
-  while (remaining > 0) {
-    date.setUTCDate(date.getUTCDate() + 1);
-    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) remaining -= 1;
-  }
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString();
 };
 
-const getDeliveryEstimate = (paidAt = new Date().toISOString()) => ({
-  start: addBusinessDays(paidAt, 5),
-  end: addBusinessDays(paidAt, 7),
-});
+const getDeliveryEstimate = (paidAt = new Date().toISOString()) => {
+  const estimatedDate = addDays(paidAt, 7);
+  return { start: estimatedDate, end: estimatedDate };
+};
+
+const absoluteProductImage = (value) => {
+  const image = String(value || '').trim();
+  if (/^https:\/\//i.test(image)) return image;
+  if (image.startsWith('/')) return `${SITE_URL}${image}`;
+  return '';
+};
 
 const sendEmail = async ({ to, subject, html, text, replyTo }) => {
   const apiKey = String(process.env.RESEND_API_KEY || '').trim();
@@ -80,25 +85,29 @@ const sendContactMessage = async ({ name, email, message }) => {
   });
 };
 
-const orderRows = (order) => order.items.map((item) => `
+const orderRows = (order) => order.items.map((item) => {
+  const imageUrl = absoluteProductImage(item.image);
+  return `
   <tr>
+    <td style="width:72px;padding:10px 12px 10px 0;border-bottom:1px solid #eee">${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" width="64" height="80" style="display:block;width:64px;height:80px;object-fit:cover;border-radius:6px;background:#f1ece8">` : ''}</td>
     <td style="padding:10px 0;border-bottom:1px solid #eee">${escapeHtml(item.name)}<br><small>Product code: ${escapeHtml(item.id)}${[item.size, item.color].filter(Boolean).length ? ` · ${escapeHtml([item.size, item.color].filter(Boolean).join(' · '))}` : ''}</small></td>
     <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
     <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td>
-  </tr>`).join('');
+  </tr>`;
+}).join('');
 
 const orderText = (order, estimate) => [
   `Thank you for shopping with ANNS, ${order.customer.name}.`,
   `Order: ${order.id}`,
   `Payment: Confirmed`,
-  `Estimated delivery: ${formatDate(estimate.start)} – ${formatDate(estimate.end)}`,
+  `Estimated delivery date: ${formatDate(estimate.end)}`,
   '',
   ...order.items.map((item) => `${item.quantity} × ${item.name} | Product code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)}`),
   '',
   `Total: ${formatCurrency(order.total)}`,
   `Deliver to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,
   '',
-  'Questions? Reply to this email or WhatsApp +91 98497 92562.',
+  `Questions? Visit ${CONTACT_URL} or WhatsApp us at ${WHATSAPP_URL}.`,
 ].join('\n');
 
 const customerHtml = (order, estimate) => `<!doctype html><html><body style="margin:0;background:#f5f1ec;font-family:Arial,sans-serif;color:#29231f">
@@ -107,17 +116,18 @@ const customerHtml = (order, estimate) => `<!doctype html><html><body style="mar
       <p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS</p>
       <h1 style="font-family:Georgia,serif;font-weight:500">Your order is confirmed</h1>
       <p>Hi ${escapeHtml(order.customer.name)}, we received your payment and are preparing your order.</p>
-      <div style="background:#f5f1ec;padding:16px;margin:24px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Estimated delivery: ${escapeHtml(formatDate(estimate.start))} – ${escapeHtml(formatDate(estimate.end))}</div>
-      <table style="width:100%;border-collapse:collapse">${orderRows(order)}<tr><td colspan="2" style="padding-top:16px;font-weight:700">Total</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></table>
+      <div style="background:#f5f1ec;padding:16px;margin:24px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Estimated delivery date: <strong>${escapeHtml(formatDate(estimate.end))}</strong> (7 days from payment)</div>
+      <table style="width:100%;border-collapse:collapse">${orderRows(order)}<tr><td colspan="3" style="padding-top:16px;font-weight:700">Total</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></table>
       <h3 style="margin-top:28px">Delivery address</h3>
       <p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p>
-      <p style="margin-top:28px;color:#756d66">Need help? Reply to this email or WhatsApp +91 98497 92562.</p>
+      <p style="margin-top:28px;color:#756d66">Need help with your order? Visit our <a href="${CONTACT_URL}" style="color:#8b5737">Contact Us page</a> or <a href="${WHATSAPP_URL}" style="color:#198754">message ANNS on WhatsApp</a>.</p>
     </div>
   </div></body></html>`;
 
 const adminOrderRows = (order) => order.items.map((item) => {
   const productUrl = `${SITE_URL}/product/${encodeURIComponent(item.id)}`;
-  return `<tr><td style="padding:12px 0;border-bottom:1px solid #e9e4df"><a href="${productUrl}" style="color:#8b5737;font-weight:700">${escapeHtml(item.name)}</a><br><small>Product code: ${escapeHtml(item.id)} · ${escapeHtml([item.size, item.color].filter(Boolean).join(' · ') || 'Standard')}</small></td><td style="padding:12px;border-bottom:1px solid #e9e4df;text-align:center">${item.quantity}</td><td style="padding:12px 0;border-bottom:1px solid #e9e4df;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td></tr>`;
+  const imageUrl = absoluteProductImage(item.image);
+  return `<tr><td style="width:72px;padding:12px 12px 12px 0;border-bottom:1px solid #e9e4df">${imageUrl ? `<a href="${productUrl}"><img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(item.name)}" width="64" height="80" style="display:block;width:64px;height:80px;object-fit:cover;border-radius:6px;background:#f1ece8"></a>` : ''}</td><td style="padding:12px 0;border-bottom:1px solid #e9e4df"><a href="${productUrl}" style="color:#8b5737;font-weight:700">${escapeHtml(item.name)}</a><br><small>Product code: ${escapeHtml(item.id)} · ${escapeHtml([item.size, item.color].filter(Boolean).join(' · ') || 'Standard')}</small></td><td style="padding:12px;border-bottom:1px solid #e9e4df;text-align:center">${item.quantity}</td><td style="padding:12px 0;border-bottom:1px solid #e9e4df;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td></tr>`;
 }).join('');
 
 const adminOrderText = (order, estimate) => [
@@ -126,7 +136,7 @@ const adminOrderText = (order, estimate) => [
   `Admin: ${SITE_URL}/product-manager?view=orders&order=${encodeURIComponent(order.id)}`,
   `Payment ID: ${order.razorpayPaymentId || 'Captured by Razorpay'}`,
   `Customer: ${order.customer.name} | ${order.customer.email} | ${order.customer.phone || ''}`,
-  `Estimated delivery: ${formatDate(estimate.start)} – ${formatDate(estimate.end)}`,
+  `Estimated delivery date: ${formatDate(estimate.end)} (7 days from payment)`,
   '',
   ...order.items.map((item) => `${item.quantity} × ${item.name} | Code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)} | ${SITE_URL}/product/${encodeURIComponent(item.id)}`),
   '',
@@ -136,7 +146,7 @@ const adminOrderText = (order, estimate) => [
 
 const adminOrderHtml = (order, estimate) => {
   const adminUrl = `${SITE_URL}/product-manager?view=orders&order=${encodeURIComponent(order.id)}`;
-  return `<!doctype html><html><body style="margin:0;background:#eee9e4;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:680px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px;border-top:5px solid #a66f49"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS ADMIN ALERT</p><h1 style="font-family:Georgia,serif;font-weight:500">New paid order</h1><p>This is an internal fulfilment notification. Payment has been verified and captured.</p><div style="background:#f5f1ec;padding:18px;margin:22px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Payment: ${escapeHtml(order.razorpayPaymentId || 'Captured by Razorpay')}<br>Estimated delivery: ${escapeHtml(formatDate(estimate.start))} – ${escapeHtml(formatDate(estimate.end))}</div><h3>Customer</h3><p>${escapeHtml(order.customer.name)}<br><a href="mailto:${escapeHtml(order.customer.email)}">${escapeHtml(order.customer.email)}</a><br>${escapeHtml(order.customer.phone || '')}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Product / code</th><th>Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${adminOrderRows(order)}<tr><td colspan="2" style="padding-top:16px;font-weight:700">Total paid</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></tbody></table><h3 style="margin-top:26px">Delivery address</h3><p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p><p style="margin:28px 0 4px"><a href="${adminUrl}" style="display:inline-block;padding:14px 22px;background:#29231f;color:#fff;text-decoration:none;border-radius:5px">Open order in admin dashboard</a></p></div></div></body></html>`;
+  return `<!doctype html><html><body style="margin:0;background:#eee9e4;font-family:Arial,sans-serif;color:#29231f"><div style="max-width:680px;margin:auto;padding:28px 16px"><div style="background:#fff;padding:32px;border-radius:12px;border-top:5px solid #a66f49"><p style="letter-spacing:3px;color:#ad7046;font-weight:700">ANNS ADMIN ALERT</p><h1 style="font-family:Georgia,serif;font-weight:500">New paid order</h1><p>This is an internal fulfilment notification. Payment has been verified and captured.</p><div style="background:#f5f1ec;padding:18px;margin:22px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Payment: ${escapeHtml(order.razorpayPaymentId || 'Captured by Razorpay')}<br>Estimated delivery date: <strong>${escapeHtml(formatDate(estimate.end))}</strong> (7 days from payment)</div><h3>Customer</h3><p>${escapeHtml(order.customer.name)}<br><a href="mailto:${escapeHtml(order.customer.email)}">${escapeHtml(order.customer.email)}</a><br>${escapeHtml(order.customer.phone || '')}</p><table style="width:100%;border-collapse:collapse"><thead><tr><th></th><th style="text-align:left">Product / code</th><th>Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>${adminOrderRows(order)}<tr><td colspan="3" style="padding-top:16px;font-weight:700">Total paid</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></tbody></table><h3 style="margin-top:26px">Delivery address</h3><p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p><p style="margin:28px 0 4px"><a href="${adminUrl}" style="display:inline-block;padding:14px 22px;background:#29231f;color:#fff;text-decoration:none;border-radius:5px">Open order in admin dashboard</a></p><p style="margin-top:20px;color:#756d66">Customer support: <a href="${CONTACT_URL}" style="color:#8b5737">Contact Us</a> · <a href="${WHATSAPP_URL}" style="color:#198754">WhatsApp</a></p></div></div></body></html>`;
 };
 
 const sendAdminOrderEmail = async (order, estimate) => sendEmail({

@@ -7,6 +7,14 @@ const {
 } = require('../src/lib/auth');
 const { configurationProblems } = require('../src/lib/config');
 const { verifyPaymentSignature, verifyWebhookSignature } = require('../src/lib/razorpay');
+const { getDeliveryEstimate } = require('../src/lib/orderEmail');
+
+test('paid orders receive a seven-day delivery estimate', () => {
+  const paidAt = '2026-10-19T10:00:00.000Z';
+  const estimate = getDeliveryEstimate(paidAt);
+  assert.equal(estimate.start, '2026-10-26T10:00:00.000Z');
+  assert.equal(estimate.end, estimate.start);
+});
 
 test('customer sessions reject tampering', () => {
   process.env.AUTH_SESSION_SECRET = 'test-session-secret-that-is-longer-than-32-characters';
