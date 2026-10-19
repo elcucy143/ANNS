@@ -15,8 +15,9 @@ const readCatalogCache = () => {
 };
 
 export const ProductCatalogProvider = ({ children }) => {
-  const [products, setProducts] = useState(readCatalogCache);
-  const [loading, setLoading] = useState(true);
+  const [initialCatalog] = useState(readCatalogCache);
+  const [products, setProducts] = useState(initialCatalog);
+  const [loading, setLoading] = useState(initialCatalog.length === 0);
   const [error, setError] = useState(null);
 
   const refreshProducts = useCallback(async ({ background = false } = {}) => {
@@ -36,12 +37,15 @@ export const ProductCatalogProvider = ({ children }) => {
         setError('The catalog is temporarily unavailable. Please try again shortly.');
       }
     } finally {
-      if (!background) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refreshProducts();
+    // Render the last verified catalog immediately and refresh it without
+    // replacing the page with a loading screen. First-time visitors still see
+    // the loading state until their initial catalog arrives.
+    void refreshProducts({ background: initialCatalog.length > 0 });
     const refreshInBackground = () => { void refreshProducts({ background: true }); };
     const interval = window.setInterval(refreshInBackground, 30000);
     const onVisibilityChange = () => { if (document.visibilityState === 'visible') refreshInBackground(); };
@@ -50,7 +54,7 @@ export const ProductCatalogProvider = ({ children }) => {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [refreshProducts]);
+  }, [refreshProducts, initialCatalog.length]);
 
   return <ProductCatalogContext.Provider value={{ products, loading, error, refreshProducts }}>{children}</ProductCatalogContext.Provider>;
 };

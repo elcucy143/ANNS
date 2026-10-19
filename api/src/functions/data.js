@@ -72,6 +72,17 @@ const normalizeReviewImage = (value) => {
   if (/^https:\/\//i.test(image) && image.length <= 2000) return image;
   return '';
 };
+const normalizeBannerImage = (value) => {
+  const image = String(value || '').trim();
+  if (!image) return '';
+  // The browser normally compresses banners below 450 KB, but base64 and
+  // unusual WhatsApp wrappers can be larger. Keep the request below the API's
+  // 4 MB limit, then externalize the bytes before storing the sale document.
+  if (image.startsWith('data:image/') && image.length <= 3 * 1024 * 1024) return image;
+  if (/^https:\/\//i.test(image) && image.length <= 2000) return image;
+  if (/^\/api\/media-image\?/i.test(image) && image.length <= 2000) return image;
+  return '';
+};
 const normalizeReview = (review = {}) => ({
   id: cleanText(review.id, 100) || `review-${crypto.randomUUID()}`,
   reviewerName: cleanText(review.reviewerName, 120),
@@ -90,7 +101,7 @@ const normalizeFlashSale = (sale = {}) => ({
   title: cleanText(sale.title, 120) || 'Flash Sale',
   subtitle: cleanText(sale.subtitle, 240),
   badge: cleanText(sale.badge, 40) || 'LIMITED TIME',
-  bannerImage: normalizeReviewImage(sale.bannerImage),
+  bannerImage: normalizeBannerImage(sale.bannerImage),
   startsAt: cleanText(sale.startsAt, 30),
   endsAt: cleanText(sale.endsAt, 30),
   active: sale.active === true,
@@ -138,6 +149,20 @@ const normalizeProduct = (product) => {
 };
 const dataImagePattern = /^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=\r\n]+)$/i;
 const productImageUrl = (productId, index, version) => `/api/product-image?id=${encodeURIComponent(productId)}&index=${index}&v=${version}`;
+const mediaImageUrl = (key, version) => `/api/media-image?key=${encodeURIComponent(key)}&v=${version}`;
+const externalizeMediaImage = async (db, key, value, operationTime = nowIso()) => {
+  const image = String(value || '').trim();
+  const match = image.match(dataImagePattern);
+  if (!match) return image;
+  const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
+  const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
+  await db.collection('mediaImages').updateOne(
+    { key },
+    { $set: { key, contentType: match[1].toLowerCase(), data, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+    { upsert: true },
+  );
+  return mediaImageUrl(key, version);
+};
 const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()) => {
   const product = { ...rawProduct };
   const productId = cleanText(product.id, 100);
@@ -721,7 +746,9 @@ registerHttp('products', {
           return { ...rawProduct, image: product.image, otherImages: product.otherImages };
         }));
         products = migrated.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
-        return json(products.map(cleanDocument));
+        const response = json(products.map(cleanDocument));
+        response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
+        return response;
       }
 
       const unauthorized = requireAdmin(request);
@@ -796,7 +823,37 @@ registerHttp('product-image', {
         status: 200,
         body: data,
         headers: {
-          'Cache-Control': 'public, max-age=31536000, immutable',
+          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+          'Content-Type': image.contentType || 'image/jpeg',
+          'Content-Length': String(data.length),
+          'X-Content-Type-Options': 'nosniff',
+        },
+      };
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('media-image', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'media-image',
+  handler: async (request, context) => {
+    try {
+      const url = new URL(request.url);
+      const key = cleanText(url.searchParams.get('key'), 100);
+      const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
+      if (!key || !/^[a-z0-9-]{1,100}$/i.test(key) || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
+      const db = await getDb();
+      const image = await db.collection('mediaImages').findOne({ key, version });
+      if (!image?.data) return json({ error: 'Image was not found' }, 404);
+      const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+      return {
+        status: 200,
+        body: data,
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
           'Content-Type': image.contentType || 'image/jpeg',
           'Content-Length': String(data.length),
           'X-Content-Type-Options': 'nosniff',
@@ -876,7 +933,9 @@ registerHttp('flash-sale', {
     try {
       const db = await getDb();
       const sale = await db.collection('flashSales').findOne({ id: 'homepage' });
-      return json(sale && isFlashSaleActive(sale) ? cleanDocument(sale) : null);
+      const response = json(sale && isFlashSaleActive(sale) ? cleanDocument(sale) : null);
+      response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
+      return response;
     } catch (error) {
       return handleError(context, error);
     }
@@ -919,6 +978,8 @@ registerHttp('admin-flash-sale', {
         return json({ error: 'The sale end must be after its start' }, 400);
       }
       const operationTime = nowIso();
+      sale.bannerImage = await externalizeMediaImage(db, 'flash-sale-banner', sale.bannerImage, operationTime);
+      if (!sale.bannerImage) await db.collection('mediaImages').deleteOne({ key: 'flash-sale-banner' });
       await collection.updateOne(
         { id: 'homepage' },
         { $set: { ...sale, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
