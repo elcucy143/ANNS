@@ -842,7 +842,15 @@ registerHttp('product-image', {
       const db = await getDb();
       const image = await db.collection('productImages').findOne({ productId, index, version });
       if (!image?.data) return json({ error: 'Image was not found' }, 404);
-      const variant = ['thumbnail', 'listing'].includes(requestedVariant) ? image.variants?.[requestedVariant] : null;
+      let variant = ['thumbnail', 'listing'].includes(requestedVariant) ? image.variants?.[requestedVariant] : null;
+      if (!variant && ['thumbnail', 'listing'].includes(requestedVariant)) {
+        const original = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+        const dimensions = requestedVariant === 'thumbnail' ? { width: 320, height: 420, quality: 78 } : { width: 900, height: 1200, quality: 84 };
+        variant = await sharp(original, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate()
+          .resize({ width: dimensions.width, height: dimensions.height, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: dimensions.quality }).toBuffer();
+        await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${requestedVariant}`]: variant } });
+      }
       const selected = variant || image.data;
       const data = Buffer.isBuffer(selected) ? selected : Buffer.from(selected.buffer || selected.value?.() || []);
       return {
