@@ -111,12 +111,28 @@ const normalizeProduct = (product) => {
   const stock = nonNegativeInteger(product.stock ?? product.totalStock ?? product.quantity);
   const sold = Math.min(stock, nonNegativeInteger(product.sold ?? product.unitsSold));
   return {
-    ...product,
+    // Persist only catalog fields. Products loaded for editing also contain
+    // database metadata (createdAt/updatedAt); passing that metadata back into
+    // both $set and $setOnInsert makes MongoDB reject an otherwise valid edit.
+    id: normalizeProductId(product.id),
+    name: cleanText(product.name, 200),
+    description: cleanText(product.description, 10000),
+    price: cleanText(product.price, 50),
+    discount: cleanText(product.discount, 50),
+    image: cleanText(product.image, 4 * 1024 * 1024),
+    otherImages: normalizeList(product.otherImages).slice(0, 4),
+    color: cleanText(product.color, 100),
     stock,
     sold,
     sizes: normalizeSizes(product.sizes ?? product.size),
-    otherImages: normalizeList(product.otherImages),
     subcategory: normalizeList(product.subcategory),
+    similarProducts: normalizeList(product.similarProducts).map(normalizeProductId).filter(Boolean),
+    reviews: normalizeList(product.reviews),
+    shipping: normalizeList(product.shipping),
+    featured: product.featured === true || String(product.featured).toLowerCase() === 'yes' ? 'yes' : 'no',
+    campaign: normalizeList(product.campaign),
+    showOnCategory: product.showOnCategory !== false,
+    category: cleanText(product.category, 100),
     available: stock > sold ? 'In Stock' : 'Out of Stock',
   };
 };
