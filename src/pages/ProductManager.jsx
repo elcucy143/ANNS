@@ -54,7 +54,7 @@ import {
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
-import { normalizeList, normalizeSizeList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
+import { normalizeList, normalizeSizeList, normalizeSubcategoryList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
 import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
@@ -690,7 +690,7 @@ const ProductManager = () => {
             sold: product.soldValue,
             sizes: normalizeSizeList(product.sizes),
             otherImages: parseList(product.otherImages),
-            subcategory: parseList(product.subcategory),
+            subcategory: normalizeSubcategoryList(product.subcategory),
             similarProducts: parseList(product.similarProducts),
             reviews: parseList(product.reviews),
             shipping: parseList(product.shipping),

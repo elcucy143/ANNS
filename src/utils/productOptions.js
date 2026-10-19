@@ -38,11 +38,23 @@ export const normalizeSizeList = (value) => {
   });
 };
 
+const SUBCATEGORY_ALIASES = new Map([
+  ['three piece sets', 'Kurtis'],
+  ['three piece kurthi', 'Kurtis'],
+  ['three piece kurthis', 'Kurtis'],
+  ['3 piece kurthi', 'Kurtis'],
+  ['3 piece kurthis', 'Kurtis'],
+]);
+
+export const normalizeSubcategoryList = (value) => [...new Set(normalizeList(value).map((subcategory) => (
+  SUBCATEGORY_ALIASES.get(String(subcategory).trim().toLowerCase()) || String(subcategory).trim()
+)).filter(Boolean))];
+
 export const normalizeCatalogProduct = (product) => ({
   ...product,
   sizes: normalizeSizeList(product?.sizes),
   otherImages: normalizeList(product?.otherImages),
-  subcategory: normalizeList(product?.subcategory),
+  subcategory: normalizeSubcategoryList(product?.subcategory),
   similarProducts: [...new Set(normalizeList(product?.similarProducts))],
   stock: Math.max(0, Number(product?.stock) || 0),
   sold: Math.max(0, Number(product?.sold) || 0),
