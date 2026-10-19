@@ -70,7 +70,7 @@ const FlashSaleSection = () => {
                             <article className="flash-sale-card" key={product.id}>
                                 <Link to={`/product/${product.id}`} className="flash-sale-product-link">
                                     <div className="flash-sale-image">
-                                        <img src={images[filename] || productImageVariant(product.image, 'listing')} alt={product.name} loading="lazy" decoding="async" />
+                                        <img src={images[filename] || productImageVariant(product.image, 'card')} alt={product.name} loading="lazy" decoding="async" />
                                         <span>{product.discountPercent}% OFF</span>
                                     </div>
                                     <div className="flash-sale-copy">

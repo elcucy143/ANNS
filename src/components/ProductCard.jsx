@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
         <div className="product-card">
             <Link to={`/product/${product.id}`} className="product-link">
                 <div className="product-image">
-                    <img src={images[filename] || productImageVariant(product.image, 'listing')} alt={product.name} loading="lazy" decoding="async" />
+                    <img src={images[filename] || productImageVariant(product.image, 'card')} alt={product.name} loading="lazy" decoding="async" />
                     <button className="add-to-cart-btn" onClick={handleAddToCart}>Add to Cart</button>
                 </div>
                 <div className="product-info">
