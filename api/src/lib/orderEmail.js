@@ -82,7 +82,7 @@ const sendContactMessage = async ({ name, email, message }) => {
 
 const orderRows = (order) => order.items.map((item) => `
   <tr>
-    <td style="padding:10px 0;border-bottom:1px solid #eee">${escapeHtml(item.name)}<br><small>${escapeHtml([item.size, item.color].filter(Boolean).join(' · '))}</small></td>
+    <td style="padding:10px 0;border-bottom:1px solid #eee">${escapeHtml(item.name)}<br><small>Product code: ${escapeHtml(item.id)}${[item.size, item.color].filter(Boolean).length ? ` · ${escapeHtml([item.size, item.color].filter(Boolean).join(' · '))}` : ''}</small></td>
     <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
     <td style="padding:10px 0;border-bottom:1px solid #eee;text-align:right">${escapeHtml(formatCurrency(item.lineTotal))}</td>
   </tr>`).join('');
@@ -93,7 +93,7 @@ const orderText = (order, estimate) => [
   `Payment: Confirmed`,
   `Estimated delivery: ${formatDate(estimate.start)} – ${formatDate(estimate.end)}`,
   '',
-  ...order.items.map((item) => `${item.quantity} × ${item.name} (${[item.size, item.color].filter(Boolean).join(', ')}) — ${formatCurrency(item.lineTotal)}`),
+  ...order.items.map((item) => `${item.quantity} × ${item.name} | Product code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)}`),
   '',
   `Total: ${formatCurrency(order.total)}`,
   `Deliver to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,

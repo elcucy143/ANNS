@@ -19,6 +19,9 @@
 .flash-sale-prices del { color: #8f8580; font-size: .86rem; }
 .flash-sale-saving { display: block; margin-top: 5px; color: #317348; font-size: .72rem; font-weight: 600; }
 .flash-sale-card > button { display: flex; width: calc(100% - 36px); align-items: center; justify-content: center; gap: 8px; margin: 0 18px 18px; padding: 11px; border: 0; border-radius: 7px; background: #281e1a; color: #fff; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 600; }
+.flash-sale-view-all { margin-top: 28px; text-align: center; }
+.flash-sale-view-all a { display: inline-flex; padding: 12px 22px; border: 1px solid rgba(255,255,255,.65); border-radius: 5px; color: #fff; font-size: .82rem; font-weight: 700; text-decoration: none; }
+.flash-sale-view-all a:hover { border-color: #fff; background: #fff; color: #281e1a; }
 @media (max-width: 980px) { .flash-sale-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) {
     .flash-sale-section { padding: 58px 0; }

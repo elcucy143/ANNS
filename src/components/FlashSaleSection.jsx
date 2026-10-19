@@ -82,6 +82,7 @@ const FlashSaleSection = () => {
                         );
                     })}
                 </div>
+                <div className="flash-sale-view-all"><Link to="/flash-sale">View all Flash Sale products</Link></div>
             </div>
         </section>
     );

@@ -27,6 +27,7 @@ const ProductCard = ({ product }) => {
                 <div className="product-info">
                     <h3>{product.name}</h3>
                     <span className="price">₹{product.price}</span>
+                    {product.originalPrice > product.price && <><del className="original-price">₹{product.originalPrice}</del><span className="discount-label">{product.discountPercent}% OFF</span></>}
                 </div>
             </Link>
         </div>

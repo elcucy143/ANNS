@@ -6,6 +6,7 @@ import './CategoryPage.css';
 
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useProductCatalog } from '../context/ProductCatalogContext';
+import { getFlashSale } from '../services/apiClient';
 
 const EMPTY_PRODUCTS = [];
 const getCategoryKey = (title) => {
@@ -30,12 +31,29 @@ const CategoryPage = ({ title }) => {
         colors: [],
         sizes: []
     });
+    const [flashSale, setFlashSale] = useState(null);
 
     const categoryKey = getCategoryKey(displayTitle);
     const { products: catalogProducts, loading, error } = useProductCatalog();
-    const categoryProducts = categoryKey === 'Sale'
-        ? catalogProducts.filter((product) => product.discount || product.campaign?.includes('sale'))
-        : catalogProducts.filter((product) => product.category === categoryKey && product.showOnCategory !== false);
+    useEffect(() => {
+        if (categoryKey !== 'Flash Sale') return undefined;
+        let active = true;
+        getFlashSale().then((sale) => { if (active) setFlashSale(sale || null); }).catch(() => { if (active) setFlashSale(null); });
+        return () => { active = false; };
+    }, [categoryKey]);
+
+    const categoryProducts = (() => {
+        if (categoryKey !== 'Flash Sale') {
+            return catalogProducts.filter((product) => product.category === categoryKey && product.showOnCategory !== false);
+        }
+        const salePrices = new Map((flashSale?.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
+        return catalogProducts.map((product) => {
+            const salePrice = salePrices.get(String(product.id));
+            const originalPrice = Number(String(product.price || '').replace(/[^0-9.]/g, ''));
+            if (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= originalPrice) return null;
+            return { ...product, originalPrice, price: salePrice, discountPercent: Math.round((1 - salePrice / originalPrice) * 100) };
+        }).filter(Boolean);
+    })();
 
     // Derive available options from category products
     const filterOptions = useMemo(() => {

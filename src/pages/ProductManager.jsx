@@ -59,8 +59,11 @@ const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
 const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
-const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_SOURCE_IMAGE_BYTES = 75 * 1024 * 1024;
 const MAX_STORED_IMAGE_BYTES = 450 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const isSupportedImageFile = (file) => SUPPORTED_IMAGE_TYPES.has(String(file?.type || '').toLowerCase())
+    || /\.(?:jpe?g|png|webp)$/i.test(String(file?.name || ''));
 const getInitialReviewForm = () => ({
     id: '',
     reviewerName: '',
@@ -200,7 +203,7 @@ const compressImageFile = (file) => new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
         URL.revokeObjectURL(objectUrl);
-        const scale = Math.min(1, 1400 / image.naturalWidth, 1600 / image.naturalHeight);
+        const scale = Math.min(1, 1800 / image.naturalWidth, 2200 / image.naturalHeight);
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
         canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -216,7 +219,7 @@ const compressImageFile = (file) => new Promise((resolve, reject) => {
             }
             try { resolve(await readBlobAsDataUrl(blob)); } catch (error) { reject(error); }
         }, 'image/jpeg', quality);
-        encode(0.78);
+        encode(0.84);
     };
     image.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -549,8 +552,8 @@ const ProductManager = () => {
         const file = event.target.files?.[0];
         event.target.value = '';
         if (!file) return;
-        if (!file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPG, PNG or WebP review image smaller than 12 MB.');
+        if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setNotification('Choose a JPEG, PNG or WebP review image smaller than 75 MB.');
             return;
         }
         try {
@@ -596,8 +599,8 @@ const ProductManager = () => {
         const file = event.target.files?.[0];
         event.target.value = '';
         if (!file) return;
-        if (!file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPG, PNG or WebP banner smaller than 12 MB.');
+        if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setNotification('Choose a JPEG, PNG or WebP banner smaller than 75 MB.');
             return;
         }
         try {
@@ -697,8 +700,8 @@ const ProductManager = () => {
             return;
         }
         if (!files.length) return;
-        if (files.some((file) => !file.type.startsWith('image/') || file.size > MAX_SOURCE_IMAGE_BYTES)) {
-            setNotification('Choose JPG, PNG or WebP images smaller than 12 MB each.');
+        if (files.some((file) => !isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES)) {
+            setNotification('Choose JPEG, PNG or WebP images smaller than 75 MB each.');
             window.setTimeout(() => setNotification(''), 3000);
             return;
         }
@@ -755,7 +758,20 @@ const ProductManager = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         const categoryProducts = [...(products[selectedCategory] || [])];
-        const productId = formData.id || `${selectedCategory.substring(0, 2).toLowerCase()}${Date.now()}`;
+        const productId = String(formData.id || '').trim();
+        if (!productId) {
+            setNotification('Enter the exact product ID printed on your stock label. Product IDs are never generated automatically.');
+            return;
+        }
+        if (!/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(productId)) {
+            setNotification('Product ID can use letters, numbers, dots, hyphens and underscores only.');
+            return;
+        }
+        const duplicate = allProducts.find((product) => product.id.toLowerCase() === productId.toLowerCase() && product.id !== selectedProductId);
+        if (duplicate) {
+            setNotification(`Product ID ${productId} is already used by ${duplicate.name}. Choose a unique code.`);
+            return;
+        }
         const similarProductIds = [...new Set(parseList(similarProductIdsInput))].filter((id) => id !== productId);
         const normalizedProduct = {
             ...getInitialFormData(),
@@ -815,6 +831,8 @@ const ProductManager = () => {
         const id = String(valueFrom(row, 'id', 'sku', 'productid')).trim();
         const errors = [];
         if (!Object.keys(products).includes(category)) errors.push('Unknown category');
+        if (!id) errors.push('Product ID is required');
+        else if (!/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(id)) errors.push('Product ID contains unsupported characters');
         if (!name) errors.push('Name is required');
         const numericPrice = toNumber(price, NaN);
         if (price === '' || !Number.isFinite(numericPrice) || numericPrice < 0) errors.push('Valid price is required');
@@ -875,14 +893,14 @@ const ProductManager = () => {
         const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, [...items]]));
         const changedProducts = [];
 
-        validRows.forEach(({ category, product }, index) => {
-            const generatedId = product.id || `${category.substring(0, 2).toLowerCase()}${Date.now()}${index}`;
-            const existingIndex = nextProducts[category].findIndex((item) => item.id === generatedId);
+        validRows.forEach(({ category, product }) => {
+            const exactProductId = product.id;
+            const existingIndex = nextProducts[category].findIndex((item) => item.id === exactProductId);
             const existingProduct = existingIndex >= 0 ? nextProducts[category][existingIndex] : getInitialFormData();
             const importedProduct = {
                 ...existingProduct,
                 ...product,
-                id: generatedId,
+                id: exactProductId,
                 available: Math.max(0, product.stock - product.sold) > 0 ? 'In Stock' : 'Out of Stock',
             };
             changedProducts.push({ ...importedProduct, category });
@@ -1494,7 +1512,7 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">BASIC DETAILS</p><h2>{selectedProductId === 'new' ? 'New product' : formData.name}</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label>Category<select value={selectedCategory} onChange={(event) => { setSelectedCategory(event.target.value); setSelectedProductId('new'); }} disabled={selectedProductId !== 'new'}>{Object.keys(products).map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-                                    <label>Product ID<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Generated if empty" disabled={selectedProductId !== 'new'} /></label>
+                                    <label>Product ID<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Example: WW300125" required autoCapitalize="characters" spellCheck="false" disabled={selectedProductId !== 'new'} /><small>This exact code is used on the storefront, orders and emails. It cannot change after creation.</small></label>
                                     <label className="full-width">Product name<input name="name" value={formData.name} onChange={handleInputChange} required /></label>
                                     <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
                                     <label>Price (₹)<input name="price" type="number" min="0" value={formData.price} onChange={handleInputChange} required /></label>
@@ -1516,7 +1534,7 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
-                                    <label className="full-width image-upload-control">Upload images<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleImageFiles} /><small>Select up to five images at once. The first is the main image and the other four appear in the product gallery. Large images are optimized automatically.</small></label>
+                                    <label className="full-width image-upload-control">Upload images<input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple onChange={handleImageFiles} /><small>Select up to five JPEG, PNG or WebP images. HD files up to 75 MB each are resized and optimized automatically; the first image is the main product photo.</small></label>
                                     {[formData.image, ...formData.otherImages].filter(Boolean).length > 0 && <div className="editor-image-preview full-width">{[formData.image, ...formData.otherImages].filter(Boolean).map((image, index) => <figure key={`${image.slice(0, 40)}-${index}`}><img src={image} alt={`${formData.name || 'Product'} ${index + 1}`} /><figcaption>{index === 0 ? 'Main image' : `Gallery ${index}`}</figcaption><button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove ${index === 0 ? 'main image' : `gallery image ${index}`}`}><XCircle size={17} /></button></figure>)}</div>}
                                     <label className="full-width">Additional image URLs<textarea value={formData.otherImages.filter((image) => !image.startsWith('data:image/')).join('\n')} onChange={handleOtherImageUrls} rows="3" placeholder="One public image URL per line (optional)" /></label>
                                     <fieldset className="size-selector-control full-width">

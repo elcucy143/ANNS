@@ -37,7 +37,8 @@ function App() {
               <Route path="/womens-wear" element={<CategoryPage title="Women's Wear" />} />
               <Route path="/gifts" element={<CategoryPage title="Gifts" />} />
               <Route path="/jewellery" element={<CategoryPage title="Jewellery" />} />
-              <Route path="/sale" element={<CategoryPage title="Sale" />} />
+              <Route path="/flash-sale" element={<CategoryPage title="Flash Sale" />} />
+              <Route path="/sale" element={<CategoryPage title="Flash Sale" />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

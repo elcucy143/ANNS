@@ -42,7 +42,7 @@ const Navbar = () => {
     { name: "Women's Wear", path: '/womens-wear' },
     { name: 'Gifts', path: '/gifts' },
     { name: 'Jewellery', path: '/jewellery' },
-    { name: 'Sale', path: '/sale' },
+    { name: 'Flash Sale', path: '/flash-sale' },
     { name: 'Contact', path: '/contact' },
   ];
 

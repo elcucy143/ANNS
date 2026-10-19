@@ -45,6 +45,7 @@ const cleanCustomerDocument = (document) => {
 };
 const nowIso = () => new Date().toISOString();
 const cleanText = (value, maxLength = 200) => String(value || '').trim().slice(0, maxLength);
+const normalizeProductId = (value) => cleanText(value, 100);
 const numericPrice = (value) => Number(String(value ?? '').replace(/[^0-9.]/g, ''));
 const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const normalizeList = (value) => {
@@ -727,6 +728,11 @@ registerHttp('products', {
       if (invalidProductIndex >= 0) return json({ error: `Product ${invalidProductIndex + 1} requires an ID, name and category` }, 400);
       const suppliedIds = productList.map((product) => cleanText(product.id, 100));
       if (new Set(suppliedIds).size !== suppliedIds.length) return json({ error: 'Every product in an upload must have a unique product ID' }, 400);
+      if (new Set(suppliedIds.map((id) => id.toLowerCase())).size !== suppliedIds.length) {
+        return json({ error: 'Product IDs must also be unique when letter case is ignored' }, 400);
+      }
+      const invalidId = suppliedIds.find((id) => !/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(normalizeProductId(id)));
+      if (invalidId) return json({ error: `Product ID ${invalidId} contains unsupported characters` }, 400);
 
       const operationTime = nowIso();
       const preparedProducts = await Promise.all(productList

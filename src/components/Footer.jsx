@@ -19,7 +19,7 @@ const Footer = () => {
                         <li><Link to="/womens-wear">Women's Wear</Link></li>
                         <li><Link to="/gifts">Gifts</Link></li>
                         <li><Link to="/jewellery">Jewellery</Link></li>
-                        <li><Link to="/sale">Sale</Link></li>
+                        <li><Link to="/flash-sale">Flash Sale</Link></li>
                     </ul>
                 </div>
 
