@@ -53,6 +53,7 @@ import {
 } from '../services/apiClient';
 import './ProductManager.css';
 import { normalizeList, normalizeSizeList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
+import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
 const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
@@ -60,11 +61,6 @@ const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
 const PRODUCT_SAVE_BATCH_SIZE = 100;
-const MAX_SOURCE_IMAGE_BYTES = 75 * 1024 * 1024;
-const MAX_STORED_IMAGE_BYTES = 450 * 1024;
-const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
-const isSupportedImageFile = (file) => SUPPORTED_IMAGE_TYPES.has(String(file?.type || '').toLowerCase())
-    || /\.(?:jpe?g|png|webp|heic|heif)$/i.test(String(file?.name || ''));
 const getInitialReviewForm = () => ({
     id: '',
     reviewerName: '',
@@ -191,58 +187,6 @@ const productsForDatabase = (products) => Object.entries(products).flatMap(([cat
 ));
 
 const formatCurrency = (value) => `₹${toNumber(value).toLocaleString('en-IN')}`;
-
-const readBlobAsDataUrl = (blob) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-});
-
-const compressImageFile = (file) => new Promise((resolve, reject) => {
-    let objectUrl = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        const scale = Math.min(1, 1800 / image.naturalWidth, 2200 / image.naturalHeight);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const context = canvas.getContext('2d');
-        context.fillStyle = '#fff';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        const encode = (quality) => canvas.toBlob(async (blob) => {
-            if (!blob) return reject(new Error(`Could not prepare ${file.name}`));
-            if (blob.size > MAX_STORED_IMAGE_BYTES && quality > 0.46) {
-                encode(quality - 0.1);
-                return;
-            }
-            try { resolve(await readBlobAsDataUrl(blob)); } catch (error) { reject(error); }
-        }, 'image/jpeg', quality);
-        encode(0.84);
-    };
-    image.onerror = async () => {
-        URL.revokeObjectURL(objectUrl);
-        try {
-            // Some WhatsApp/iPhone downloads keep a .jpeg filename while the
-            // bytes are HEIC/HEIF. Normalize that encoding before compression.
-            const { default: heic2any } = await import('heic2any');
-            const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
-            const normalizedBlob = Array.isArray(converted) ? converted[0] : converted;
-            if (!(normalizedBlob instanceof Blob)) throw new Error('Conversion produced no image');
-            objectUrl = URL.createObjectURL(normalizedBlob);
-            image.onerror = () => {
-                URL.revokeObjectURL(objectUrl);
-                reject(new Error(`${file.name} could not be decoded. Ask the sender to resend it as a photo or PNG.`));
-            };
-            image.src = objectUrl;
-        } catch {
-            reject(new Error(`${file.name} could not be decoded. Ask the sender to resend it as a photo or PNG.`));
-        }
-    };
-    image.src = objectUrl;
-});
 
 const ProductManager = () => {
     const [products, setProducts] = useState(readProductDraft);
@@ -577,12 +521,12 @@ const ProductManager = () => {
         event.target.value = '';
         if (!file) return;
         if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPEG, PNG, WebP or iPhone/HEIC review image smaller than 75 MB.');
+            setNotification('Choose an image file smaller than 75 MB. Camera and WhatsApp formats are converted automatically.');
             return;
         }
         try {
             setNotification('Preparing review image…');
-            const image = await compressImageFile(file);
+            const image = await prepareImageFile(file);
             setReviewForm((current) => ({ ...current, image }));
             setNotification('Review image is ready. Save the review to publish it.');
         } catch (error) {
@@ -624,12 +568,12 @@ const ProductManager = () => {
         event.target.value = '';
         if (!file) return;
         if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
-            setNotification('Choose a JPEG, PNG, WebP or iPhone/HEIC banner smaller than 75 MB.');
+            setNotification('Choose an image file smaller than 75 MB. Camera and WhatsApp formats are converted automatically.');
             return;
         }
         try {
             setNotification('Preparing sale banner…');
-            const bannerImage = await compressImageFile(file);
+            const bannerImage = await prepareImageFile(file);
             setFlashSale((current) => ({ ...current, bannerImage }));
             setNotification('Sale banner is ready. Save the sale to publish it.');
         } catch (error) { setNotification(error.message || 'The banner could not be prepared.'); }
@@ -725,13 +669,17 @@ const ProductManager = () => {
         }
         if (!files.length) return;
         if (files.some((file) => !isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES)) {
-            setNotification('Choose JPEG, PNG, WebP or iPhone/HEIC images smaller than 75 MB each.');
+            setNotification('Choose image files smaller than 75 MB each. Camera and WhatsApp formats are converted automatically.');
             window.setTimeout(() => setNotification(''), 3000);
             return;
         }
         try {
             setNotification('Preparing images…');
-            const dataUrls = await Promise.all(files.map(compressImageFile));
+            const dataUrls = [];
+            for (const file of files) {
+                setNotification(`Preparing image ${dataUrls.length + 1} of ${files.length}: ${file.name}`);
+                dataUrls.push(await prepareImageFile(file));
+            }
             setFormData((current) => {
                 const existingImages = [current.image, ...current.otherImages].filter(Boolean);
                 const images = [...existingImages, ...dataUrls].slice(0, MAX_PRODUCT_IMAGES);
@@ -1395,7 +1343,7 @@ const ProductManager = () => {
                                     <label className="full-width">Related product (optional)<select value={reviewForm.productId} onChange={(event) => setReviewForm((current) => ({ ...current, productId: event.target.value }))}><option value="">General store review</option>{allProducts.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id}</option>)}</select><small>Product-linked reviews also appear on that product page.</small></label>
                                 </div>
                                 <div className="review-image-uploader">
-                                    <input ref={reviewImageInputRef} className="visually-hidden" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={handleReviewImage} />
+                                    <input ref={reviewImageInputRef} className="visually-hidden" type="file" accept={IMAGE_FILE_ACCEPT} onChange={handleReviewImage} />
                                     {reviewForm.image ? <div className="review-image-preview"><img src={reviewForm.image} alt="Review preview" /><button type="button" onClick={() => setReviewForm((current) => ({ ...current, image: '' }))}><Trash2 size={16} /> Remove image</button></div> : <button type="button" className="review-upload-button" onClick={() => reviewImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add screenshot or customer photo</strong><small>Optional · WhatsApp screenshots are optimized automatically</small></button>}
                                 </div>
                                 <div className="review-publish-options">
@@ -1444,7 +1392,7 @@ const ProductManager = () => {
                                 <label>Ends<input type="datetime-local" value={flashSale.endsAt} onChange={(event) => setFlashSale((current) => ({ ...current, endsAt: event.target.value }))} /></label>
                             </div>
                             <div className="flash-sale-banner-uploader">
-                                <input ref={flashSaleImageInputRef} className="visually-hidden" type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={handleFlashSaleImage} />
+                                <input ref={flashSaleImageInputRef} className="visually-hidden" type="file" accept={IMAGE_FILE_ACCEPT} onChange={handleFlashSaleImage} />
                                 {flashSale.bannerImage ? <div className="flash-sale-banner-preview"><img src={flashSale.bannerImage} alt="Flash sale banner preview" /><button type="button" onClick={() => setFlashSale((current) => ({ ...current, bannerImage: '' }))}><Trash2 size={16} /> Remove banner</button></div> : <button type="button" className="review-upload-button" onClick={() => flashSaleImageInputRef.current?.click()}><ImagePlus size={24} /><strong>Add festival banner image</strong><small>Optional · the layout also works without an image</small></button>}
                             </div>
                         </section>
@@ -1558,7 +1506,7 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">PRODUCT INFORMATION</p><h2>Images and options</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label className="full-width">Main image URL<input name="image" value={formData.image} onChange={handleInputChange} placeholder="Paste an image URL or choose image files below" /></label>
-                                    <label className="full-width image-upload-control">Upload images<input type="file" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={handleImageFiles} /><small>Select up to five JPEG, PNG, WebP or iPhone/HEIC images. HD files up to 75 MB each are converted, resized and optimized automatically; the first image is the main product photo.</small></label>
+                                    <label className="full-width image-upload-control">Upload images<input type="file" accept={IMAGE_FILE_ACCEPT} multiple onChange={handleImageFiles} /><small>Select up to five common image files. JPEG, PNG, WebP, GIF, BMP, AVIF, SVG and iPhone/HEIC images up to 75 MB each are converted into safe, optimized web images automatically.</small></label>
                                     {[formData.image, ...formData.otherImages].filter(Boolean).length > 0 && <div className="editor-image-preview full-width">{[formData.image, ...formData.otherImages].filter(Boolean).map((image, index) => <figure key={`${image.slice(0, 40)}-${index}`}><img src={image} alt={`${formData.name || 'Product'} ${index + 1}`} /><figcaption>{index === 0 ? 'Main image' : `Gallery ${index}`}</figcaption><button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove ${index === 0 ? 'main image' : `gallery image ${index}`}`}><XCircle size={17} /></button></figure>)}</div>}
                                     <label className="full-width">Additional image URLs<textarea value={formData.otherImages.filter((image) => !image.startsWith('data:image/')).join('\n')} onChange={handleOtherImageUrls} rows="3" placeholder="One public image URL per line (optional)" /></label>
                                     <fieldset className="size-selector-control full-width">
