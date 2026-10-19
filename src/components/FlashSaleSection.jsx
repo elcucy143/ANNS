@@ -8,6 +8,7 @@ import { getFlashSale } from '../services/apiClient';
 import './FlashSaleSection.css';
 
 const money = (value) => Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const HOMEPAGE_SALE_PRODUCT_LIMIT = 4;
 
 const FlashSaleSection = () => {
     const [sale, setSale] = useState(null);
@@ -48,6 +49,7 @@ const FlashSaleSection = () => {
     const endLabel = sale.endsAt
         ? new Date(sale.endsAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
         : '';
+    const previewProducts = saleProducts.slice(0, HOMEPAGE_SALE_PRODUCT_LIMIT);
 
     return (
         <section className="flash-sale-section" aria-labelledby="flash-sale-title">
@@ -61,7 +63,7 @@ const FlashSaleSection = () => {
                     {endLabel && <span className="flash-sale-ends"><Clock3 size={17} /> Ends {endLabel}</span>}
                 </header>
                 <div className="flash-sale-grid">
-                    {saleProducts.map((product) => {
+                    {previewProducts.map((product) => {
                         const filename = product.image ? product.image.split('/').pop() : '';
                         return (
                             <article className="flash-sale-card" key={product.id}>
@@ -82,7 +84,9 @@ const FlashSaleSection = () => {
                         );
                     })}
                 </div>
-                <div className="flash-sale-view-all"><Link to="/flash-sale">View all Flash Sale products</Link></div>
+                <div className="flash-sale-view-all">
+                    <Link to="/flash-sale">View all {saleProducts.length} Flash Sale products</Link>
+                </div>
             </div>
         </section>
     );
