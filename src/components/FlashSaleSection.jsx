@@ -85,7 +85,7 @@ const FlashSaleSection = () => {
                     })}
                 </div>
                 <div className="flash-sale-view-all">
-                    <Link to="/flash-sale">View all {saleProducts.length} Flash Sale products</Link>
+                    <Link to="/flash-sale">View all {sale.items.length} Flash Sale products</Link>
                 </div>
             </div>
         </section>
