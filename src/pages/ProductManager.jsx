@@ -1390,6 +1390,12 @@ const ProductManager = () => {
                             <article className="customer-stat"><BarChart3 size={21} /><div><span>Visits</span><strong>{(analytics?.sessions || 0).toLocaleString('en-IN')}</strong><small>Browser sessions</small></div></article>
                             <article className="customer-stat"><Globe2 size={21} /><div><span>Locations</span><strong>{(analytics?.locations || []).length.toLocaleString('en-IN')}</strong><small>City and region groups</small></div></article>
                         </section>
+                        <section className="customer-stat-grid analytics-commerce-grid">
+                            <article className="customer-stat"><ShoppingBag size={21} /><div><span>Total paid revenue</span><strong>{formatCurrency(customerInsights.revenue)}</strong><small>Lifetime captured payments · refunds excluded</small></div></article>
+                            <article className="customer-stat"><ReceiptText size={21} /><div><span>Total paid orders</span><strong>{customerInsights.orderCount.toLocaleString('en-IN')}</strong><small>Lifetime Razorpay-verified purchases</small></div></article>
+                            <article className="customer-stat"><CheckCircle2 size={21} /><div><span>Delivered orders</span><strong>{orders.filter((order) => order.paymentStatus === 'captured' && order.fulfillmentStatus === 'delivered').length.toLocaleString('en-IN')}</strong><small>Marked delivered by the admin</small></div></article>
+                            <article className="customer-stat"><Package size={21} /><div><span>Average order</span><strong>{formatCurrency(customerInsights.orderCount ? customerInsights.revenue / customerInsights.orderCount : 0)}</strong><small>Lifetime verified order value</small></div></article>
+                        </section>
                         {!analytics && !analyticsLoading && <section className="admin-panel admin-empty-state"><BarChart3 size={28} /><p>Open this page after visitors browse the live storefront to see traffic here.</p></section>}
                         {analytics && <>
                             <section className="admin-panel">
