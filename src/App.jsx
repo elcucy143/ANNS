@@ -15,6 +15,7 @@ import Account from './pages/Account';
 import Checkout from './pages/Checkout';
 import ProtectedRoute from './components/ProtectedRoute';
 import RouteScrollManager from './components/RouteScrollManager';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -33,6 +34,7 @@ function App() {
       <CartProvider>
         <Router>
           <RouteScrollManager />
+          <AnalyticsTracker />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />

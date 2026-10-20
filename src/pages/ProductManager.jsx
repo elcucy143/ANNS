@@ -22,12 +22,16 @@ import {
     Mail,
     MessageSquareQuote,
     BadgePercent,
+    BarChart3,
     BookOpenCheck,
     ImagePlus,
     Star,
     Phone,
     ReceiptText,
     RefreshCw,
+    Globe2,
+    Clock3,
+    Eye,
     UploadCloud,
     Trash2,
     XCircle,
@@ -42,6 +46,7 @@ import {
     deleteReviewsFromDatabase,
     deleteFlashSale,
     getAdminFlashSale,
+    getAdminAnalytics,
     getAdminReviews,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
@@ -58,7 +63,6 @@ import { normalizeList, normalizeSizeList, normalizeSubcategoryList, STANDARD_CL
 import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
-const PRODUCT_DRAFT_KEY = 'anns-admin-products-draft';
 const LOW_STOCK_LIMIT = 10;
 const PRODUCT_CATEGORIES = ['Gifts', 'Jewellery', 'Womens Wear'];
 const MAX_PRODUCT_IMAGES = 5;
@@ -220,7 +224,7 @@ const ProductManager = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const initialParams = new URLSearchParams(window.location.search);
-    const initialView = ['overview', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const initialView = ['overview', 'analytics', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
     const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -256,11 +260,21 @@ const ProductManager = () => {
     const [customersPage, setCustomersPage] = useState(1);
     const [reviewsPage, setReviewsPage] = useState(1);
     const [customerHistoryPage, setCustomerHistoryPage] = useState(1);
+    const [analytics, setAnalytics] = useState(null);
+    const [analyticsDays, setAnalyticsDays] = useState(30);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const fileInputRef = useRef(null);
     const bulkImageInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
     const flashSaleImageInputRef = useRef(null);
     const linkedOrderId = initialParams.get('order') || '';
+
+    useEffect(() => {
+        // Older builds cached complete base64 product images in localStorage.
+        // Remove that obsolete draft so large ZIP imports can never exhaust the
+        // browser quota; MongoDB is the catalog source of truth.
+        try { localStorage.removeItem('anns-admin-products-draft'); } catch { /* storage may be disabled */ }
+    }, []);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
 
@@ -394,6 +408,18 @@ const ProductManager = () => {
         window.setTimeout(() => setNotification(''), 3000);
     };
 
+    const refreshAnalytics = async (days = analyticsDays) => {
+        setAnalyticsLoading(true);
+        try {
+            setAnalytics(await getAdminAnalytics(days));
+            setDatabaseStatus('connected');
+        } catch (error) {
+            setNotification(error.message || 'Visitor analytics could not be loaded.');
+        } finally {
+            setAnalyticsLoading(false);
+        }
+    };
+
     const submitFulfillmentUpdate = async (event, orderId) => {
         event.preventDefault();
         const fields = new FormData(event.currentTarget);
@@ -456,7 +482,6 @@ const ProductManager = () => {
             const databaseProducts = await getProductsFromDatabase();
             const groupedProducts = groupDatabaseProducts(databaseProducts);
             setProducts(groupedProducts);
-            localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(groupedProducts));
             setDatabaseStatus('connected');
         } catch {
             setDatabaseStatus('local');
@@ -525,7 +550,7 @@ const ProductManager = () => {
                 }, []);
                 for (const [batchIndex, group] of batches.entries()) {
                     const batch = group.items;
-                    setNotification(changedProducts.length > PRODUCT_SAVE_BATCH_SIZE
+                    setNotification(batches.length > 1
                         ? `Saving batch ${batchIndex + 1} of ${batches.length}…`
                         : message);
                     const result = await saveProductsToDatabase(batch);
@@ -541,7 +566,6 @@ const ProductManager = () => {
             }
         }
         setProducts(nextProducts);
-        localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
         window.setTimeout(() => setNotification(''), 3500);
     };
 
@@ -850,7 +874,6 @@ const ProductManager = () => {
                 [product.category]: (products[product.category] || []).filter((item) => item.id !== product.id),
             };
             setProducts(nextProducts);
-            localStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify(nextProducts));
             setNotification(`${product.name} was removed from MongoDB Atlas and the storefront.`);
             if (selectedProductId === product.id) openNewProduct();
         } catch (error) {
@@ -1031,6 +1054,7 @@ const ProductManager = () => {
                 return updated;
             })]));
             await saveProducts(nextProducts, `${preparedCount} images matched to ${changedProducts.length} products.`, changedProducts);
+            await refreshProductsFromDatabase();
             setNotification(`${preparedCount} images uploaded and matched to ${changedProducts.length} products.`);
         } catch (error) {
             setImportError(error.message || 'The image ZIP could not be processed.');
@@ -1220,6 +1244,7 @@ const ProductManager = () => {
 
     const navigation = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'analytics', label: 'Visitor analytics', icon: BarChart3 },
         { id: 'inventory', label: 'Inventory', icon: Boxes },
         { id: 'orders', label: 'Orders', icon: ReceiptText },
         { id: 'customers', label: 'Customers', icon: Users },
@@ -1236,6 +1261,7 @@ const ProductManager = () => {
         if (view === 'orders') refreshCustomerData();
         if (view === 'reviews') refreshReviews();
         if (view === 'flash-sale') refreshFlashSale();
+        if (view === 'analytics') refreshAnalytics();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
     };
 
@@ -1349,6 +1375,33 @@ const ProductManager = () => {
                                 </div>
                             ) : <div className="admin-empty-state"><CheckCircle2 size={28} /><p>No duplicate product names found.</p></div>}
                         </section>
+                    </div>
+                )}
+
+                {activeView === 'analytics' && (
+                    <div className="admin-view-stack">
+                        <section className="admin-panel analytics-toolbar">
+                            <div><p className="admin-kicker">STORE TRAFFIC</p><h2>Visitor activity</h2><small>Privacy-safe first-party analytics. No raw IP addresses are stored.</small></div>
+                            <div><label>Period<select value={analyticsDays} onChange={(event) => { const days = Number(event.target.value); setAnalyticsDays(days); void refreshAnalytics(days); }}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label><button type="button" className="admin-secondary-button" disabled={analyticsLoading} onClick={() => refreshAnalytics()}><RefreshCw size={17} /> {analyticsLoading ? 'Loading…' : 'Refresh'}</button></div>
+                        </section>
+                        <section className="customer-stat-grid">
+                            <article className="customer-stat"><Users size={21} /><div><span>Unique visitors</span><strong>{(analytics?.uniqueVisitors || 0).toLocaleString('en-IN')}</strong><small>Different browsers/devices</small></div></article>
+                            <article className="customer-stat"><Eye size={21} /><div><span>Page views</span><strong>{(analytics?.pageViews || 0).toLocaleString('en-IN')}</strong><small>All storefront pages opened</small></div></article>
+                            <article className="customer-stat"><BarChart3 size={21} /><div><span>Visits</span><strong>{(analytics?.sessions || 0).toLocaleString('en-IN')}</strong><small>Browser sessions</small></div></article>
+                            <article className="customer-stat"><Globe2 size={21} /><div><span>Locations</span><strong>{(analytics?.locations || []).length.toLocaleString('en-IN')}</strong><small>City and region groups</small></div></article>
+                        </section>
+                        {!analytics && !analyticsLoading && <section className="admin-panel admin-empty-state"><BarChart3 size={28} /><p>Open this page after visitors browse the live storefront to see traffic here.</p></section>}
+                        {analytics && <>
+                            <section className="admin-panel">
+                                <div className="admin-panel-heading"><div><p className="admin-kicker">DAILY TRAFFIC</p><h2>Visitors and page views</h2></div></div>
+                                <div className="analytics-bars">{analytics.daily.map((day) => { const maximum = Math.max(1, ...analytics.daily.map((item) => item.views)); return <div key={day.date} title={`${day.date}: ${day.views} views, ${day.visitors} visitors`}><span><strong>{new Date(`${day.date}T00:00:00`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</strong><small>{day.visitors} visitors · {day.views} views</small></span><i><b style={{ width: `${Math.max(2, (day.views / maximum) * 100)}%` }} /></i></div>; })}</div>
+                            </section>
+                            <section className="admin-overview-grid analytics-grid">
+                                <article className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">FROM WHERE</p><h2>Top visitor locations</h2></div></div><div className="analytics-ranking">{analytics.locations.map((location, index) => <div key={`${location.country}-${location.region}-${location.city}-${index}`}><span><strong>{[location.city, location.region, location.country].filter(Boolean).join(', ') || 'Unknown location'}</strong><small>{location.visitors} visitors</small></span><b>{location.views} views</b></div>)}{!analytics.locations.length && <p>No location data yet.</p>}</div></article>
+                                <article className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">POPULAR CONTENT</p><h2>Top pages</h2></div></div><div className="analytics-ranking">{analytics.pages.map((page) => <div key={page.path}><span><strong>{page.path}</strong><small>{page.visitors} visitors</small></span><b>{page.views} views</b></div>)}{!analytics.pages.length && <p>No page views yet.</p>}</div></article>
+                            </section>
+                            <section className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">RECENT VISITS</p><h2>When people visited</h2></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Time</th><th>Page</th><th>Location</th><th>Visitor</th></tr></thead><tbody>{analytics.recent.map((visit, index) => <tr key={`${visit.sessionId}-${visit.createdAt}-${index}`}><td><Clock3 size={14} /> {new Date(visit.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{visit.path}</td><td>{[visit.city, visit.region, visit.country].filter(Boolean).join(', ') || 'Unknown'}</td><td>{visit.visitorId.slice(0, 8)}…</td></tr>)}</tbody></table></div>{!analytics.recent.length && <div className="admin-empty-state"><Eye size={28} /><p>No visits recorded in this period.</p></div>}</section>
+                        </>}
                     </div>
                 )}
 

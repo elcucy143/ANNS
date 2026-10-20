@@ -59,6 +59,12 @@ export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 export const getFlashSale = () => request('flash-sale', { cache: 'no-store' });
 export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true, cache: 'no-store' });
+export const getAdminAnalytics = (days = 30) => request(`analytics?days=${days}`, { admin: true, cache: 'no-store' });
+
+export const recordPageView = (event) => request('analytics', {
+  method: 'POST',
+  body: JSON.stringify(event),
+});
 
 export const sendContactMessage = (message) => request('contact', {
   method: 'POST',

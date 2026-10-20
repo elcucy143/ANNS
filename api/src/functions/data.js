@@ -834,6 +834,82 @@ registerHttp('products', {
   },
 });
 
+registerHttp('analytics', {
+  methods: ['GET', 'POST'],
+  authLevel: 'anonymous',
+  route: 'analytics',
+  handler: async (request, context) => {
+    try {
+      const db = await getDb();
+      const collection = db.collection('analyticsEvents');
+
+      if (request.method === 'POST') {
+        const body = await parseJson(request);
+        const visitorId = cleanText(body?.visitorId, 80);
+        const sessionId = cleanText(body?.sessionId, 80);
+        const path = cleanText(body?.path, 500);
+        if (!visitorId || !sessionId || !path.startsWith('/') || path.startsWith('/product-manager')) {
+          return json({ error: 'Invalid analytics event' }, 400);
+        }
+        const header = (name) => cleanText(request.headers.get(name), 160);
+        const decodeHeader = (value) => {
+          try { return decodeURIComponent(value || ''); } catch { return value || ''; }
+        };
+        let referrerHost = '';
+        try { referrerHost = body?.referrer ? new URL(body.referrer).hostname : ''; } catch { referrerHost = ''; }
+        const createdAt = new Date();
+        await collection.insertOne({
+          visitorId,
+          sessionId,
+          path,
+          referrerHost: cleanText(referrerHost, 200),
+          country: header('x-vercel-ip-country') || 'Unknown',
+          region: decodeHeader(header('x-vercel-ip-country-region')),
+          city: decodeHeader(header('x-vercel-ip-city')),
+          timezone: cleanText(body?.timezone, 100),
+          language: cleanText(body?.language, 30),
+          screen: cleanText(body?.screen, 30),
+          createdAt,
+        });
+        // Analytics are intentionally retained for 180 days and contain no raw IP address.
+        return json({ ok: true }, 202);
+      }
+
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+      const url = new URL(request.url);
+      const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 30));
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const match = { createdAt: { $gte: since } };
+      const [summary] = await collection.aggregate([
+        { $match: match },
+        { $facet: {
+          totals: [{ $group: { _id: null, pageViews: { $sum: 1 }, visitors: { $addToSet: '$visitorId' }, sessions: { $addToSet: '$sessionId' } } }],
+          daily: [{ $group: { _id: { $dateToString: { date: '$createdAt', format: '%Y-%m-%d', timezone: 'Asia/Kolkata' } }, views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } }, { $sort: { _id: 1 } }],
+          locations: [{ $group: { _id: { country: '$country', region: '$region', city: '$city' }, views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } }, { $sort: { views: -1 } }, { $limit: 25 }],
+          pages: [{ $group: { _id: '$path', views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } }, { $sort: { views: -1 } }, { $limit: 20 }],
+          hours: [{ $group: { _id: { $hour: { date: '$createdAt', timezone: 'Asia/Kolkata' } }, views: { $sum: 1 } } }, { $sort: { _id: 1 } }],
+          recent: [{ $sort: { createdAt: -1 } }, { $limit: 30 }, { $project: { _id: 0, visitorId: 1, sessionId: 1, path: 1, country: 1, region: 1, city: 1, timezone: 1, createdAt: 1 } }],
+        } },
+      ]).toArray();
+      const totals = summary?.totals?.[0] || { pageViews: 0, visitors: [], sessions: [] };
+      return json({
+        days,
+        pageViews: totals.pageViews,
+        uniqueVisitors: totals.visitors.length,
+        sessions: totals.sessions.length,
+        daily: (summary?.daily || []).map((item) => ({ date: item._id, views: item.views, visitors: item.visitors.length })),
+        locations: (summary?.locations || []).map((item) => ({ ...item._id, views: item.views, visitors: item.visitors.length })),
+        pages: (summary?.pages || []).map((item) => ({ path: item._id, views: item.views, visitors: item.visitors.length })),
+        hours: (summary?.hours || []).map((item) => ({ hour: item._id, views: item.views })),
+        recent: summary?.recent || [],
+      });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('product-image', {
   methods: ['GET'],
   authLevel: 'anonymous',
