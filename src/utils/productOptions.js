@@ -40,11 +40,22 @@ export const normalizeSizeList = (value) => {
 
 const SUBCATEGORY_ALIASES = new Map([
   ['three piece sets', 'Kurtis'],
+  ['three piece kurti', 'Kurtis'],
+  ['three piece kurtis', 'Kurtis'],
   ['three piece kurthi', 'Kurtis'],
   ['three piece kurthis', 'Kurtis'],
+  ['3 piece kurti', 'Kurtis'],
+  ['3 piece kurtis', 'Kurtis'],
   ['3 piece kurthi', 'Kurtis'],
   ['3 piece kurthis', 'Kurtis'],
 ]);
+
+export const displaySubcategoryLabel = (subcategory) => {
+  const normalized = String(subcategory || '').trim().toLowerCase();
+  if (normalized === 'kurtis') return '3 Piece Kurtis';
+  if (normalized === 'one piece kurtis' || normalized === 'one piece kurti') return 'Kurtis';
+  return String(subcategory || '').trim();
+};
 
 export const normalizeSubcategoryList = (value) => [...new Set(normalizeList(value).map((subcategory) => (
   SUBCATEGORY_ALIASES.get(String(subcategory).trim().toLowerCase()) || String(subcategory).trim()

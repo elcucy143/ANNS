@@ -161,6 +161,10 @@ const CategoryPage = ({ title }) => {
                 break;
         }
 
+        // Limited-time offers stay at the front of every collection while
+        // preserving the selected ordering within sale and regular products.
+        result.sort((first, second) => Number(Boolean(second.flashSale)) - Number(Boolean(first.flashSale)));
+
         return result;
     }, [categoryProducts, subcategoryFilter, filters, sortBy, effectiveMaxPrice]);
     const totalPages = Math.max(1, Math.ceil(products.length / PRODUCTS_PER_PAGE));

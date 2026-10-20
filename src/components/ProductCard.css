@@ -23,6 +23,20 @@
     transition: transform 0.5s ease;
 }
 
+.product-sale-badge {
+    position: absolute;
+    z-index: 2;
+    top: 12px;
+    left: 12px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    background: #ad3329;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
 .product-card:hover .product-image img {
     transform: scale(1.05);
 }

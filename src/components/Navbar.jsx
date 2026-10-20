@@ -7,6 +7,7 @@ import './Navbar.css';
 import logo from '../assets/logo-corrected.jpg';
 
 import categoriesData from '../assets/json/categories.json';
+import { displaySubcategoryLabel } from '../utils/productOptions';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -124,7 +125,7 @@ const Navbar = () => {
                             setActiveDropdown(null);
                           }}
                         >
-                          {sub}
+                          {displaySubcategoryLabel(sub)}
                         </Link>
                       ))}
                     </div>

@@ -201,7 +201,7 @@ const ProductDetails = () => {
                         <p className="product-price">₹{product.price}</p>
                         {product.originalPrice > product.price && <>
                             <del>₹{product.originalPrice}</del>
-                            <span>{product.discountPercent}% OFF</span>
+                            <span>FLASH SALE · {product.discountPercent}% OFF</span>
                         </>}
                     </div>
                     <p className="product-description">{product.description}</p>

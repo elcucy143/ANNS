@@ -22,6 +22,7 @@ const ProductCard = ({ product }) => {
         <div className="product-card">
             <Link to={`/product/${product.id}`} className="product-link">
                 <div className="product-image">
+                    {product.flashSale && <span className="product-sale-badge">SALE · {product.discountPercent}% OFF</span>}
                     <img
                         src={images[filename] || productImageVariant(product.image, 'card')}
                         srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}

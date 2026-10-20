@@ -59,7 +59,7 @@ import {
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
-import { normalizeList, normalizeSizeList, normalizeSubcategoryList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
+import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSubcategoryList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
 import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
@@ -1807,7 +1807,7 @@ const ProductManager = () => {
                                         </div>
                                         <small>{formData.sizes.length ? `Selected: ${formData.sizes.join(', ')}` : 'Select at least one size for clothing, or leave empty for non-sized products.'}</small>
                                     </fieldset>
-                                    <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
+                                    <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{displaySubcategoryLabel(subcategory)}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
                                     <label className="full-width">Shipping information<input value={formData.shipping.join(', ')} onChange={(event) => handleArrayChange(event, 'shipping')} placeholder="Comma separated" /></label>
                                     <label className="full-width">Campaign labels<input value={formData.campaign.join(', ')} onChange={(event) => handleArrayChange(event, 'campaign')} placeholder="Comma separated" /></label>
                                     <label className="full-width">Similar product IDs<input value={similarProductIdsInput} onChange={(event) => setSimilarProductIdsInput(event.target.value)} placeholder="For example: ww30001, ww30002, ww30003" /><small>Enter each colour variant’s unique product ID separated by commas. Related products: {parseList(similarProductIdsInput).length || 0}</small></label>
