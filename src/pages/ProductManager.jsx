@@ -252,6 +252,7 @@ const ProductManager = () => {
     const [flashSaleProductId, setFlashSaleProductId] = useState('');
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
     const [bulkImageBusy, setBulkImageBusy] = useState(false);
+    const [bulkImageReport, setBulkImageReport] = useState(null);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [bulkStockValue, setBulkStockValue] = useState('');
     const [inventoryPage, setInventoryPage] = useState(1);
@@ -959,6 +960,7 @@ const ProductManager = () => {
         setImportError('');
         setImportRows([]);
         setImportFileName(file.name);
+        setBulkImageReport(null);
 
         try {
             let rows;
@@ -1014,48 +1016,93 @@ const ProductManager = () => {
         if (!zipFile) return;
         setBulkImageBusy(true);
         setImportError('');
+        setBulkImageReport(null);
         try {
             const { default: JSZip } = await import('jszip');
             const archive = await JSZip.loadAsync(zipFile);
-            const productById = new Map(allProducts.map((product) => [product.id.toLowerCase(), product]));
-            const productIds = [...productById.keys()].sort((first, second) => second.length - first.length);
+            const normalizeMatchKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const stagedRows = importRows.filter((row) => row.valid && row.product.id);
+            const candidates = [
+                ...allProducts.map((product) => ({ id: product.id, source: 'catalog' })),
+                ...stagedRows.map((row) => ({ id: row.product.id, source: 'spreadsheet' })),
+            ];
+            const productsByMatchKey = new Map();
+            candidates.forEach((candidate) => {
+                const key = normalizeMatchKey(candidate.id);
+                if (key) productsByMatchKey.set(key, candidate);
+            });
+            const productKeys = [...productsByMatchKey.keys()].sort((first, second) => second.length - first.length);
             const groupedFiles = new Map();
-            Object.values(archive.files)
+            const imageEntries = Object.values(archive.files)
                 .filter((entry) => !entry.dir && isSupportedImageFile({ name: entry.name, type: '' }))
                 .sort((first, second) => first.name.localeCompare(second.name, undefined, { numeric: true }))
-                .forEach((entry) => {
-                    const filename = entry.name.split('/').pop() || '';
-                    const stem = filename.replace(/\.[^.]+$/, '').toLowerCase();
-                    const productId = productIds.find((id) => stem === id || stem.startsWith(`${id}-`) || stem.startsWith(`${id}_`) || stem.startsWith(`${id}.`));
-                    if (productId) groupedFiles.set(productId, [...(groupedFiles.get(productId) || []), { entry, filename }]);
-                });
+            const unmatchedFiles = [];
+            imageEntries.forEach((entry) => {
+                const filename = entry.name.split('/').pop() || '';
+                const stemKey = normalizeMatchKey(filename.replace(/\.[^.]+$/, ''));
+                const matchedKey = productKeys.find((key) => stemKey === key || stemKey.startsWith(key) || (key.length >= 4 && stemKey.includes(key)));
+                const candidate = productsByMatchKey.get(matchedKey);
+                if (candidate) groupedFiles.set(candidate.id, [...(groupedFiles.get(candidate.id) || []), { entry, filename }]);
+                else unmatchedFiles.push(filename);
+            });
 
-            if (!groupedFiles.size) throw new Error('No images matched a product code. Name files like WW30111-1.jpg, WW30111-2.jpg.');
+            if (!imageEntries.length) throw new Error('The ZIP contains no JPG, JPEG, PNG or other supported image files.');
+            if (!groupedFiles.size) {
+                const expected = candidates.slice(0, 8).map((item) => item.id).join(', ');
+                throw new Error(`No image filename contains a known product code. ${expected ? `Codes currently available: ${expected}${candidates.length > 8 ? '…' : ''}. ` : ''}Example: PRODUCTCODE-1.jpg.`);
+            }
             const replacements = new Map();
+            const failedFiles = [];
+            const ignoredFiles = [];
             let preparedCount = 0;
             for (const [productId, files] of groupedFiles) {
                 const prepared = [];
+                ignoredFiles.push(...files.slice(MAX_PRODUCT_IMAGES).map(({ filename }) => `${filename} (maximum ${MAX_PRODUCT_IMAGES} per product)`));
                 for (const { entry, filename } of files.slice(0, MAX_PRODUCT_IMAGES)) {
-                    const blob = await entry.async('blob');
-                    const imageFile = new File([blob], filename, { type: blob.type });
-                    prepared.push(await prepareImageFile(imageFile));
-                    preparedCount += 1;
-                    setNotification(`Preparing image ${preparedCount}…`);
+                    try {
+                        const blob = await entry.async('blob');
+                        const imageFile = new File([blob], filename, { type: blob.type });
+                        prepared.push(await prepareImageFile(imageFile));
+                        preparedCount += 1;
+                        setNotification(`Preparing image ${preparedCount}…`);
+                    } catch (error) {
+                        failedFiles.push(`${filename}: ${error.message || 'could not be processed'}`);
+                    }
                 }
                 if (prepared.length) replacements.set(productId, prepared);
             }
 
+            setImportRows((current) => current.map((row) => {
+                const images = replacements.get(row.product.id);
+                return images ? { ...row, product: { ...row.product, image: images[0], otherImages: images.slice(1) } } : row;
+            }));
             const changedProducts = [];
             const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
-                const images = replacements.get(product.id.toLowerCase());
+                const images = replacements.get(product.id);
                 if (!images) return product;
                 const updated = { ...product, image: images[0], otherImages: images.slice(1) };
                 changedProducts.push({ ...updated, category });
                 return updated;
             })]));
-            await saveProducts(nextProducts, `${preparedCount} images matched to ${changedProducts.length} products.`, changedProducts);
-            await refreshProductsFromDatabase();
-            setNotification(`${preparedCount} images uploaded and matched to ${changedProducts.length} products.`);
+            if (changedProducts.length) {
+                await saveProducts(nextProducts, `${preparedCount} images prepared for ${replacements.size} products.`, changedProducts);
+                await refreshProductsFromDatabase();
+            }
+            const stagedMatchedIds = new Set(stagedRows.filter((row) => replacements.has(row.product.id)).map((row) => row.product.id));
+            const missingStagedCodes = stagedRows.map((row) => row.product.id).filter((id) => !stagedMatchedIds.has(id));
+            setBulkImageReport({
+                zipName: zipFile.name,
+                imageCount: imageEntries.length,
+                preparedCount,
+                matchedProductIds: [...replacements.keys()],
+                unmatchedFiles,
+                failedFiles,
+                ignoredFiles,
+                missingStagedCodes,
+                stagedCount: stagedMatchedIds.size,
+                catalogCount: changedProducts.length,
+            });
+            setNotification(`${preparedCount} images matched to ${replacements.size} products.${stagedMatchedIds.size ? ' Spreadsheet rows are ready—click Import valid rows to finish.' : ''}`);
         } catch (error) {
             setImportError(error.message || 'The image ZIP could not be processed.');
         } finally {
@@ -1732,11 +1779,27 @@ const ProductManager = () => {
                             <div>
                                 <p className="admin-kicker">BULK PRODUCT IMAGES</p>
                                 <h2>Match images from a ZIP</h2>
-                                <p>Name files with the product code: <strong>WW30111-1.jpg</strong>, <strong>WW30111-2.png</strong>. Up to five naturally sorted images are attached to each matching product.</p>
+                                <p>Include the product code anywhere in each filename. JPG, JPEG, PNG and other common image formats are accepted—for example <strong>WW30111-1.jpg</strong>, <strong>Photo WW30111 2.jpeg</strong> or <strong>WW30111_front.png</strong>. Up to five images are attached to each product.</p>
                             </div>
                             <input ref={bulkImageInputRef} className="visually-hidden" type="file" accept=".zip,application/zip" onChange={handleBulkImageZip} />
                             <button type="button" className="admin-secondary-button" disabled={bulkImageBusy} onClick={() => bulkImageInputRef.current?.click()}><ImagePlus size={18} /> {bulkImageBusy ? 'Processing ZIP…' : 'Upload image ZIP'}</button>
                         </section>
+                        {bulkImageReport && (
+                            <section className="admin-panel bulk-image-report" aria-live="polite">
+                                <div className="admin-panel-heading">
+                                    <div><p className="admin-kicker">IMAGE MATCH REPORT</p><h2>{bulkImageReport.preparedCount} of {bulkImageReport.imageCount} images prepared</h2><small>{bulkImageReport.zipName}</small></div>
+                                    <span className="bulk-match-total"><CheckCircle2 size={17} /> {bulkImageReport.matchedProductIds.length} products matched</span>
+                                </div>
+                                <div className="bulk-report-grid">
+                                    <article className="success"><strong>Matched product codes</strong><p>{bulkImageReport.matchedProductIds.join(', ') || 'None'}</p></article>
+                                    {bulkImageReport.missingStagedCodes.length > 0 && <article className="warning"><strong>Spreadsheet products with no matching ZIP image</strong><p>{bulkImageReport.missingStagedCodes.join(', ')}</p></article>}
+                                    {bulkImageReport.unmatchedFiles.length > 0 && <article className="warning"><strong>Image filenames with no matching product code</strong><p>{bulkImageReport.unmatchedFiles.join(', ')}</p></article>}
+                                    {bulkImageReport.failedFiles.length > 0 && <article className="error"><strong>Images that could not be processed</strong><p>{bulkImageReport.failedFiles.join(' · ')}</p></article>}
+                                    {bulkImageReport.ignoredFiles.length > 0 && <article className="warning"><strong>Extra images not used</strong><p>{bulkImageReport.ignoredFiles.join(', ')}</p></article>}
+                                </div>
+                                {bulkImageReport.stagedCount > 0 && <p className="bulk-report-next"><strong>Next:</strong> review the spreadsheet preview below, then click <strong>Import valid rows</strong>. Their matched images are already attached.</p>}
+                            </section>
+                        )}
                         {importRows.length > 0 && (
                             <section className="admin-panel">
                                 <div className="admin-panel-heading">
