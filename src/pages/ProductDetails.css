@@ -141,10 +141,15 @@
 }
 
 .product-price {
+    margin: 0;
     font-size: 1.8rem;
     font-weight: 600;
     color: var(--color-primary);
 }
+
+.product-detail-prices { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.product-detail-prices del { color: #928981; font-size: 1rem; }
+.product-detail-prices span { color: #a4452b; font-size: .78rem; font-weight: 700; }
 
 .product-description {
     color: var(--color-text-light);

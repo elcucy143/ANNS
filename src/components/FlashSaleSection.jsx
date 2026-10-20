@@ -38,7 +38,7 @@ const FlashSaleSection = () => {
         return sale.items.map((item) => {
             const product = catalog.get(String(item.productId));
             if (!product) return null;
-            const originalPrice = Number(String(product.price).replace(/[^0-9.]/g, ''));
+            const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price).replace(/[^0-9.]/g, ''));
             const salePrice = Number(item.salePrice);
             if (!Number.isFinite(originalPrice) || !Number.isFinite(salePrice) || salePrice >= originalPrice) return null;
             return { ...product, originalPrice, price: salePrice, discountPercent: Math.round((1 - salePrice / originalPrice) * 100) };

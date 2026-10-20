@@ -197,7 +197,13 @@ const ProductDetails = () => {
                         </div>
                         <a href="#customer-reviews" className="review-link">{product.rating.toFixed(1)} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</a>
                     </div>}
-                    <p className="product-price">₹{product.price}</p>
+                    <div className="product-detail-prices">
+                        <p className="product-price">₹{product.price}</p>
+                        {product.originalPrice > product.price && <>
+                            <del>₹{product.originalPrice}</del>
+                            <span>{product.discountPercent}% OFF</span>
+                        </>}
+                    </div>
                     <p className="product-description">{product.description}</p>
 
                     {category === 'Gifts' && (

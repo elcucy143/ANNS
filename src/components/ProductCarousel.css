@@ -87,6 +87,9 @@
     color: var(--color-text-light);
 }
 
+.product-info .original-price { margin-left: 8px; color: #928981; font-size: .84rem; }
+.product-info .discount-label { display: inline-block; margin-left: 8px; color: #a4452b; font-size: .72rem; font-weight: 700; }
+
 .carousel-product-link {
     text-decoration: none;
     color: inherit;

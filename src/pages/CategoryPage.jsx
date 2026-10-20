@@ -64,7 +64,7 @@ const CategoryPage = ({ title }) => {
         const salePrices = new Map((flashSale?.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
         return catalogProducts.map((product) => {
             const salePrice = salePrices.get(String(product.id));
-            const originalPrice = Number(String(product.price || '').replace(/[^0-9.]/g, ''));
+            const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price || '').replace(/[^0-9.]/g, ''));
             if (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= originalPrice) return null;
             return { ...product, originalPrice, price: salePrice, discountPercent: Math.round((1 - salePrice / originalPrice) * 100) };
         }).filter(Boolean);

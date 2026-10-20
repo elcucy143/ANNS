@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getProductsFromDatabase } from '../services/apiClient';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { getFlashSale, getProductsFromDatabase } from '../services/apiClient';
 import { normalizeCatalogProduct } from '../utils/productOptions';
 
 const ProductCatalogContext = createContext({ products: [], loading: true, error: null, refreshProducts: async () => {} });
@@ -17,6 +17,7 @@ const readCatalogCache = () => {
 export const ProductCatalogProvider = ({ children }) => {
   const [initialCatalog] = useState(readCatalogCache);
   const [products, setProducts] = useState(initialCatalog);
+  const [flashSale, setFlashSale] = useState(null);
   const [loading, setLoading] = useState(initialCatalog.length === 0);
   const [error, setError] = useState(null);
 
@@ -41,12 +42,24 @@ export const ProductCatalogProvider = ({ children }) => {
     }
   }, []);
 
+  const refreshFlashSale = useCallback(async () => {
+    try {
+      setFlashSale(await getFlashSale() || null);
+    } catch {
+      // Keep the last verified sale during a temporary network failure.
+    }
+  }, []);
+
   useEffect(() => {
     // Render the last verified catalog immediately and refresh it without
     // replacing the page with a loading screen. First-time visitors still see
     // the loading state until their initial catalog arrives.
     void refreshProducts({ background: initialCatalog.length > 0 });
-    const refreshInBackground = () => { void refreshProducts({ background: true }); };
+    void refreshFlashSale();
+    const refreshInBackground = () => {
+      void refreshProducts({ background: true });
+      void refreshFlashSale();
+    };
     const interval = window.setInterval(refreshInBackground, 30000);
     const onVisibilityChange = () => { if (document.visibilityState === 'visible') refreshInBackground(); };
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -54,9 +67,26 @@ export const ProductCatalogProvider = ({ children }) => {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [refreshProducts, initialCatalog.length]);
+  }, [refreshProducts, refreshFlashSale, initialCatalog.length]);
 
-  return <ProductCatalogContext.Provider value={{ products, loading, error, refreshProducts }}>{children}</ProductCatalogContext.Provider>;
+  const pricedProducts = useMemo(() => {
+    const salePrices = new Map((flashSale?.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
+    return products.map((product) => {
+      const regularPrice = Number(String(product.price ?? '').replace(/[^0-9.]/g, ''));
+      const salePrice = salePrices.get(String(product.id));
+      if (!Number.isFinite(regularPrice) || !Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= regularPrice) return product;
+      return {
+        ...product,
+        regularPrice,
+        originalPrice: regularPrice,
+        price: salePrice,
+        discountPercent: Math.round((1 - salePrice / regularPrice) * 100),
+        flashSale: true,
+      };
+    });
+  }, [products, flashSale]);
+
+  return <ProductCatalogContext.Provider value={{ products: pricedProducts, loading, error, refreshProducts, flashSale }}>{children}</ProductCatalogContext.Provider>;
 };
 
 // This hook shares the catalog provider state with product-facing pages.

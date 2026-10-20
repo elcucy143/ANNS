@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useProductCatalog } from './ProductCatalogContext';
 
 const CartContext = createContext();
 export const CART_STORAGE_KEY = 'anns-cart-v2';
@@ -60,12 +61,28 @@ const persistCart = (items) => {
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
+    const { products } = useProductCatalog();
     const [cartItems, setCartItems] = useState(readStoredCart);
 
     const [lastAddedItem, setLastAddedItem] = useState(null);
     const [isPopupVisible, setIsPopupVisible] = useState(false);
 
     useEffect(() => { persistCart(cartItems); }, [cartItems]);
+
+    useEffect(() => {
+        if (!products.length) return;
+        const catalog = new Map(products.map((product) => [String(product.id), product]));
+        // Catalogue changes are an external price update (for example, a flash sale starting or ending).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCartItems((current) => current.map((item) => {
+            const product = catalog.get(String(item.id));
+            if (!product) return item;
+            const nextPrice = parsePrice(product.price);
+            const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
+            if (item.price === nextPrice && item.name === product.name && item.image === nextImage) return item;
+            return { ...item, name: product.name, price: nextPrice, image: nextImage };
+        }));
+    }, [products]);
 
     useEffect(() => {
         const syncCart = (event) => {
