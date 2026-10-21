@@ -41,7 +41,8 @@ const FlashSaleSection = () => {
             const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price).replace(/[^0-9.]/g, ''));
             const salePrice = Number(item.salePrice);
             if (!Number.isFinite(originalPrice) || !Number.isFinite(salePrice) || salePrice >= originalPrice) return null;
-            return { ...product, originalPrice, price: salePrice, discountPercent: Math.round((1 - salePrice / originalPrice) * 100) };
+            const effectivePrice = Math.min(Number(product.price) || originalPrice, salePrice);
+            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: true, discounted: true };
         }).filter(Boolean);
     }, [products, sale]);
 

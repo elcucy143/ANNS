@@ -73,15 +73,22 @@ export const ProductCatalogProvider = ({ children }) => {
     const salePrices = new Map((flashSale?.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
     return products.map((product) => {
       const regularPrice = Number(String(product.price ?? '').replace(/[^0-9.]/g, ''));
-      const salePrice = salePrices.get(String(product.id));
-      if (!Number.isFinite(regularPrice) || !Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= regularPrice) return product;
+      if (!Number.isFinite(regularPrice) || regularPrice <= 0) return product;
+      const uploadedDiscountPrice = Number(String(product.discount ?? '').replace(/[^0-9.]/g, ''));
+      const hasUploadedDiscount = Number.isFinite(uploadedDiscountPrice) && uploadedDiscountPrice > 0 && uploadedDiscountPrice < regularPrice;
+      const catalogPrice = hasUploadedDiscount ? uploadedDiscountPrice : regularPrice;
+      const configuredFlashPrice = salePrices.get(String(product.id));
+      const hasFlashDiscount = Number.isFinite(configuredFlashPrice) && configuredFlashPrice > 0 && configuredFlashPrice < catalogPrice;
+      const effectivePrice = hasFlashDiscount ? configuredFlashPrice : catalogPrice;
+      if (effectivePrice >= regularPrice) return product;
       return {
         ...product,
         regularPrice,
         originalPrice: regularPrice,
-        price: salePrice,
-        discountPercent: Math.round((1 - salePrice / regularPrice) * 100),
-        flashSale: true,
+        price: effectivePrice,
+        discountPercent: Math.round((1 - effectivePrice / regularPrice) * 100),
+        flashSale: hasFlashDiscount,
+        discounted: true,
       };
     });
   }, [products, flashSale]);

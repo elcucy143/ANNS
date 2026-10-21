@@ -66,7 +66,8 @@ const CategoryPage = ({ title }) => {
             const salePrice = salePrices.get(String(product.id));
             const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price || '').replace(/[^0-9.]/g, ''));
             if (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= originalPrice) return null;
-            return { ...product, originalPrice, price: salePrice, discountPercent: Math.round((1 - salePrice / originalPrice) * 100) };
+            const effectivePrice = Math.min(Number(product.price) || originalPrice, salePrice);
+            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: true, discounted: true };
         }).filter(Boolean);
     })();
 
@@ -163,7 +164,7 @@ const CategoryPage = ({ title }) => {
 
         // Limited-time offers stay at the front of every collection while
         // preserving the selected ordering within sale and regular products.
-        result.sort((first, second) => Number(Boolean(second.flashSale)) - Number(Boolean(first.flashSale)));
+        result.sort((first, second) => Number(second.originalPrice > second.price) - Number(first.originalPrice > first.price));
 
         return result;
     }, [categoryProducts, subcategoryFilter, filters, sortBy, effectiveMaxPrice]);

@@ -18,7 +18,7 @@ const SearchResults = () => {
                 product.color, ...(Array.isArray(product.subcategory) ? product.subcategory : []),
             ].filter(Boolean).join(' ').toLowerCase();
             return terms.every((term) => searchable.includes(term));
-        }).sort((first, second) => Number(Boolean(second.flashSale)) - Number(Boolean(first.flashSale)));
+        }).sort((first, second) => Number(second.originalPrice > second.price) - Number(first.originalPrice > first.price));
     }, [query, catalogProducts]);
 
     return (

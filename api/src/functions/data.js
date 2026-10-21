@@ -49,6 +49,13 @@ const nowIso = () => new Date().toISOString();
 const cleanText = (value, maxLength = 200) => String(value || '').trim().slice(0, maxLength);
 const normalizeProductId = (value) => cleanText(value, 100);
 const numericPrice = (value) => Number(String(value ?? '').replace(/[^0-9.]/g, ''));
+const catalogPrice = (product) => {
+  const regularPrice = numericPrice(product?.price);
+  const discountedPrice = numericPrice(product?.discount);
+  return Number.isFinite(discountedPrice) && discountedPrice > 0 && discountedPrice < regularPrice
+    ? discountedPrice
+    : regularPrice;
+};
 const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const normalizeList = (value) => {
   if (Array.isArray(value)) return value.flatMap(normalizeList);
@@ -805,6 +812,15 @@ registerHttp('products', {
       }
       const invalidId = suppliedIds.find((id) => !/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(normalizeProductId(id)));
       if (invalidId) return json({ error: `Product ID ${invalidId} contains unsupported characters` }, 400);
+      for (const rawProduct of productList) {
+        const regularPrice = numericPrice(rawProduct.price);
+        const discountText = cleanText(rawProduct.discount, 50);
+        const discountedPrice = numericPrice(discountText);
+        if (!Number.isFinite(regularPrice) || regularPrice <= 0) return json({ error: `Product ${rawProduct.id} requires a valid original price above ₹0` }, 400);
+        if (discountText && discountedPrice !== 0 && (!Number.isFinite(discountedPrice) || discountedPrice < 0 || discountedPrice >= regularPrice)) {
+          return json({ error: `Discounted price for ${rawProduct.id} must be above ₹0 and lower than its original price` }, 400);
+        }
+      }
 
       const operationTime = nowIso();
       const preparedProducts = await Promise.all(productList
@@ -1105,13 +1121,13 @@ registerHttp('admin-flash-sale', {
       const sale = normalizeFlashSale(body?.sale || body);
       const productIds = [...new Set(sale.items.map((item) => item.productId))];
       const products = productIds.length
-        ? await db.collection('products').find({ id: { $in: productIds } }, { projection: { id: 1, price: 1 } }).toArray()
+        ? await db.collection('products').find({ id: { $in: productIds } }, { projection: { id: 1, price: 1, discount: 1 } }).toArray()
         : [];
-      const prices = new Map(products.map((product) => [String(product.id), numericPrice(product.price)]));
+      const prices = new Map(products.map((product) => [String(product.id), catalogPrice(product)]));
       for (const item of sale.items) {
-        const originalPrice = prices.get(item.productId);
-        if (!Number.isFinite(originalPrice)) return json({ error: `Product ${item.productId} was not found` }, 400);
-        if (item.salePrice >= originalPrice) return json({ error: `Sale price for ${item.productId} must be lower than its regular price` }, 400);
+        const currentPrice = prices.get(item.productId);
+        if (!Number.isFinite(currentPrice)) return json({ error: `Product ${item.productId} was not found` }, 400);
+        if (item.salePrice >= currentPrice) return json({ error: `Flash Sale price for ${item.productId} must be lower than its current catalog price` }, 400);
       }
       if (sale.active && !sale.items.length) return json({ error: 'Add at least one product before activating the flash sale' }, 400);
       if (sale.startsAt && sale.endsAt && new Date(sale.startsAt) >= new Date(sale.endsAt)) {
@@ -1231,7 +1247,7 @@ registerHttp('razorpay-create-order', {
         const id = cleanText(requestedItem.id, 100);
         const product = productsById.get(id);
         const quantity = Math.max(1, Math.min(20, Math.trunc(Number(requestedItem.quantity) || 1)));
-        const regularPrice = numericPrice(product?.price);
+        const regularPrice = catalogPrice(product);
         const configuredSalePrice = activeSalePrices.get(id);
         const price = Number.isFinite(configuredSalePrice) && configuredSalePrice > 0 && configuredSalePrice < regularPrice
           ? configuredSalePrice

@@ -134,6 +134,11 @@ const toNumber = (value, fallback = 0) => {
     const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
     return Number.isFinite(parsed) ? parsed : fallback;
 };
+const getCurrentCatalogPrice = (product) => {
+    const originalPrice = toNumber(product?.price);
+    const discountedPrice = toNumber(product?.discount);
+    return discountedPrice > 0 && discountedPrice < originalPrice ? discountedPrice : originalPrice;
+};
 
 const getStock = (product) => {
     if (product.stock !== '' && product.stock !== undefined) return Math.max(0, toNumber(product.stock));
@@ -672,7 +677,7 @@ const ProductManager = () => {
         if (!flashSaleProductId || flashSale.items.some((item) => item.productId === flashSaleProductId)) return;
         const product = allProducts.find((item) => item.id === flashSaleProductId);
         if (!product) return;
-        const regularPrice = toNumber(product.price);
+        const regularPrice = getCurrentCatalogPrice(product);
         setFlashSale((current) => ({
             ...current,
             items: [...current.items, { productId: flashSaleProductId, salePrice: Math.max(1, Math.round(regularPrice * .9)) }],
@@ -833,6 +838,16 @@ const ProductManager = () => {
             setNotification(`Product ID ${productId} is already used by ${duplicate.name}. Choose a unique code.`);
             return;
         }
+        const originalPrice = toNumber(formData.price, NaN);
+        const discountedPrice = toNumber(formData.discount, NaN);
+        if (!Number.isFinite(originalPrice) || originalPrice <= 0) {
+            setNotification('Enter a valid original price above ₹0.');
+            return;
+        }
+        if (formData.discount !== '' && (!Number.isFinite(discountedPrice) || discountedPrice <= 0 || discountedPrice >= originalPrice)) {
+            setNotification('The discounted price must be above ₹0 and lower than the original price.');
+            return;
+        }
         const similarProductIds = [...new Set(parseList(similarProductIdsInput))].filter((id) => id !== productId);
         const normalizedProduct = {
             ...getInitialFormData(),
@@ -906,7 +921,7 @@ const ProductManager = () => {
             ...current,
             items: [...current.items, ...allProducts
                 .filter((product) => selected.has(product.id) && !current.items.some((item) => item.productId === product.id))
-                .map((product) => ({ productId: product.id, salePrice: Math.max(1, Math.round(toNumber(product.price) * .9)) }))],
+                .map((product) => ({ productId: product.id, salePrice: Math.max(1, Math.round(getCurrentCatalogPrice(product) * .9)) }))],
         }));
         setSelectedProductIds([]);
         setFlashSalePage(1);
@@ -918,7 +933,8 @@ const ProductManager = () => {
         const row = normalizeHeaders(rawRow);
         const category = normalizeCategory(valueFrom(row, 'category'));
         const name = String(valueFrom(row, 'name', 'productname')).trim();
-        const price = valueFrom(row, 'price', 'sellingprice');
+        const price = valueFrom(row, 'originalprice', 'regularprice', 'mrp', 'listprice', 'price', 'sellingprice');
+        const discountedPrice = valueFrom(row, 'discountedprice', 'discountprice', 'saleprice', 'offerprice', 'discount');
         const id = String(valueFrom(row, 'id', 'sku', 'productid')).trim();
         const errors = [];
         if (!Object.keys(products).includes(category)) errors.push('Unknown category');
@@ -926,7 +942,11 @@ const ProductManager = () => {
         else if (!/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(id)) errors.push('Product ID contains unsupported characters');
         if (!name) errors.push('Name is required');
         const numericPrice = toNumber(price, NaN);
-        if (price === '' || !Number.isFinite(numericPrice) || numericPrice < 0) errors.push('Valid price is required');
+        if (price === '' || !Number.isFinite(numericPrice) || numericPrice <= 0) errors.push('Valid original price above ₹0 is required');
+        const numericDiscountedPrice = toNumber(discountedPrice, NaN);
+        if (discountedPrice !== '' && numericDiscountedPrice !== 0 && (!Number.isFinite(numericDiscountedPrice) || numericDiscountedPrice <= 0 || numericDiscountedPrice >= numericPrice)) {
+            errors.push('Discounted price must be lower than original price');
+        }
 
         return {
             rowNumber: index + 2,
@@ -938,7 +958,7 @@ const ProductManager = () => {
                 name,
                 description: String(valueFrom(row, 'description')).trim(),
                 price: String(price),
-                discount: String(valueFrom(row, 'discount')).trim(),
+                discount: discountedPrice === '' || numericDiscountedPrice === 0 ? '' : String(discountedPrice).trim(),
                 stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
                 sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
                 image: String(valueFrom(row, 'image', 'imageurl')).trim(),
@@ -1118,8 +1138,8 @@ const ProductManager = () => {
             id: 'sample-001',
             name: 'Sample product',
             description: 'Product description',
-            price: 499,
-            discount: 0,
+            originalPrice: 499,
+            discountedPrice: 449,
             stock: 25,
             sold: 5,
             image: '/src/assets/img/example.jpg',
@@ -1713,19 +1733,20 @@ const ProductManager = () => {
                             <div className="flash-sale-product-picker">
                                 <select value={flashSaleProductId} onChange={(event) => setFlashSaleProductId(event.target.value)}>
                                     <option value="">Select a product</option>
-                                    {allProducts.filter((product) => !flashSale.items.some((item) => item.productId === product.id)).map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id} · {formatCurrency(product.price)}</option>)}
+                                    {allProducts.filter((product) => !flashSale.items.some((item) => item.productId === product.id)).map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id} · {formatCurrency(getCurrentCatalogPrice(product))}</option>)}
                                 </select>
                                 <button type="button" className="admin-secondary-button" onClick={addFlashSaleProduct} disabled={!flashSaleProductId}><Plus size={17} /> Add product</button>
                             </div>
                             <div className="flash-sale-admin-list">
                                 {pagedFlashSaleItems.map((item) => {
                                     const product = allProducts.find((entry) => entry.id === item.productId);
-                                    const regularPrice = toNumber(product?.price);
+                                    const originalPrice = toNumber(product?.price);
+                                    const regularPrice = getCurrentCatalogPrice(product);
                                     const salePrice = toNumber(item.salePrice);
                                     const percent = regularPrice > salePrice && regularPrice ? Math.round((1 - salePrice / regularPrice) * 100) : 0;
                                     return <article key={item.productId}>
                                         {product?.image && <img src={product.image} alt="" />}
-                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · Regular {formatCurrency(regularPrice)}</small></div>
+                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · Current {formatCurrency(regularPrice)}{originalPrice > regularPrice ? ` · Original ${formatCurrency(originalPrice)}` : ''}</small></div>
                                         <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value } : entry) }))} /></label>
                                         <span className={percent > 0 ? 'valid' : 'invalid'}>{percent > 0 ? `${percent}% off` : 'Must be lower'}</span>
                                         <button type="button" className="delete" title="Remove from sale" onClick={() => setFlashSale((current) => ({ ...current, items: current.items.filter((entry) => entry.productId !== item.productId) }))}><Trash2 size={17} /></button>
@@ -1808,7 +1829,7 @@ const ProductManager = () => {
                                 </div>
                                 <div className="admin-table-wrap import-preview-table">
                                     <table className="admin-table">
-                                        <thead><tr><th>Row</th><th>Status</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Sold</th></tr></thead>
+                                        <thead><tr><th>Row</th><th>Status</th><th>Product</th><th>Category</th><th>Original price</th><th>Discounted price</th><th>Stock</th><th>Sold</th></tr></thead>
                                         <tbody>{importRows.slice(0, 50).map((row) => (
                                             <tr key={row.rowNumber}>
                                                 <td>{row.rowNumber}</td>
@@ -1816,6 +1837,7 @@ const ProductManager = () => {
                                                 <td><strong>{row.product.name || 'Missing name'}</strong><small>{row.product.id || 'ID will be generated'}</small></td>
                                                 <td>{row.category || '—'}</td>
                                                 <td>{row.product.price === '' ? '—' : formatCurrency(row.product.price)}</td>
+                                                <td>{row.product.discount === '' ? '—' : formatCurrency(row.product.discount)}</td>
                                                 <td>{row.product.stock}</td><td>{row.product.sold}</td>
                                             </tr>
                                         ))}</tbody>
@@ -1840,8 +1862,8 @@ const ProductManager = () => {
                                     <label>Product ID<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Example: WW300125" required autoCapitalize="characters" spellCheck="false" disabled={selectedProductId !== 'new'} /><small>This exact code is used on the storefront, orders and emails. It cannot change after creation.</small></label>
                                     <label className="full-width">Product name<input name="name" value={formData.name} onChange={handleInputChange} required /></label>
                                     <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
-                                    <label>Price (₹)<input name="price" type="number" min="0" value={formData.price} onChange={handleInputChange} required /></label>
-                                    <label>Discount<input name="discount" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /></label>
+                                    <label>Original price (₹)<input name="price" type="number" min="1" value={formData.price} onChange={handleInputChange} required /></label>
+                                    <label>Discounted price (₹)<input name="discount" type="number" min="1" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /><small>Leave blank if this product is not discounted.</small></label>
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">
