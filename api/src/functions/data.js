@@ -780,7 +780,32 @@ registerHttp('products', {
           );
           return { ...rawProduct, image: product.image, otherImages: product.otherImages };
         }));
-        products = migrated.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
+        // A few legacy spreadsheets used `price` for the selling price and
+        // `discount` for MRP. Repair that unambiguous reversed shape once so
+        // the storefront, checkout and future admin edits all share the same
+        // original-price / discounted-price convention.
+        const reversedPriceProducts = migrated.filter((product) => {
+          const originalPrice = numericPrice(product.price);
+          const discountedPrice = numericPrice(product.discount);
+          return Number.isFinite(originalPrice) && originalPrice > 0
+            && Number.isFinite(discountedPrice) && discountedPrice > originalPrice;
+        });
+        if (reversedPriceProducts.length) {
+          const correctedAt = nowIso();
+          await collection.bulkWrite(reversedPriceProducts.map((product) => ({
+            updateOne: {
+              filter: { _id: product._id },
+              update: { $set: { price: String(product.discount), discount: String(product.price), updatedAt: correctedAt } },
+            },
+          })), { ordered: false });
+          const reversedIds = new Set(reversedPriceProducts.map((product) => String(product.id)));
+          products = migrated.map((product) => (reversedIds.has(String(product.id))
+            ? { ...product, price: String(product.discount), discount: String(product.price), updatedAt: correctedAt }
+            : product));
+        } else {
+          products = migrated;
+        }
+        products = products.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
         const response = json(products.map(cleanDocument));
         response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
         return response;

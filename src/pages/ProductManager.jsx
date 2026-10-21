@@ -838,11 +838,21 @@ const ProductManager = () => {
             setNotification(`Product ID ${productId} is already used by ${duplicate.name}. Choose a unique code.`);
             return;
         }
-        const originalPrice = toNumber(formData.price, NaN);
-        const discountedPrice = toNumber(formData.discount, NaN);
+        let originalPrice = toNumber(formData.price, NaN);
+        let discountedPrice = toNumber(formData.discount, NaN);
         if (!Number.isFinite(originalPrice) || originalPrice <= 0) {
             setNotification('Enter a valid original price above ₹0.');
             return;
+        }
+        if (formData.discount !== '' && Number.isFinite(discountedPrice) && discountedPrice > originalPrice) {
+            const shouldSwap = window.confirm(
+                `The discounted price (${formatCurrency(discountedPrice)}) is higher than the original price (${formatCurrency(originalPrice)}). Swap these prices automatically?`,
+            );
+            if (!shouldSwap) {
+                setNotification('Correct the two prices, then save again. The original price must be higher.');
+                return;
+            }
+            [originalPrice, discountedPrice] = [discountedPrice, originalPrice];
         }
         if (formData.discount !== '' && (!Number.isFinite(discountedPrice) || discountedPrice <= 0 || discountedPrice >= originalPrice)) {
             setNotification('The discounted price must be above ₹0 and lower than the original price.');
@@ -853,6 +863,8 @@ const ProductManager = () => {
             ...getInitialFormData(),
             ...formData,
             id: productId,
+            price: String(originalPrice),
+            discount: formData.discount === '' ? '' : String(discountedPrice),
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
@@ -944,7 +956,10 @@ const ProductManager = () => {
         const numericPrice = toNumber(price, NaN);
         if (price === '' || !Number.isFinite(numericPrice) || numericPrice <= 0) errors.push('Valid original price above ₹0 is required');
         const numericDiscountedPrice = toNumber(discountedPrice, NaN);
-        if (discountedPrice !== '' && numericDiscountedPrice !== 0 && (!Number.isFinite(numericDiscountedPrice) || numericDiscountedPrice <= 0 || numericDiscountedPrice >= numericPrice)) {
+        const reversedPrices = discountedPrice !== ''
+            && Number.isFinite(numericDiscountedPrice)
+            && numericDiscountedPrice > numericPrice;
+        if (discountedPrice !== '' && numericDiscountedPrice !== 0 && (!Number.isFinite(numericDiscountedPrice) || numericDiscountedPrice <= 0 || numericDiscountedPrice === numericPrice)) {
             errors.push('Discounted price must be lower than original price');
         }
 
@@ -952,6 +967,7 @@ const ProductManager = () => {
             rowNumber: index + 2,
             valid: errors.length === 0,
             errors,
+            reversedPrices,
             category,
             product: {
                 id,
@@ -994,7 +1010,26 @@ const ProductManager = () => {
                 rows = utils.sheet_to_json(firstSheet, { defval: '', raw: false });
             }
             if (!rows.length) throw new Error('The selected file does not contain product rows.');
-            setImportRows(rows.map(mapImportedRow));
+            const mappedRows = rows.map(mapImportedRow);
+            const reversedRows = mappedRows.filter((row) => row.reversedPrices);
+            if (reversedRows.length) {
+                const examples = reversedRows.slice(0, 5).map((row) => row.product.id || `row ${row.rowNumber}`).join(', ');
+                const shouldSwap = window.confirm(
+                    `${reversedRows.length} product${reversedRows.length === 1 ? '' : 's'} (${examples}${reversedRows.length > 5 ? ', …' : ''}) have a discounted price higher than the original price. Swap those two columns automatically?`,
+                );
+                if (shouldSwap) {
+                    reversedRows.forEach((row) => {
+                        [row.product.price, row.product.discount] = [row.product.discount, row.product.price];
+                        row.reversedPrices = false;
+                    });
+                } else {
+                    reversedRows.forEach((row) => {
+                        row.valid = false;
+                        row.errors.push('Original and discounted prices appear reversed');
+                    });
+                }
+            }
+            setImportRows(mappedRows);
         } catch (error) {
             setImportError(error.message || 'The file could not be read.');
         }
