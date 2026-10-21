@@ -104,6 +104,8 @@ const orderText = (order, estimate) => [
   '',
   ...order.items.map((item) => `${item.quantity} × ${item.name} | Product code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)}`),
   '',
+  `Subtotal: ${formatCurrency(order.subtotal ?? order.total)}`,
+  `Shipping: ${Number(order.shippingTotal) > 0 ? formatCurrency(order.shippingTotal) : 'Free'}`,
   `Total: ${formatCurrency(order.total)}`,
   `Deliver to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,
   '',
@@ -117,7 +119,7 @@ const customerHtml = (order, estimate) => `<!doctype html><html><body style="mar
       <h1 style="font-family:Georgia,serif;font-weight:500">Your order is confirmed</h1>
       <p>Hi ${escapeHtml(order.customer.name)}, we received your payment and are preparing your order.</p>
       <div style="background:#f5f1ec;padding:16px;margin:24px 0"><strong>Order ${escapeHtml(order.id)}</strong><br>Estimated delivery date: <strong>${escapeHtml(formatDate(estimate.end))}</strong> (7 days from payment)</div>
-      <table style="width:100%;border-collapse:collapse">${orderRows(order)}<tr><td colspan="3" style="padding-top:16px;font-weight:700">Total</td><td style="padding-top:16px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></table>
+      <table style="width:100%;border-collapse:collapse">${orderRows(order)}<tr><td colspan="3" style="padding-top:16px">Subtotal</td><td style="padding-top:16px;text-align:right">${escapeHtml(formatCurrency(order.subtotal ?? order.total))}</td></tr><tr><td colspan="3" style="padding-top:8px">Shipping</td><td style="padding-top:8px;text-align:right">${Number(order.shippingTotal) > 0 ? escapeHtml(formatCurrency(order.shippingTotal)) : 'Free'}</td></tr><tr><td colspan="3" style="padding-top:10px;font-weight:700">Total</td><td style="padding-top:10px;text-align:right;font-weight:700">${escapeHtml(formatCurrency(order.total))}</td></tr></table>
       <h3 style="margin-top:28px">Delivery address</h3>
       <p>${escapeHtml([order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', '))}</p>
       <p style="margin-top:28px;color:#756d66">Need help with your order? Visit our <a href="${CONTACT_URL}" style="color:#8b5737">Contact Us page</a> or <a href="${WHATSAPP_URL}" style="color:#198754">message ANNS on WhatsApp</a>.</p>
@@ -140,6 +142,8 @@ const adminOrderText = (order, estimate) => [
   '',
   ...order.items.map((item) => `${item.quantity} × ${item.name} | Code: ${item.id} | ${[item.size, item.color].filter(Boolean).join(', ') || 'Standard'} | ${formatCurrency(item.lineTotal)} | ${SITE_URL}/product/${encodeURIComponent(item.id)}`),
   '',
+  `Subtotal: ${formatCurrency(order.subtotal ?? order.total)}`,
+  `Shipping: ${Number(order.shippingTotal) > 0 ? formatCurrency(order.shippingTotal) : 'Free'}`,
   `Total: ${formatCurrency(order.total)}`,
   `Ship to: ${[order.shippingAddress.addressLine1, order.shippingAddress.addressLine2, order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}`,
 ].join('\n');

@@ -23,6 +23,7 @@ const normalizeCartItem = (item) => {
         id: String(item.id),
         name: String(item.name),
         price: parsePrice(item.price),
+        shippingCharge: parsePrice(item.shippingCharge),
         image,
         quantity: normalizeQuantity(item.quantity),
         size: String(item.size || ''),
@@ -79,8 +80,9 @@ export const CartProvider = ({ children }) => {
             if (!product) return item;
             const nextPrice = parsePrice(product.price);
             const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
-            if (item.price === nextPrice && item.name === product.name && item.image === nextImage) return item;
-            return { ...item, name: product.name, price: nextPrice, image: nextImage };
+            const nextShippingCharge = parsePrice(product.shippingCharge);
+            if (item.price === nextPrice && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage) return item;
+            return { ...item, name: product.name, price: nextPrice, shippingCharge: nextShippingCharge, image: nextImage };
         }));
     }, [products]);
 
@@ -138,6 +140,11 @@ export const CartProvider = ({ children }) => {
         }, 0);
     };
 
+    const getShippingTotal = () => cartItems.reduce(
+        (total, item) => total + parsePrice(item.shippingCharge) * item.quantity,
+        0,
+    );
+
     const getCartCount = () => {
         return cartItems.reduce((total, item) => total + item.quantity, 0);
     };
@@ -150,6 +157,7 @@ export const CartProvider = ({ children }) => {
             updateQuantity,
             clearCart,
             getCartTotal,
+            getShippingTotal,
             getCartCount,
             lastAddedItem,
             isPopupVisible,

@@ -140,6 +140,7 @@ const normalizeProduct = (product) => {
     description: cleanText(product.description, 10000),
     price: cleanText(product.price, 50),
     discount: cleanText(product.discount, 50),
+    shippingCharge: Number(Math.max(0, numericPrice(product.shippingCharge)).toFixed(2)),
     image: cleanText(product.image, 4 * 1024 * 1024),
     otherImages: normalizeList(product.otherImages).slice(0, 4),
     color: cleanText(product.color, 100),
@@ -845,6 +846,10 @@ registerHttp('products', {
         if (discountText && discountedPrice !== 0 && (!Number.isFinite(discountedPrice) || discountedPrice < 0 || discountedPrice >= regularPrice)) {
           return json({ error: `Discounted price for ${rawProduct.id} must be above ₹0 and lower than its original price` }, 400);
         }
+        const shippingCharge = numericPrice(rawProduct.shippingCharge);
+        if (!Number.isFinite(shippingCharge) || shippingCharge < 0) {
+          return json({ error: `Shipping charge for ${rawProduct.id} must be ₹0 or more` }, 400);
+        }
       }
 
       const operationTime = nowIso();
@@ -1297,10 +1302,14 @@ registerHttp('razorpay-create-order', {
           quantity,
           price,
           lineTotal: Number((price * quantity).toFixed(2)),
+          shippingCharge: Number(Math.max(0, numericPrice(product.shippingCharge)).toFixed(2)),
+          lineShipping: Number((Math.max(0, numericPrice(product.shippingCharge)) * quantity).toFixed(2)),
         };
       });
 
-      const total = Number(items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
+      const subtotal = Number(items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
+      const shippingTotal = Number(items.reduce((sum, item) => sum + item.lineShipping, 0).toFixed(2));
+      const total = Number((subtotal + shippingTotal).toFixed(2));
       const amount = Math.round(total * 100);
       if (!Number.isSafeInteger(amount) || amount < 100) {
         return json({ error: 'Order total must be at least ₹1.00' }, 400);
@@ -1337,6 +1346,8 @@ registerHttp('razorpay-create-order', {
           country: 'India',
         },
         items,
+        subtotal,
+        shippingTotal,
         total,
         amountPaise: amount,
         currency: 'INR',

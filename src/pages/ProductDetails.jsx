@@ -292,7 +292,7 @@ const ProductDetails = () => {
                     <div className="shipping-info">
                         <div className="shipping-item">
                             <Truck size={20} />
-                            <span>Pan India Shipping</span>
+                            <span>{Number(product.shippingCharge) > 0 ? `Shipping ₹${Number(product.shippingCharge).toLocaleString('en-IN')} per item` : 'Free Pan India Shipping'}</span>
                         </div>
                         <div className="shipping-item">
                             <Clock size={20} />

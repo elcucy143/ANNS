@@ -10,7 +10,7 @@ import images from '../assets/images';
 import { productImageVariant } from '../utils/imageUrl';
 
 const Cart = () => {
-    const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, getCartTotal, getShippingTotal } = useCart();
     const { products } = useProductCatalog();
     const { user, isLoading } = useAuth();
 
@@ -76,12 +76,12 @@ const Cart = () => {
                     </div>
                     <div className="summary-row">
                         <span>Shipping</span>
-                        <span>Free</span>
+                        <span>{getShippingTotal() > 0 ? `₹ ${getShippingTotal().toFixed(2)}` : 'Free'}</span>
                     </div>
                     <div className="summary-divider"></div>
                     <div className="summary-row total">
                         <span>Total</span>
-                        <span>₹ {getCartTotal().toFixed(2)}</span>
+                        <span>₹ {(getCartTotal() + getShippingTotal()).toFixed(2)}</span>
                     </div>
                     <Link
                         to={user ? '/checkout' : '/account'}

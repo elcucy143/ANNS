@@ -65,9 +65,13 @@ const CategoryPage = ({ title }) => {
         return catalogProducts.map((product) => {
             const salePrice = salePrices.get(String(product.id));
             const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price || '').replace(/[^0-9.]/g, ''));
-            if (!Number.isFinite(salePrice) || salePrice <= 0 || salePrice >= originalPrice) return null;
-            const effectivePrice = Math.min(Number(product.price) || originalPrice, salePrice);
-            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: true, discounted: true };
+            const catalogDiscounted = product.discounted === true && Number(product.price) < originalPrice;
+            const configuredSale = Number.isFinite(salePrice) && salePrice > 0 && salePrice < originalPrice;
+            if (!catalogDiscounted && !configuredSale) return null;
+            const effectivePrice = configuredSale
+                ? Math.min(Number(product.price) || originalPrice, salePrice)
+                : Number(product.price);
+            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: configuredSale, discounted: true };
         }).filter(Boolean);
     })();
 

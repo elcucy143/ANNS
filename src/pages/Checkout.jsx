@@ -25,7 +25,7 @@ const loadRazorpay = () => new Promise((resolve, reject) => {
 
 const Checkout = () => {
   const { user } = useAuth();
-  const { cartItems, clearCart, getCartTotal } = useCart();
+  const { cartItems, clearCart, getCartTotal, getShippingTotal } = useCart();
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
@@ -170,7 +170,7 @@ const Checkout = () => {
           {error && <div className="checkout-error" role="alert">{error}</div>}
           <button className="pay-now-button" type="submit" disabled={isPaying}>
             {isPaying ? <LoaderCircle className="checkout-spinner" size={19} /> : <LockKeyhole size={18} />}
-            {isPaying ? 'Opening secure payment…' : `Pay ₹${getCartTotal().toLocaleString('en-IN')}`}
+            {isPaying ? 'Opening secure payment…' : `Pay ₹${(getCartTotal() + getShippingTotal()).toLocaleString('en-IN')}`}
           </button>
           <p className="checkout-payment-note"><ShieldCheck size={15} /> Payment details are securely handled by Razorpay and never stored by ANNS.</p>
           <p className="checkout-payment-note"><Truck size={15} /> Estimated delivery is seven days after successful payment. <Link to="/shipping-policy">Shipping</Link> · <Link to="/return-policy">Cancellation and refunds</Link> · <Link to="/contact">Contact/WhatsApp support</Link></p>
@@ -186,7 +186,7 @@ const Checkout = () => {
               </div>
             ))}
           </div>
-          <div className="checkout-totals"><span>Shipping<strong>Free</strong></span><span className="grand-total">Total<strong>₹{getCartTotal().toLocaleString('en-IN')}</strong></span></div>
+          <div className="checkout-totals"><span>Shipping<strong>{getShippingTotal() > 0 ? `₹${getShippingTotal().toLocaleString('en-IN')}` : 'Free'}</strong></span><span className="grand-total">Total<strong>₹{(getCartTotal() + getShippingTotal()).toLocaleString('en-IN')}</strong></span></div>
           <div className="checkout-trust"><ShieldCheck size={19} /><span><strong>Secure online payment</strong><small>UPI, cards, netbanking and supported wallets</small></span></div>
         </aside>
       </div>

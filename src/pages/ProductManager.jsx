@@ -112,6 +112,7 @@ const getInitialFormData = () => ({
     available: 'In Stock',
     price: '',
     discount: '',
+    shippingCharge: 0,
     image: '',
     otherImages: [],
     color: '',
@@ -865,6 +866,7 @@ const ProductManager = () => {
             id: productId,
             price: String(originalPrice),
             discount: formData.discount === '' ? '' : String(discountedPrice),
+            shippingCharge: Math.max(0, toNumber(formData.shippingCharge)),
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
@@ -956,11 +958,16 @@ const ProductManager = () => {
         const numericPrice = toNumber(price, NaN);
         if (price === '' || !Number.isFinite(numericPrice) || numericPrice <= 0) errors.push('Valid original price above ₹0 is required');
         const numericDiscountedPrice = toNumber(discountedPrice, NaN);
+        const shippingCharge = valueFrom(row, 'shippingcharge', 'deliverycharge', 'shippingfee', 'deliveryfee');
+        const numericShippingCharge = toNumber(shippingCharge, NaN);
         const reversedPrices = discountedPrice !== ''
             && Number.isFinite(numericDiscountedPrice)
             && numericDiscountedPrice > numericPrice;
         if (discountedPrice !== '' && numericDiscountedPrice !== 0 && (!Number.isFinite(numericDiscountedPrice) || numericDiscountedPrice <= 0 || numericDiscountedPrice === numericPrice)) {
             errors.push('Discounted price must be lower than original price');
+        }
+        if (shippingCharge !== '' && (!Number.isFinite(numericShippingCharge) || numericShippingCharge < 0)) {
+            errors.push('Shipping charge must be ₹0 or more');
         }
 
         return {
@@ -975,6 +982,7 @@ const ProductManager = () => {
                 description: String(valueFrom(row, 'description')).trim(),
                 price: String(price),
                 discount: discountedPrice === '' || numericDiscountedPrice === 0 ? '' : String(discountedPrice).trim(),
+                shippingCharge: shippingCharge === '' ? 0 : numericShippingCharge,
                 stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
                 sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
                 image: String(valueFrom(row, 'image', 'imageurl')).trim(),
@@ -1175,6 +1183,7 @@ const ProductManager = () => {
             description: 'Product description',
             originalPrice: 499,
             discountedPrice: 449,
+            shippingCharge: 60,
             stock: 25,
             sold: 5,
             image: '/src/assets/img/example.jpg',
@@ -1864,7 +1873,7 @@ const ProductManager = () => {
                                 </div>
                                 <div className="admin-table-wrap import-preview-table">
                                     <table className="admin-table">
-                                        <thead><tr><th>Row</th><th>Status</th><th>Product</th><th>Category</th><th>Original price</th><th>Discounted price</th><th>Stock</th><th>Sold</th></tr></thead>
+                                        <thead><tr><th>Row</th><th>Status</th><th>Product</th><th>Category</th><th>Original price</th><th>Discounted price</th><th>Shipping</th><th>Stock</th><th>Sold</th></tr></thead>
                                         <tbody>{importRows.slice(0, 50).map((row) => (
                                             <tr key={row.rowNumber}>
                                                 <td>{row.rowNumber}</td>
@@ -1873,6 +1882,7 @@ const ProductManager = () => {
                                                 <td>{row.category || '—'}</td>
                                                 <td>{row.product.price === '' ? '—' : formatCurrency(row.product.price)}</td>
                                                 <td>{row.product.discount === '' ? '—' : formatCurrency(row.product.discount)}</td>
+                                                <td>{row.product.shippingCharge > 0 ? formatCurrency(row.product.shippingCharge) : 'Free'}</td>
                                                 <td>{row.product.stock}</td><td>{row.product.sold}</td>
                                             </tr>
                                         ))}</tbody>
@@ -1899,6 +1909,7 @@ const ProductManager = () => {
                                     <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
                                     <label>Original price (₹)<input name="price" type="number" min="1" value={formData.price} onChange={handleInputChange} required /></label>
                                     <label>Discounted price (₹)<input name="discount" type="number" min="1" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /><small>Leave blank if this product is not discounted.</small></label>
+                                    <label>Shipping charge per item (₹)<input name="shippingCharge" type="number" min="0" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} /><small>Enter 0 for free shipping.</small></label>
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">
