@@ -312,8 +312,8 @@ const CategoryPage = ({ title }) => {
                     )}
                     <div className="products-list">
                         {loading ? <div className="empty-state"><p>Loading collection…</p></div> : error ? <div className="empty-state"><p>{error}</p></div> : products.length > 0 ? (
-                            visibleProducts.map(product => (
-                                <ProductCard key={product.id} product={product} />
+                            visibleProducts.map((product, index) => (
+                                <ProductCard key={product.id} product={product} priority={index < 4} />
                             ))
                         ) : (
                             <div className="empty-state">

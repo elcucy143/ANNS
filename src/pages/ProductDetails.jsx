@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Star, Truck, RefreshCw, Clock, Minus, Plus, MessageCircle, Heart } from 'lucide-react';
+import { Star, Truck, RefreshCw, Clock, Minus, Plus, MessageCircle, Heart, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import './ProductDetails.css';
 
@@ -24,6 +24,7 @@ const ProductDetails = () => {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedColor, setSelectedColor] = useState('Red');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [zoomOpen, setZoomOpen] = useState(false);
     const [customization, setCustomization] = useState({ nameOrText: '', instructions: '' });
     const { products: catalogProducts, loading } = useProductCatalog();
     const { reviews } = useReviews();
@@ -43,10 +44,23 @@ const ProductDetails = () => {
     React.useEffect(() => {
         setQuantity(1);
         setSelectedImage(null);
+        setZoomOpen(false);
         setCustomization({ nameOrText: '', instructions: '' });
     }, [id]);
 
     React.useEffect(() => { if (productData?.id) recordView(productData.id); }, [productData?.id, recordView]);
+
+    React.useEffect(() => {
+        if (!zoomOpen) return undefined;
+        const closeOnEscape = (event) => { if (event.key === 'Escape') setZoomOpen(false); };
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [zoomOpen]);
 
     React.useEffect(() => {
         setSelectedColor(productColor);
@@ -128,6 +142,11 @@ const ProductDetails = () => {
                 <div className="product-gallery">
                     <div
                         className="main-image"
+                        role="button"
+                        tabIndex="0"
+                        aria-label={`Open larger image of ${product.name}`}
+                        onClick={() => setZoomOpen(true)}
+                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setZoomOpen(true); }}
                         onMouseEnter={(e) => {
                             const { width, height } = e.currentTarget.getBoundingClientRect();
                             e.currentTarget.style.setProperty('--img-width', `${width}px`);
@@ -158,12 +177,12 @@ const ProductDetails = () => {
                             e.currentTarget.style.setProperty('--bg-y', `${bgY}%`);
                         }}
                     >
-                        <img src={getImageVariant(selectedImage || product.images[0], 'listing')} alt={product.name} decoding="async" />
+                        <img src={getImageVariant(selectedImage || product.images[0], 'listing')} alt={product.name} decoding="async" fetchPriority="high" />
                         <div className="magnifier-lens"></div>
                         <div
                             className="zoom-window"
                             style={{
-                                backgroundImage: `url(${getImageSrc(selectedImage || product.images[0])})`
+                                backgroundImage: `url("${getImageVariant(selectedImage || product.images[0], 'listing')}")`
                             }}
                         ></div>
                     </div>
@@ -303,6 +322,17 @@ const ProductDetails = () => {
                             <span>Easy Returns</span>
                         </div>
                     </div>
+            {zoomOpen && (
+                <div className="image-lightbox" role="dialog" aria-modal="true" aria-label={`${product.name} enlarged image`} onClick={() => setZoomOpen(false)}>
+                    <button type="button" className="image-lightbox-close" onClick={() => setZoomOpen(false)} aria-label="Close enlarged image"><X size={24} /></button>
+                    <img
+                        src={getImageVariant(selectedImage || product.images[0], 'listing')}
+                        alt={`${product.name} enlarged`}
+                        decoding="async"
+                        onClick={(event) => event.stopPropagation()}
+                    />
+                </div>
+            )}
                 </div>
             </div>
 

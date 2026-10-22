@@ -5,7 +5,7 @@ import './ProductCard.css';
 import images from '../assets/images';
 import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, priority = false }) => {
     const { addToCart } = useCart();
     const navigate = useNavigate();
 
@@ -28,7 +28,8 @@ const ProductCard = ({ product }) => {
                         srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}
                         sizes="(max-width: 540px) 46vw, (max-width: 900px) 31vw, 280px"
                         alt={product.name}
-                        loading="lazy"
+                        loading={priority ? 'eager' : 'lazy'}
+                        fetchPriority={priority ? 'high' : 'auto'}
                         decoding="async"
                     />
                     <button className="add-to-cart-btn" onClick={handleAddToCart}>Add to Cart</button>

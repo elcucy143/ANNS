@@ -198,14 +198,15 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
     const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
     const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
     const optimized = sharp(data, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate();
-    const [thumbnail, listing] = await Promise.all([
+    const [thumbnail, card, listing] = await Promise.all([
       optimized.clone().resize({ width: 320, height: 420, fit: 'inside', withoutEnlargement: true }).webp({ quality: 78 }).toBuffer(),
+      optimized.clone().resize({ width: 600, height: 800, fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toBuffer(),
       optimized.clone().resize({ width: 900, height: 1200, fit: 'inside', withoutEnlargement: true }).webp({ quality: 84 }).toBuffer(),
     ]);
     imageOperations.push({
       updateOne: {
         filter: { productId, index },
-        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, variants: { thumbnail, listing }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, variants: { thumbnail, card, listing }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         upsert: true,
       },
     });

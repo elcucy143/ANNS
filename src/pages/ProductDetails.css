@@ -97,6 +97,45 @@
     border: 2px solid var(--color-primary);
 }
 
+.image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+    background: rgba(20, 16, 14, .92);
+    cursor: zoom-out;
+}
+
+.image-lightbox img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(94vw, 1100px);
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #f4f0ed;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+}
+
+.image-lightbox-close {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 1;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(0, 0, 0, .45);
+    cursor: pointer;
+}
+
 /* Info Section */
 .product-info-section {
     display: flex;
