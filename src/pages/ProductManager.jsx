@@ -59,7 +59,7 @@ import {
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
-import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSubcategoryList, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
+import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSubcategoryList, subcategoryMatchKey, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
 import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
@@ -165,6 +165,23 @@ const normalizeCategory = (value = '') => {
     if (match) return match;
     if (normalized === 'womens wear') return 'Womens Wear';
     return String(value).trim();
+};
+
+const categoryDisplayName = (category) => category === 'Womens Wear' ? "Women's Wear" : category;
+
+const allowedSubcategoriesFor = (category) => (
+    categoriesData.categories.find((item) => item.name === categoryDisplayName(category))?.subCategories || []
+);
+
+const normalizeImportedSubcategories = (value, category) => {
+    const allowed = allowedSubcategoriesFor(category);
+    const unknown = [];
+    const normalized = normalizeSubcategoryList(value).map((subcategory) => {
+        const match = allowed.find((option) => subcategoryMatchKey(option) === subcategoryMatchKey(subcategory));
+        if (!match) unknown.push(subcategory);
+        return match || subcategory;
+    });
+    return { normalized: [...new Set(normalized)], unknown: [...new Set(unknown)] };
 };
 
 const normalizeHeaders = (row) => Object.fromEntries(
@@ -804,8 +821,7 @@ const ProductManager = () => {
     };
 
     const getSubcategories = () => {
-        const displayName = selectedCategory === 'Womens Wear' ? "Women's Wear" : selectedCategory;
-        return categoriesData.categories.find((category) => category.name === displayName)?.subCategories || [];
+        return allowedSubcategoriesFor(selectedCategory);
     };
 
     const editorSuggestions = useMemo(() => {
@@ -862,6 +878,15 @@ const ProductManager = () => {
             return;
         }
         const similarProductIds = [...new Set(parseList(similarProductIdsInput))].filter((id) => id !== productId);
+        const selectedSubcategories = normalizeImportedSubcategories(formData.subcategory, selectedCategory);
+        if (!selectedSubcategories.normalized.length) {
+            setNotification(`Choose at least one ${categoryDisplayName(selectedCategory)} subcategory so customers can find this product.`);
+            return;
+        }
+        if (selectedSubcategories.unknown.length) {
+            setNotification(`Unknown subcategory: ${selectedSubcategories.unknown.join(', ')}. Choose a valid ${categoryDisplayName(selectedCategory)} subcategory.`);
+            return;
+        }
         const normalizedProduct = {
             ...getInitialFormData(),
             ...formData,
@@ -872,6 +897,7 @@ const ProductManager = () => {
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
+            subcategory: selectedSubcategories.normalized,
             similarProducts: similarProductIds,
             shipping: parseList(formData.shipping),
             campaign: parseList(formData.campaign),
@@ -952,11 +978,16 @@ const ProductManager = () => {
         const price = valueFrom(row, 'originalprice', 'regularprice', 'mrp', 'listprice', 'price', 'sellingprice');
         const discountedPrice = valueFrom(row, 'discountedprice', 'discountprice', 'saleprice', 'offerprice', 'discount');
         const id = String(valueFrom(row, 'id', 'sku', 'productid')).trim();
+        const importedSubcategories = normalizeImportedSubcategories(valueFrom(row, 'subcategory', 'subcategories'), category);
         const errors = [];
         if (!Object.keys(products).includes(category)) errors.push('Unknown category');
         if (!id) errors.push('Product ID is required');
         else if (!/^[A-Za-z0-9][A-Za-z0-9._-]{1,99}$/.test(id)) errors.push('Product ID contains unsupported characters');
         if (!name) errors.push('Name is required');
+        if (!importedSubcategories.normalized.length) errors.push('Subcategory is required');
+        if (importedSubcategories.unknown.length) {
+            errors.push(`Unknown ${categoryDisplayName(category)} subcategory: ${importedSubcategories.unknown.join(', ')}`);
+        }
         const numericPrice = toNumber(price, NaN);
         if (price === '' || !Number.isFinite(numericPrice) || numericPrice <= 0) errors.push('Valid original price above ₹0 is required');
         const numericDiscountedPrice = toNumber(discountedPrice, NaN);
@@ -1003,7 +1034,7 @@ const ProductManager = () => {
                 otherImages: parseList(valueFrom(row, 'otherimages', 'otherimageurls')),
                 color: String(valueFrom(row, 'color')).trim(),
                 sizes: parseList(valueFrom(row, 'sizes', 'size')),
-                subcategory: normalizeSubcategoryList(valueFrom(row, 'subcategory', 'subcategories')),
+                subcategory: importedSubcategories.normalized,
                 featured: String(valueFrom(row, 'featured')).trim().toLowerCase() === 'yes' ? 'yes' : 'no',
                 similarProducts: parseList(valueFrom(row, 'similarproducts', 'similarproductids')),
                 shipping: parseList(valueFrom(row, 'shipping', 'shippinginfo')),

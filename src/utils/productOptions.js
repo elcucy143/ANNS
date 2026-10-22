@@ -73,6 +73,15 @@ export const normalizeSubcategoryList = (value) => [...new Set(normalizeList(val
   SUBCATEGORY_ALIASES.get(String(subcategory).trim().toLowerCase()) || String(subcategory).trim()
 )).filter(Boolean))];
 
+// Use one comparison key everywhere products are imported and filtered. This
+// prevents harmless differences such as "Black Beads Sets", "black-beads sets"
+// or extra spaces from hiding a product from its storefront subcategory.
+export const subcategoryMatchKey = (value) => String(value || '')
+  .trim()
+  .toLowerCase()
+  .replace(/&/g, 'and')
+  .replace(/[^a-z0-9]+/g, '');
+
 export const normalizeCatalogProduct = (product) => ({
   ...product,
   sizes: normalizeSizeList(product?.sizes),
