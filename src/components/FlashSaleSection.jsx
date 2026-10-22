@@ -10,9 +10,11 @@ import './FlashSaleSection.css';
 
 const money = (value) => Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 const HOMEPAGE_SALE_PRODUCT_LIMIT = 4;
+const HOMEPAGE_SALE_ROTATION_MS = 8000;
 
 const FlashSaleSection = () => {
     const [sale, setSale] = useState(null);
+    const [previewOffset, setPreviewOffset] = useState(0);
     const { products } = useProductCatalog();
     const { addToCart } = useCart();
     const navigate = useNavigate();
@@ -46,12 +48,23 @@ const FlashSaleSection = () => {
         }).filter(Boolean);
     }, [products, sale]);
 
+    useEffect(() => {
+        if (saleProducts.length <= HOMEPAGE_SALE_PRODUCT_LIMIT) return undefined;
+        const interval = window.setInterval(() => {
+            setPreviewOffset((current) => (current + HOMEPAGE_SALE_PRODUCT_LIMIT) % saleProducts.length);
+        }, HOMEPAGE_SALE_ROTATION_MS);
+        return () => window.clearInterval(interval);
+    }, [saleProducts]);
+
     if (!sale || !saleProducts.length) return null;
 
     const endLabel = sale.endsAt
         ? new Date(sale.endsAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
         : '';
-    const previewProducts = saleProducts.slice(0, HOMEPAGE_SALE_PRODUCT_LIMIT);
+    const previewProducts = Array.from(
+        { length: Math.min(HOMEPAGE_SALE_PRODUCT_LIMIT, saleProducts.length) },
+        (_, index) => saleProducts[(previewOffset + index) % saleProducts.length],
+    );
 
     return (
         <section className="flash-sale-section" aria-labelledby="flash-sale-title">
@@ -64,7 +77,7 @@ const FlashSaleSection = () => {
                     </div>
                     {endLabel && <span className="flash-sale-ends"><Clock3 size={17} /> Ends {endLabel}</span>}
                 </header>
-                <div className="flash-sale-grid">
+                <div className="flash-sale-grid" aria-live="polite">
                     {previewProducts.map((product) => {
                         const filename = product.image ? product.image.split('/').pop() : '';
                         return (
