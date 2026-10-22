@@ -976,6 +976,56 @@ registerHttp('analytics', {
   },
 });
 
+registerHttp('admin-storage-capacity', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'admin/storage-capacity',
+  handler: async (request, context) => {
+    const unauthorized = requireAdmin(request);
+    if (unauthorized) return unauthorized;
+    try {
+      const db = await getDb();
+      const warningThresholdMB = Math.max(100, Number(process.env.MONGODB_STORAGE_WARNING_MB) || 400);
+      const [databaseStats, productCount, imageSummary] = await Promise.all([
+        db.command({ dbStats: 1, scale: 1024 * 1024 }),
+        db.collection('products').countDocuments(),
+        db.collection('productImages').aggregate([
+          { $group: { _id: null, count: { $sum: 1 }, bytes: { $sum: { $bsonSize: '$$ROOT' } } } },
+        ]).toArray(),
+      ]);
+      const imageCount = Number(imageSummary?.[0]?.count || 0);
+      const imageBytes = Number(imageSummary?.[0]?.bytes || 0);
+      const databaseDataMB = Number(databaseStats?.dataSize || 0);
+      const remainingWarningMB = Math.max(0, warningThresholdMB - databaseDataMB);
+      const averageImageBytes = imageCount ? imageBytes / imageCount : 210 * 1024;
+      const averageImagesPerProduct = productCount ? imageCount / productCount : 1;
+      const estimatedRemainingImages = Math.max(0, Math.floor((remainingWarningMB * 1024 * 1024) / averageImageBytes));
+      const estimatedRemainingProducts = Math.max(0, Math.floor(estimatedRemainingImages / Math.max(1, averageImagesPerProduct)));
+      return json({
+        productCount,
+        imageCount,
+        databaseDataMB: Math.round(databaseDataMB * 10) / 10,
+        imageDataMB: Math.round((imageBytes / 1024 / 1024) * 10) / 10,
+        warningThresholdMB,
+        usagePercent: Math.min(100, Math.round((databaseDataMB / warningThresholdMB) * 100)),
+        averageImagesPerProduct: Math.round(averageImagesPerProduct * 10) / 10,
+        estimatedRemainingImages,
+        estimatedRemainingProducts,
+        limits: {
+          maximumSourceImageMB: 75,
+          maximumImagesPerProduct: 5,
+          recommendedProductsPerBatch: 20,
+          maximumProductsPerRequest: 100,
+          zoomDimensions: '900 × 1200 px',
+          acceptedFormats: ['JPG', 'JPEG', 'PNG', 'WebP', 'AVIF', 'HEIC/HEIF', 'GIF', 'BMP'],
+        },
+      });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('product-image', {
   methods: ['GET'],
   authLevel: 'anonymous',

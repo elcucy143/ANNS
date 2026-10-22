@@ -48,6 +48,7 @@ import {
     getAdminFlashSale,
     getAdminAnalytics,
     getAdminReviews,
+    getAdminStorageCapacity,
     getCustomersFromDatabase,
     getOrdersFromDatabase,
     getProductsFromDatabase,
@@ -288,6 +289,7 @@ const ProductManager = () => {
     const [analytics, setAnalytics] = useState(null);
     const [analyticsDays, setAnalyticsDays] = useState(30);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
+    const [storageCapacity, setStorageCapacity] = useState(null);
     const fileInputRef = useRef(null);
     const bulkImageInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
@@ -513,12 +515,21 @@ const ProductManager = () => {
         }
     };
 
+    const refreshStorageCapacity = async () => {
+        try {
+            setStorageCapacity(await getAdminStorageCapacity());
+        } catch {
+            // Product management stays available if capacity telemetry is temporarily unavailable.
+        }
+    };
+
     useEffect(() => {
         if (!isAuthenticated || !hasAdminKey()) return;
         void refreshProductsFromDatabase();
         void refreshCustomerData();
         void refreshReviews();
         void refreshFlashSale();
+        void refreshStorageCapacity();
         const interval = window.setInterval(() => { void refreshProductsFromDatabase(); }, 30000);
         const onVisibilityChange = () => {
             if (document.visibilityState === 'visible') void refreshProductsFromDatabase();
@@ -586,6 +597,7 @@ const ProductManager = () => {
                 }
                 setDatabaseStatus('connected');
                 setNotification(`${message} ${saved} product${saved === 1 ? '' : 's'} verified in MongoDB Atlas.${capacityWarning ? ` Storage warning: ${capacityWarning}` : ''}`);
+                void refreshStorageCapacity();
             } catch (error) {
                 setDatabaseStatus('local');
                 setNotification(error.message || 'The product could not be saved to MongoDB Atlas.');
@@ -604,7 +616,7 @@ const ProductManager = () => {
             setIsAuthenticated(true);
             setLoginError('');
             setDatabaseStatus('connected');
-            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews(), refreshFlashSale()]);
+            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews(), refreshFlashSale(), refreshStorageCapacity()]);
         } catch {
             setLoginError('Incorrect admin password.');
         }
@@ -1420,7 +1432,10 @@ const ProductManager = () => {
         if (view === 'reviews') refreshReviews();
         if (view === 'flash-sale') refreshFlashSale();
         if (view === 'analytics') refreshAnalytics();
-        if ((view === 'overview' || view === 'inventory') && hasAdminKey()) refreshProductsFromDatabase();
+        if ((view === 'overview' || view === 'inventory') && hasAdminKey()) {
+            refreshProductsFromDatabase();
+            if (view === 'overview') refreshStorageCapacity();
+        }
     };
 
     const statCards = [
@@ -1514,6 +1529,29 @@ const ProductManager = () => {
                                     })}
                                 </div>
                             </article>
+                        </section>
+
+                        <section className="admin-panel capacity-panel">
+                            <div className="admin-panel-heading">
+                                <div><p className="admin-kicker">UPLOAD CAPACITY</p><h2>Product and image limits</h2></div>
+                                <button type="button" onClick={refreshStorageCapacity}><RefreshCw size={16} /> Refresh</button>
+                            </div>
+                            {storageCapacity ? <>
+                                <div className="capacity-summary">
+                                    <article><span>Products live</span><strong>{storageCapacity.productCount.toLocaleString('en-IN')}</strong><small>{storageCapacity.imageCount.toLocaleString('en-IN')} stored images</small></article>
+                                    <article><span>Database content</span><strong>{storageCapacity.databaseDataMB} MB</strong><small>{storageCapacity.imageDataMB} MB is product imagery</small></article>
+                                    <article><span>Early warning at</span><strong>{storageCapacity.warningThresholdMB} MB</strong><small>{storageCapacity.usagePercent}% of warning level used</small></article>
+                                    <article><span>Estimated remaining</span><strong>≈ {storageCapacity.estimatedRemainingProducts.toLocaleString('en-IN')}</strong><small>products at the current {storageCapacity.averageImagesPerProduct} images/product average</small></article>
+                                </div>
+                                <div className="capacity-meter" aria-label={`${storageCapacity.usagePercent}% of storage warning level used`}><i style={{ width: `${storageCapacity.usagePercent}%` }} /></div>
+                                <div className="capacity-limits">
+                                    <div><strong>{storageCapacity.limits.maximumSourceImageMB} MB</strong><span>maximum source image</span></div>
+                                    <div><strong>{storageCapacity.limits.maximumImagesPerProduct}</strong><span>maximum images per product</span></div>
+                                    <div><strong>{storageCapacity.limits.recommendedProductsPerBatch}</strong><span>recommended products per bulk batch</span></div>
+                                    <div><strong>{storageCapacity.limits.zoomDimensions}</strong><span>optimized zoom size</span></div>
+                                </div>
+                                <p className="capacity-guidance"><AlertTriangle size={17} /><span><strong>Admin guidance:</strong> Prefer one or two clear images per product. Upload 20 products at a time. Accepted formats: {storageCapacity.limits.acceptedFormats.join(', ')}. The remaining-product figure is an estimate based on current image sizes and updates automatically.</span></p>
+                            </> : <div className="admin-empty-state"><RefreshCw size={26} /><p>Loading current database capacity…</p></div>}
                         </section>
 
                         <section className="admin-panel">
