@@ -11,17 +11,19 @@ import { normalizeSubcategoryList, subcategoryMatchKey } from '../utils/productO
 
 const EMPTY_PRODUCTS = [];
 const PRODUCTS_PER_PAGE = 12;
-const CatalogPagination = ({ page, pageCount, total, onChange, label }) => {
+const CatalogPagination = ({ page, pageCount, total, onChange, label, placement = 'bottom' }) => {
     const start = Math.max(1, Math.min(page - 2, pageCount - 4));
     const end = Math.min(pageCount, start + 4);
     const pages = Array.from({ length: end - start + 1 }, (_, index) => start + index);
-    return <nav className="catalog-pagination" aria-label={`${label} product pages`}>
+    const firstProduct = ((page - 1) * PRODUCTS_PER_PAGE) + 1;
+    const lastProduct = Math.min(page * PRODUCTS_PER_PAGE, total);
+    return <nav className={`catalog-pagination ${placement}`} aria-label={`${label} product pages ${placement}`}>
         <button type="button" onClick={() => onChange(page - 1)} disabled={page === 1} aria-label="Previous page"><ChevronLeft size={19} /></button>
         {start > 1 && <><button type="button" onClick={() => onChange(1)}>1</button>{start > 2 && <span>…</span>}</>}
         {pages.map((number) => <button type="button" key={number} className={number === page ? 'active' : ''} aria-current={number === page ? 'page' : undefined} onClick={() => onChange(number)}>{number}</button>)}
         {end < pageCount && <>{end < pageCount - 1 && <span>…</span>}<button type="button" onClick={() => onChange(pageCount)}>{pageCount}</button></>}
         <button type="button" onClick={() => onChange(page + 1)} disabled={page === pageCount} aria-label="Next page"><ChevronRight size={19} /></button>
-        <span className="catalog-pagination-count">{total} products</span>
+        <span className="catalog-pagination-count">Showing {firstProduct}–{lastProduct} of {total} products · Page {page} of {pageCount}</span>
     </nav>;
 };
 const getCategoryKey = (title) => {
@@ -305,6 +307,9 @@ const CategoryPage = ({ title }) => {
                 </aside>
 
                 <div className="products-container">
+                    {!loading && !error && products.length > PRODUCTS_PER_PAGE && (
+                        <CatalogPagination page={activePage} pageCount={totalPages} total={products.length} onChange={changePage} label={displayTitle} placement="top" />
+                    )}
                     <div className="products-list">
                         {loading ? <div className="empty-state"><p>Loading collection…</p></div> : error ? <div className="empty-state"><p>{error}</p></div> : products.length > 0 ? (
                             visibleProducts.map(product => (
