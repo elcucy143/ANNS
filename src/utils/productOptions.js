@@ -39,31 +39,37 @@ export const normalizeSizeList = (value) => {
 };
 
 const SUBCATEGORY_ALIASES = new Map([
-  ['kurti', 'Kurtis'],
-  ['kurtis', 'Kurtis'],
-  ['kurthi', 'Kurtis'],
-  ['kurthis', 'Kurtis'],
-  ['three piece set', 'Kurtis'],
+  ['kurti', 'One piece kurtis'],
+  ['kurtis', 'One piece kurtis'],
+  ['kurthi', 'One piece kurtis'],
+  ['kurthis', 'One piece kurtis'],
+  ['one piece kurti', 'One piece kurtis'],
+  ['one piece kurtis', 'One piece kurtis'],
+  ['one piece kurthi', 'One piece kurtis'],
+  ['one piece kurthis', 'One piece kurtis'],
+  ['three piece set', 'Three piece sets'],
   ['two piece set', 'Two piece sets'],
   ['two piece sets', 'Two piece sets'],
   ['2 piece set', 'Two piece sets'],
   ['2 piece sets', 'Two piece sets'],
   ['two piece kurti', 'Two piece sets'],
   ['two piece kurtis', 'Two piece sets'],
-  ['three piece sets', 'Kurtis'],
-  ['three piece kurti', 'Kurtis'],
-  ['three piece kurtis', 'Kurtis'],
-  ['three piece kurthi', 'Kurtis'],
-  ['three piece kurthis', 'Kurtis'],
-  ['3 piece kurti', 'Kurtis'],
-  ['3 piece kurtis', 'Kurtis'],
-  ['3 piece kurthi', 'Kurtis'],
-  ['3 piece kurthis', 'Kurtis'],
+  ['three piece sets', 'Three piece sets'],
+  ['three piece kurti', 'Three piece sets'],
+  ['three piece kurtis', 'Three piece sets'],
+  ['three piece kurthi', 'Three piece sets'],
+  ['three piece kurthis', 'Three piece sets'],
+  ['3 piece set', 'Three piece sets'],
+  ['3 piece sets', 'Three piece sets'],
+  ['3 piece kurti', 'Three piece sets'],
+  ['3 piece kurtis', 'Three piece sets'],
+  ['3 piece kurthi', 'Three piece sets'],
+  ['3 piece kurthis', 'Three piece sets'],
 ]);
 
 export const displaySubcategoryLabel = (subcategory) => {
   const normalized = String(subcategory || '').trim().toLowerCase();
-  if (normalized === 'kurtis') return '3 Piece Kurtis';
+  if (normalized === 'three piece sets' || normalized === 'three piece set') return '3 Piece Kurtis';
   if (normalized === 'one piece kurtis' || normalized === 'one piece kurti') return 'Kurtis';
   if (normalized === 'two piece sets' || normalized === 'two piece set') return 'Two Piece Sets';
   return String(subcategory || '').trim();
