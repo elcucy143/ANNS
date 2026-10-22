@@ -7,6 +7,7 @@ import './CategoryPage.css';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
+import { normalizeSubcategoryList } from '../utils/productOptions';
 
 const EMPTY_PRODUCTS = [];
 const PRODUCTS_PER_PAGE = 12;
@@ -105,11 +106,10 @@ const CategoryPage = ({ title }) => {
 
         // 1. Subcategory filter (from URL)
         if (subcategoryFilter) {
+            const normalizedFilter = normalizeSubcategoryList(subcategoryFilter)[0]?.toLowerCase();
             result = result.filter(product => {
-                if (Array.isArray(product.subcategory)) {
-                    return product.subcategory.includes(subcategoryFilter);
-                }
-                return product.subcategory === subcategoryFilter;
+                return normalizeSubcategoryList(product.subcategory)
+                    .some((subcategory) => subcategory.toLowerCase() === normalizedFilter);
             });
         }
 

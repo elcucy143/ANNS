@@ -39,6 +39,11 @@ export const normalizeSizeList = (value) => {
 };
 
 const SUBCATEGORY_ALIASES = new Map([
+  ['kurti', 'Kurtis'],
+  ['kurtis', 'Kurtis'],
+  ['kurthi', 'Kurtis'],
+  ['kurthis', 'Kurtis'],
+  ['three piece set', 'Kurtis'],
   ['two piece set', 'Two piece sets'],
   ['two piece sets', 'Two piece sets'],
   ['2 piece set', 'Two piece sets'],
