@@ -60,7 +60,9 @@ export const ProductCatalogProvider = ({ children }) => {
       void refreshProducts({ background: true });
       void refreshFlashSale();
     };
-    const interval = window.setInterval(refreshInBackground, 30000);
+    // One-minute freshness keeps new products visible quickly while avoiding
+    // a full-catalogue request every 30 seconds for every open shopper tab.
+    const interval = window.setInterval(refreshInBackground, 60000);
     const onVisibilityChange = () => { if (document.visibilityState === 'visible') refreshInBackground(); };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {

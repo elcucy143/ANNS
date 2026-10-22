@@ -56,7 +56,26 @@ const checkoutLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many checkout attempts. Please wait before trying again.' },
 });
-server.use('/api', apiLimiter);
+const publicReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 3000,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many catalogue requests. Please try again shortly.' },
+});
+const publicReadPaths = new Set([
+  '/health', '/products', '/product-image', '/media-image', '/reviews', '/flash-sale',
+]);
+// Product grids can legitimately request hundreds of immutable images from a
+// shared office/mobile-network IP. Keep mutation and private APIs protected by
+// the general limiter without allowing public cached images to consume the
+// same allowance and block checkout.
+server.use('/api', (req, res, next) => {
+  if ((req.method === 'GET' || req.method === 'HEAD') && publicReadPaths.has(req.path)) {
+    return publicReadLimiter(req, res, next);
+  }
+  return apiLimiter(req, res, next);
+});
 server.use([
   '/api/admin-login',
   '/api/auth/google',

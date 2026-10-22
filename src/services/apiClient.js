@@ -44,7 +44,10 @@ export const clearAdminKey = () => sessionStorage.removeItem(ADMIN_SESSION_STORA
 export const hasAdminKey = () => Boolean(sessionStorage.getItem(ADMIN_SESSION_STORAGE));
 
 export const getDatabaseHealth = () => request('health');
-export const getProductsFromDatabase = () => request('products', { cache: 'no-store' });
+// The catalogue endpoint is CDN cached briefly. Let the browser reuse and
+// conditionally validate it instead of forcing a full 0.5–1 MB download on
+// every background refresh as the catalogue grows.
+export const getProductsFromDatabase = () => request('products');
 export const getCustomersFromDatabase = () => request('customers', { admin: true });
 export const getOrdersFromDatabase = () => request('orders', { admin: true });
 export const updateOrderFulfillment = (order) => request('orders', {
@@ -57,7 +60,7 @@ export const approveOrderCancellation = (id) => request('orders', {
 });
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
-export const getFlashSale = () => request('flash-sale', { cache: 'no-store' });
+export const getFlashSale = () => request('flash-sale');
 export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true, cache: 'no-store' });
 export const getAdminAnalytics = (days = 30) => request(`analytics?days=${days}`, { admin: true, cache: 'no-store' });
 

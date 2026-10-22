@@ -206,7 +206,11 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
     imageOperations.push({
       updateOne: {
         filter: { productId, index },
-        update: { $set: { productId, index, contentType: match[1].toLowerCase(), data, version, variants: { thumbnail, card, listing }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        // Keep the storefront-sized image as the stored master. Retaining the
+        // multi-megabyte upload as well as three derivatives made image storage
+        // grow several times faster than the catalogue. The 900x1200 WebP is
+        // also the largest size the storefront and zoom viewer serve.
+        update: { $set: { productId, index, contentType: 'image/webp', data: listing, version, variants: { thumbnail, card }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         upsert: true,
       },
     });
@@ -970,30 +974,46 @@ registerHttp('product-image', {
       const requestedVariant = cleanText(url.searchParams.get('size'), 20).toLowerCase();
       if (!productId || !Number.isInteger(index) || index < 0 || index > 4 || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
       const db = await getDb();
-      const image = await db.collection('productImages').findOne({ productId, index, version });
-      if (!image?.data) return json({ error: 'Image was not found' }, 404);
       const supportedVariants = ['thumbnail', 'card', 'listing'];
-      let variant = supportedVariants.includes(requestedVariant) ? image.variants?.[requestedVariant] : null;
-      if (!variant && supportedVariants.includes(requestedVariant)) {
+      const selectedVariant = supportedVariants.includes(requestedVariant) ? requestedVariant : 'listing';
+      const projection = selectedVariant === 'listing'
+        ? { data: 1, contentType: 1, 'variants.listing': 1 }
+        : { contentType: 1, [`variants.${selectedVariant}`]: 1 };
+      let image = await db.collection('productImages').findOne({ productId, index, version }, { projection });
+      if (!image) return json({ error: 'Image was not found' }, 404);
+      let variant = image.variants?.[selectedVariant] || (selectedVariant === 'listing' ? image.data : null);
+      let responseContentType = image.variants?.[selectedVariant] ? 'image/webp' : (image.contentType || 'image/jpeg');
+      if (!variant) {
+        // Legacy records may not have a requested derivative. Fetch the stored
+        // master only on that exceptional path, generate the derivative once,
+        // and keep normal card requests small.
+        image = await db.collection('productImages').findOne(
+          { productId, index, version },
+          { projection: { data: 1, contentType: 1 } },
+        );
+        if (!image?.data) return json({ error: 'Image was not found' }, 404);
         const original = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
-        const dimensions = requestedVariant === 'thumbnail'
+        const dimensions = selectedVariant === 'thumbnail'
           ? { width: 320, height: 420, quality: 78 }
-          : requestedVariant === 'card'
+          : selectedVariant === 'card'
             ? { width: 600, height: 800, quality: 80 }
             : { width: 900, height: 1200, quality: 84 };
         variant = await sharp(original, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate()
           .resize({ width: dimensions.width, height: dimensions.height, fit: 'inside', withoutEnlargement: true })
           .webp({ quality: dimensions.quality }).toBuffer();
-        await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${requestedVariant}`]: variant } });
+        responseContentType = 'image/webp';
+        if (selectedVariant !== 'listing') {
+          await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${selectedVariant}`]: variant } });
+        }
       }
-      const selected = variant || image.data;
+      const selected = variant;
       const data = Buffer.isBuffer(selected) ? selected : Buffer.from(selected.buffer || selected.value?.() || []);
       return {
         status: 200,
         body: data,
         headers: {
           'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-          'Content-Type': variant ? 'image/webp' : (image.contentType || 'image/jpeg'),
+          'Content-Type': responseContentType,
           'Content-Length': String(data.length),
           'X-Content-Type-Options': 'nosniff',
         },
