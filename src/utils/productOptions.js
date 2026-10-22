@@ -39,6 +39,12 @@ export const normalizeSizeList = (value) => {
 };
 
 const SUBCATEGORY_ALIASES = new Map([
+  ['two piece set', 'Two piece sets'],
+  ['two piece sets', 'Two piece sets'],
+  ['2 piece set', 'Two piece sets'],
+  ['2 piece sets', 'Two piece sets'],
+  ['two piece kurti', 'Two piece sets'],
+  ['two piece kurtis', 'Two piece sets'],
   ['three piece sets', 'Kurtis'],
   ['three piece kurti', 'Kurtis'],
   ['three piece kurtis', 'Kurtis'],
@@ -54,6 +60,7 @@ export const displaySubcategoryLabel = (subcategory) => {
   const normalized = String(subcategory || '').trim().toLowerCase();
   if (normalized === 'kurtis') return '3 Piece Kurtis';
   if (normalized === 'one piece kurtis' || normalized === 'one piece kurti') return 'Kurtis';
+  if (normalized === 'two piece sets' || normalized === 'two piece set') return 'Two Piece Sets';
   return String(subcategory || '').trim();
 };
 

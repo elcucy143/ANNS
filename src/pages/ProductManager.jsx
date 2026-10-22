@@ -112,6 +112,7 @@ const getInitialFormData = () => ({
     available: 'In Stock',
     price: '',
     discount: '',
+    hasShippingCharge: 'no',
     shippingCharge: 0,
     image: '',
     otherImages: [],
@@ -717,6 +718,7 @@ const ProductManager = () => {
         setFormData({
             ...getInitialFormData(),
             ...product,
+            hasShippingCharge: toNumber(product.shippingCharge) > 0 ? 'yes' : 'no',
             stock: product.stockValue,
             sold: product.soldValue,
             sizes: normalizeSizeList(product.sizes),
@@ -866,7 +868,7 @@ const ProductManager = () => {
             id: productId,
             price: String(originalPrice),
             discount: formData.discount === '' ? '' : String(discountedPrice),
-            shippingCharge: Math.max(0, toNumber(formData.shippingCharge)),
+            shippingCharge: formData.hasShippingCharge === 'yes' ? Math.max(0, toNumber(formData.shippingCharge)) : 0,
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
@@ -958,15 +960,26 @@ const ProductManager = () => {
         const numericPrice = toNumber(price, NaN);
         if (price === '' || !Number.isFinite(numericPrice) || numericPrice <= 0) errors.push('Valid original price above ₹0 is required');
         const numericDiscountedPrice = toNumber(discountedPrice, NaN);
-        const shippingCharge = valueFrom(row, 'shippingcharge', 'deliverycharge', 'shippingfee', 'deliveryfee');
-        const numericShippingCharge = toNumber(shippingCharge, NaN);
+        const shippingChoice = String(valueFrom(row, 'hasshippingcharge', 'shippingchargeyesno', 'chargeshhipping', 'paidshipping')).trim().toLowerCase();
+        const legacyShippingCharge = valueFrom(row, 'shippingcharge', 'deliverycharge', 'shippingfee', 'deliveryfee');
+        const shippingAmount = valueFrom(row, 'shippingchargeamount', 'shippingamount', 'deliverychargeamount', 'deliveryamount') || legacyShippingCharge;
+        const numericShippingCharge = toNumber(shippingAmount, NaN);
+        const hasShippingCharge = shippingChoice
+            ? ['yes', 'y', 'true', '1', 'paid'].includes(shippingChoice)
+            : shippingAmount !== '' && numericShippingCharge > 0;
         const reversedPrices = discountedPrice !== ''
             && Number.isFinite(numericDiscountedPrice)
             && numericDiscountedPrice > numericPrice;
         if (discountedPrice !== '' && numericDiscountedPrice !== 0 && (!Number.isFinite(numericDiscountedPrice) || numericDiscountedPrice <= 0 || numericDiscountedPrice === numericPrice)) {
             errors.push('Discounted price must be lower than original price');
         }
-        if (shippingCharge !== '' && (!Number.isFinite(numericShippingCharge) || numericShippingCharge < 0)) {
+        if (shippingChoice && !['yes', 'y', 'true', '1', 'paid', 'no', 'n', 'false', '0', 'free'].includes(shippingChoice)) {
+            errors.push('Has shipping charge must be Yes or No');
+        }
+        if (hasShippingCharge && (!Number.isFinite(numericShippingCharge) || numericShippingCharge <= 0)) {
+            errors.push('Enter a shipping amount above ₹0 when shipping charge is Yes');
+        }
+        if (!hasShippingCharge && shippingAmount !== '' && (!Number.isFinite(numericShippingCharge) || numericShippingCharge < 0)) {
             errors.push('Shipping charge must be ₹0 or more');
         }
 
@@ -982,14 +995,15 @@ const ProductManager = () => {
                 description: String(valueFrom(row, 'description')).trim(),
                 price: String(price),
                 discount: discountedPrice === '' || numericDiscountedPrice === 0 ? '' : String(discountedPrice).trim(),
-                shippingCharge: shippingCharge === '' ? 0 : numericShippingCharge,
+                hasShippingCharge: hasShippingCharge ? 'yes' : 'no',
+                shippingCharge: hasShippingCharge ? numericShippingCharge : 0,
                 stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
                 sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
                 image: String(valueFrom(row, 'image', 'imageurl')).trim(),
                 otherImages: parseList(valueFrom(row, 'otherimages', 'otherimageurls')),
                 color: String(valueFrom(row, 'color')).trim(),
                 sizes: parseList(valueFrom(row, 'sizes', 'size')),
-                subcategory: parseList(valueFrom(row, 'subcategory', 'subcategories')),
+                subcategory: normalizeSubcategoryList(valueFrom(row, 'subcategory', 'subcategories')),
                 featured: String(valueFrom(row, 'featured')).trim().toLowerCase() === 'yes' ? 'yes' : 'no',
                 similarProducts: parseList(valueFrom(row, 'similarproducts', 'similarproductids')),
                 shipping: parseList(valueFrom(row, 'shipping', 'shippinginfo')),
@@ -1183,7 +1197,8 @@ const ProductManager = () => {
             description: 'Product description',
             originalPrice: 499,
             discountedPrice: 449,
-            shippingCharge: 60,
+            hasShippingCharge: 'Yes',
+            shippingChargeAmount: 60,
             stock: 25,
             sold: 5,
             image: '/src/assets/img/example.jpg',
@@ -1193,7 +1208,6 @@ const ProductManager = () => {
             subcategory: 'Black beads sets',
             featured: 'no',
             similarProducts: 'sample-002, sample-003',
-            shipping: 'Pan India Shipping, Ships in 5 to 7 days',
             campaign: '',
         }];
         const worksheet = utils.json_to_sheet(templateRows);
@@ -1909,7 +1923,8 @@ const ProductManager = () => {
                                     <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
                                     <label>Original price (₹)<input name="price" type="number" min="1" value={formData.price} onChange={handleInputChange} required /></label>
                                     <label>Discounted price (₹)<input name="discount" type="number" min="1" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /><small>Leave blank if this product is not discounted.</small></label>
-                                    <label>Shipping charge per item (₹)<input name="shippingCharge" type="number" min="0" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} /><small>Enter 0 for free shipping.</small></label>
+                                    <label>Shipping charge?<select name="hasShippingCharge" value={formData.hasShippingCharge} onChange={handleInputChange}><option value="no">No — free shipping</option><option value="yes">Yes</option></select></label>
+                                    {formData.hasShippingCharge === 'yes' && <label>Shipping amount per item (₹)<input name="shippingCharge" type="number" min="0.01" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} required /><small>Added to the cart and Razorpay total.</small></label>}
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">
