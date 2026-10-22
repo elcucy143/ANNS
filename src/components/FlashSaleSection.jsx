@@ -35,16 +35,21 @@ const FlashSaleSection = () => {
     }, []);
 
     const saleProducts = useMemo(() => {
-        if (!sale?.items?.length) return [];
-        const catalog = new Map(products.map((product) => [String(product.id), product]));
-        return sale.items.map((item) => {
-            const product = catalog.get(String(item.productId));
-            if (!product) return null;
+        if (!sale) return [];
+        const configuredPrices = new Map((sale.items || []).map((item) => [String(item.productId), Number(item.salePrice)]));
+        // Include both explicitly selected Flash Sale items and products whose
+        // bulk upload already contains a valid discounted price. This mirrors
+        // the full Flash Sale page and prevents the homepage from rotating only
+        // the small manually configured subset.
+        return products.map((product) => {
+            const configuredPrice = configuredPrices.get(String(product.id));
             const originalPrice = Number(product.originalPrice || product.regularPrice || String(product.price).replace(/[^0-9.]/g, ''));
-            const salePrice = Number(item.salePrice);
-            if (!Number.isFinite(originalPrice) || !Number.isFinite(salePrice) || salePrice >= originalPrice) return null;
-            const effectivePrice = Math.min(Number(product.price) || originalPrice, salePrice);
-            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: true, discounted: true };
+            const catalogPrice = Number(product.price);
+            const hasCatalogDiscount = product.discounted === true && Number.isFinite(catalogPrice) && catalogPrice > 0 && catalogPrice < originalPrice;
+            const hasConfiguredDiscount = Number.isFinite(configuredPrice) && configuredPrice > 0 && configuredPrice < originalPrice;
+            if (!Number.isFinite(originalPrice) || (!hasCatalogDiscount && !hasConfiguredDiscount)) return null;
+            const effectivePrice = hasConfiguredDiscount ? Math.min(catalogPrice || originalPrice, configuredPrice) : catalogPrice;
+            return { ...product, originalPrice, price: effectivePrice, discountPercent: Math.round((1 - effectivePrice / originalPrice) * 100), flashSale: hasConfiguredDiscount, discounted: true };
         }).filter(Boolean);
     }, [products, sale]);
 
@@ -107,7 +112,7 @@ const FlashSaleSection = () => {
                     })}
                 </div>
                 <div className="flash-sale-view-all">
-                    <Link to="/flash-sale">View all {sale.items.length} Flash Sale products</Link>
+                    <Link to="/flash-sale">View all {saleProducts.length} Flash Sale products</Link>
                 </div>
             </div>
         </section>

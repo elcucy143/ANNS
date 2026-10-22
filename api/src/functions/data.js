@@ -115,7 +115,10 @@ const normalizeFlashSale = (sale = {}) => ({
   startsAt: cleanText(sale.startsAt, 30),
   endsAt: cleanText(sale.endsAt, 30),
   active: sale.active === true,
-  items: (Array.isArray(sale.items) ? sale.items : []).slice(0, 24).map((item) => ({
+  // A sale may cover a large seasonal catalogue. The old 24-item cap silently
+  // discarded later selections, leaving the homepage count and rotation stale.
+  // Two thousand compact ID/price pairs remain far below MongoDB's document limit.
+  items: (Array.isArray(sale.items) ? sale.items : []).slice(0, 2000).map((item) => ({
     productId: cleanText(item.productId, 100),
     salePrice: Number(numericPrice(item.salePrice).toFixed(2)),
   })).filter((item) => item.productId && Number.isFinite(item.salePrice) && item.salePrice > 0),
