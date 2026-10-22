@@ -833,6 +833,7 @@ registerHttp('products', {
 
       const productList = Array.isArray(body) ? body : body?.products;
       if (!Array.isArray(productList) || !productList.length) return json({ error: 'Products array is required' }, 400);
+      if (productList.length > 100) return json({ error: 'Upload at most 100 products per request. Smaller batches are verified more reliably.' }, 400);
 
       const invalidProductIndex = productList.findIndex((product) => !cleanText(product?.id, 100) || !cleanText(product?.name, 200) || !cleanText(product?.category, 100));
       if (invalidProductIndex >= 0) return json({ error: `Product ${invalidProductIndex + 1} requires an ID, name and category` }, 400);
@@ -878,7 +879,21 @@ registerHttp('products', {
       const persisted = await collection.countDocuments({ id: { $in: suppliedIds } });
       if (persisted !== suppliedIds.length) throw new Error('Product persistence verification failed');
       await recordAdminAudit(db, request, 'products.saved', suppliedIds.join(','), { count: persisted });
-      return json({ ok: true, saved: persisted, matched: result.matchedCount, modified: result.modifiedCount, added: result.upsertedCount });
+      const databaseStats = await db.command({ dbStats: 1, scale: 1024 * 1024 }).catch(() => null);
+      const databaseDataMB = Number(databaseStats?.dataSize || 0);
+      const warningThresholdMB = Math.max(100, Number(process.env.MONGODB_STORAGE_WARNING_MB) || 400);
+      const storageWarning = databaseDataMB >= warningThresholdMB
+        ? `Database content is approximately ${Math.round(databaseDataMB)} MB. Move product images to dedicated object storage or increase the MongoDB tier before the next large upload.`
+        : '';
+      return json({
+        ok: true,
+        saved: persisted,
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+        added: result.upsertedCount,
+        databaseDataMB: Math.round(databaseDataMB),
+        warning: storageWarning,
+      });
     } catch (error) {
       return handleError(context, error);
     }

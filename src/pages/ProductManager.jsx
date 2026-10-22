@@ -562,6 +562,7 @@ const ProductManager = () => {
         if (hasAdminKey()) {
             try {
                 let saved = 0;
+                let capacityWarning = '';
                 const batches = changedProducts.reduce((groups, product) => {
                     const size = new Blob([JSON.stringify(product)]).size;
                     const current = groups.at(-1);
@@ -581,9 +582,10 @@ const ProductManager = () => {
                     const result = await saveProductsToDatabase(batch);
                     if (result.saved !== batch.length) throw new Error(`MongoDB confirmed ${saved + result.saved} of ${changedProducts.length} products. Retry the import; existing product IDs will update safely without creating duplicates.`);
                     saved += result.saved;
+                    if (result.warning) capacityWarning = result.warning;
                 }
                 setDatabaseStatus('connected');
-                setNotification(`${message} ${saved} product${saved === 1 ? '' : 's'} verified in MongoDB Atlas.`);
+                setNotification(`${message} ${saved} product${saved === 1 ? '' : 's'} verified in MongoDB Atlas.${capacityWarning ? ` Storage warning: ${capacityWarning}` : ''}`);
             } catch (error) {
                 setDatabaseStatus('local');
                 setNotification(error.message || 'The product could not be saved to MongoDB Atlas.');
