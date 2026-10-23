@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
+const compression = require('compression');
 const helmet = require('helmet');
 const { rateLimit } = require('express-rate-limit');
 
@@ -20,6 +21,10 @@ const { registeredRoutes } = require('./functions/data');
 
 const server = express();
 server.disable('x-powered-by');
+// Product catalog JSON grows with the business. Compress text responses at
+// the origin so a first-time/mobile visitor does not download the full raw
+// payload. Images are already compressed and are skipped by this middleware.
+server.use(compression());
 if (process.env.TRUST_PROXY) server.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
 server.use(helmet({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },

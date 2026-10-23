@@ -817,6 +817,7 @@ registerHttp('products', {
         products = products.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
         const response = json(products.map(cleanDocument));
         response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
+        response.headers['Vercel-CDN-Cache-Control'] = 'public, s-maxage=15, stale-while-revalidate=300';
         return response;
       }
 
@@ -1087,6 +1088,7 @@ registerHttp('product-image', {
         body: data,
         headers: {
           'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+          'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
           'Content-Type': responseContentType,
           'Content-Length': String(data.length),
           'X-Content-Type-Options': 'nosniff',
@@ -1117,6 +1119,7 @@ registerHttp('media-image', {
         body: data,
         headers: {
           'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+          'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
           'Content-Type': image.contentType || 'image/jpeg',
           'Content-Length': String(data.length),
           'X-Content-Type-Options': 'nosniff',
@@ -1152,6 +1155,7 @@ registerHttp('reviews', {
       }));
       const response = json(migrated.map(cleanDocument));
       response.headers['Cache-Control'] = 'public, max-age=15, s-maxage=60, stale-while-revalidate=300';
+      response.headers['Vercel-CDN-Cache-Control'] = 'public, s-maxage=60, stale-while-revalidate=300';
       return response;
     } catch (error) {
       return handleError(context, error);
@@ -1281,6 +1285,7 @@ registerHttp('flash-sale', {
       const sale = await db.collection('flashSales').findOne({ id: 'homepage' });
       const response = json(sale && isFlashSaleActive(sale) ? cleanDocument(sale) : null);
       response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
+      response.headers['Vercel-CDN-Cache-Control'] = 'public, s-maxage=15, stale-while-revalidate=300';
       return response;
     } catch (error) {
       return handleError(context, error);
