@@ -335,3 +335,5 @@
   .account-heading h2 { font-size: 1.65rem; }
   .account-dashboard { padding: 40px 24px; }
 }
+.account-order-review-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.account-order-review-links button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border: 1px solid #c9aa91; border-radius: 4px; color: #765039; background: #fffaf6; cursor: pointer; }

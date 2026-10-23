@@ -125,6 +125,10 @@ export const resetPassword = (token, password) => request('auth/reset-password',
   method: 'POST', body: JSON.stringify({ token, password }),
 });
 export const getMyOrders = () => request('account/orders', { auth: true });
+export const getMyProductReview = (productId) => request(`account/reviews?productId=${encodeURIComponent(productId)}`, { auth: true });
+export const saveMyProductReview = (review) => request('account/reviews', {
+  method: 'POST', auth: true, body: JSON.stringify(review),
+});
 export const requestOrderCancellation = (id, reason) => request('account/orders', {
   method: 'POST', auth: true, body: JSON.stringify({ id, reason }),
 });

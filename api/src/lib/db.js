@@ -46,6 +46,10 @@ const ensureIndexes = async (db) => {
       db.collection('reviews').createIndex({ id: 1 }, { unique: true }),
       db.collection('reviews').createIndex({ published: 1, featured: 1, reviewDate: -1 }),
       db.collection('reviews').createIndex({ productId: 1, published: 1, reviewDate: -1 }),
+      db.collection('reviews').createIndex(
+        { customerId: 1, productId: 1 },
+        { unique: true, partialFilterExpression: { customerId: { $type: 'string' } } },
+      ),
       db.collection('flashSales').createIndex({ id: 1 }, { unique: true }),
       db.collection('flashSales').createIndex({ active: 1, startsAt: 1, endsAt: 1 }),
       db.collection('analyticsEvents').createIndex({ createdAt: 1 }, { expireAfterSeconds: 180 * 24 * 60 * 60 }),

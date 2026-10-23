@@ -15,6 +15,7 @@ import { useReviews } from '../context/ReviewContext';
 import ReviewsSection from '../components/ReviewsSection';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 import { productImageVariant } from '../utils/imageUrl';
+import ProductReviewForm from '../components/ProductReviewForm';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -355,6 +356,7 @@ const ProductDetails = () => {
                     );
                 })()
             }
+            <ProductReviewForm productId={product.id} productName={product.name} />
             <ReviewsSection productId={product.id} title={`Customer reviews for ${product.name}`} />
         </div >
     );

@@ -21,7 +21,7 @@ const ReviewCard = ({ review }) => (
             <p>“{review.comment}”</p>
             <footer>
                 <span className="testimonial-avatar">{review.reviewerName?.charAt(0)?.toUpperCase() || 'A'}</span>
-                <div><strong>{review.reviewerName}</strong><small>Verified customer testimonial{review.reviewDate ? ` · ${new Date(`${review.reviewDate}T00:00:00`).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}` : ''}</small></div>
+                <div><strong>{review.reviewerName}</strong><small>{review.verifiedPurchase ? 'Verified purchase' : 'Verified customer testimonial'}{review.reviewDate ? ` · ${new Date(`${review.reviewDate}T00:00:00`).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}` : ''}</small></div>
             </footer>
         </div>
     </article>

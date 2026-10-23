@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Download, LogOut, Package, ShieldCheck, UserRound, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, Download, LogOut, Package, ShieldCheck, Star, UserRound, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { GOOGLE_CLIENT_ID, GOOGLE_IDENTITY_SCRIPT_ID } from '../config/auth';
 import { getMyOrders, requestOrderCancellation, requestPasswordReset, resetPassword } from '../services/apiClient';
@@ -167,6 +167,13 @@ const Account = () => {
                 {order.trackingUrl
                   ? <a href={order.trackingUrl} target="_blank" rel="noreferrer">Track shipment with {order.courier || 'courier'}</a>
                   : ['processing', 'packed'].includes(order.fulfillmentStatus || 'processing') && <p>Your tracking link will appear here after dispatch.</p>}
+                <div className="account-order-review-links">
+                  {(order.items || []).map((item) => item.id && (
+                    <button type="button" key={`${order.id}-${item.id}`} onClick={() => navigate(`/product/${item.id}#write-review`)}>
+                      <Star size={15} /> Review {item.name || 'product'}
+                    </button>
+                  ))}
+                </div>
                 <div className="account-order-actions"><button type="button" onClick={() => printInvoice(order)}><Download size={15} /> Invoice</button>{cancellable && <button type="button" className="danger" onClick={() => cancelOrder(order)}><XCircle size={15} /> Request cancellation</button>}</div>
               </article>;
             })}

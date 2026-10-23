@@ -1159,6 +1159,72 @@ registerHttp('reviews', {
   },
 });
 
+registerHttp('customer-reviews', {
+  methods: ['GET', 'POST'],
+  authLevel: 'anonymous',
+  route: 'account/reviews',
+  handler: async (request, context) => {
+    try {
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Sign in to review a purchased product' }, 401);
+      const db = await getDb();
+      const customer = await getActiveCustomer(db, session);
+      if (!customer) return json({ error: 'Your session has expired. Please sign in again' }, 401);
+
+      const url = new URL(request.url);
+      const body = request.method === 'POST' ? await parseJson(request) : {};
+      const productId = cleanText(body?.productId || url.searchParams.get('productId'), 100);
+      if (!productId) return json({ error: 'Choose a product to review' }, 400);
+
+      const purchasedOrder = await db.collection('orders').findOne({
+        customerId: customer.id,
+        paymentStatus: 'captured',
+        'items.id': productId,
+      }, { sort: { paidAt: -1, createdAt: -1 } });
+      const existing = await db.collection('reviews').findOne({ customerId: customer.id, productId });
+      if (request.method === 'GET') {
+        return json({ eligible: Boolean(purchasedOrder), review: existing ? cleanDocument(existing) : null });
+      }
+      if (!purchasedOrder) return json({ error: 'Only customers who purchased this product can review it' }, 403);
+
+      const requestedRating = Math.trunc(Number(body?.rating));
+      const rating = Number.isInteger(requestedRating) && requestedRating >= 1 && requestedRating <= 5
+        ? requestedRating
+        : 0;
+      const title = cleanText(body?.title, 160);
+      const comment = cleanText(body?.comment, 1500);
+      if (!rating || comment.length < 10) return json({ error: 'Choose a star rating and write at least 10 characters' }, 400);
+
+      const operationTime = nowIso();
+      const review = {
+        id: existing?.id || `review-${crypto.randomUUID()}`,
+        reviewerName: cleanText(customer.name, 120) || 'ANNS customer',
+        rating,
+        title,
+        comment,
+        image: existing?.image || '',
+        productId,
+        orderId: purchasedOrder.id,
+        customerId: customer.id,
+        reviewDate: operationTime.slice(0, 10),
+        verifiedPurchase: true,
+        featured: existing?.featured === true,
+        published: true,
+        source: 'verified_purchase',
+        updatedAt: operationTime,
+      };
+      await db.collection('reviews').updateOne(
+        { customerId: customer.id, productId },
+        { $set: review, $setOnInsert: { createdAt: operationTime } },
+        { upsert: true },
+      );
+      return json({ ok: true, review: cleanDocument(await db.collection('reviews').findOne({ customerId: customer.id, productId })) });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('admin-reviews', {
   methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',
