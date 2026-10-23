@@ -829,9 +829,15 @@ registerHttp('products', {
         if (!ids.length) return json({ error: 'At least one product ID is required' }, 400);
         const uniqueIds = [...new Set(ids)];
         const result = await collection.deleteMany({ id: { $in: uniqueIds } });
-        await db.collection('productImages').deleteMany({ productId: { $in: uniqueIds } });
+        const imageResult = await db.collection('productImages').deleteMany({ productId: { $in: uniqueIds } });
+        // Remove stale cross-references so deleted products cannot remain in a
+        // Flash Sale or appear as broken related-product links.
+        await Promise.all([
+          db.collection('flashSales').updateMany({}, { $pull: { items: { productId: { $in: uniqueIds } } } }),
+          collection.updateMany({}, { $pull: { similarProducts: { $in: uniqueIds } } }),
+        ]);
         await recordAdminAudit(db, request, 'products.deleted', uniqueIds.join(','), { count: result.deletedCount });
-        return json({ ok: true, deleted: result.deletedCount });
+        return json({ ok: true, deleted: result.deletedCount, deletedImages: imageResult.deletedCount });
       }
 
       const productList = Array.isArray(body) ? body : body?.products;

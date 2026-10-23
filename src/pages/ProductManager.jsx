@@ -970,6 +970,29 @@ const ProductManager = () => {
         setBulkStockValue('');
     };
 
+    const removeSelectedProducts = async () => {
+        if (!selectedProductIds.length) return;
+        const selected = new Set(selectedProductIds);
+        const preview = selectedProductIds.slice(0, 8).join(', ');
+        const remainder = selectedProductIds.length > 8 ? ` and ${selectedProductIds.length - 8} more` : '';
+        if (!window.confirm(`Permanently remove ${selectedProductIds.length} selected product${selectedProductIds.length === 1 ? '' : 's'} and their uploaded images?\n\n${preview}${remainder}\n\nThis cannot be undone from Product Studio.`)) return;
+        try {
+            const result = await deleteProductsFromDatabase(selectedProductIds);
+            const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [
+                category,
+                items.filter((product) => !selected.has(product.id)),
+            ]));
+            setProducts(nextProducts);
+            setFlashSale((current) => ({ ...current, items: current.items.filter((item) => !selected.has(item.productId)) }));
+            setSelectedProductIds([]);
+            setNotification(`${result.deleted} product${result.deleted === 1 ? '' : 's'} and ${result.deletedImages || 0} stored image${result.deletedImages === 1 ? '' : 's'} were permanently removed.`);
+            void refreshStorageCapacity();
+        } catch (error) {
+            setNotification(error.message || 'The selected products could not be removed. Please try again.');
+        }
+        window.setTimeout(() => setNotification(''), 5000);
+    };
+
     const addSelectedToFlashSale = () => {
         if (!selectedProductIds.length) return;
         const selected = new Set(selectedProductIds);
@@ -1625,7 +1648,7 @@ const ProductManager = () => {
                             <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
-                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
+                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
                         <div className="admin-table-wrap">
                             <table className="admin-table">
                                 <thead><tr><th><input type="checkbox" aria-label="Select this page" checked={pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id))} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedProducts.map((product) => product.id)])] : current.filter((id) => !pagedProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
