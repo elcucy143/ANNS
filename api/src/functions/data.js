@@ -768,7 +768,10 @@ registerHttp('products', {
   route: 'products',
   handler: async (request, context) => {
     try {
-      const db = await getDb();
+      const db = await withDbRetry(async (candidate) => {
+        await candidate.command({ ping: 1 });
+        return candidate;
+      });
       const collection = db.collection('products');
 
       if (request.method === 'GET') {
@@ -1109,21 +1112,22 @@ registerHttp('media-image', {
       const key = cleanText(url.searchParams.get('key'), 100);
       const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
       if (!key || !/^[a-z0-9-]{1,100}$/i.test(key) || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
-      const db = await getDb();
-      const image = await db.collection('mediaImages').findOne({ key, version });
-      if (!image?.data) return json({ error: 'Image was not found' }, 404);
-      const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
-      return {
-        status: 200,
-        body: data,
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-          'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
-          'Content-Type': image.contentType || 'image/jpeg',
-          'Content-Length': String(data.length),
-          'X-Content-Type-Options': 'nosniff',
-        },
-      };
+      return withDbRetry(async (db) => {
+        const image = await db.collection('mediaImages').findOne({ key, version });
+        if (!image?.data) return json({ error: 'Image was not found' }, 404);
+        const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+        return {
+          status: 200,
+          body: data,
+          headers: {
+            'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
+            'Content-Type': image.contentType || 'image/jpeg',
+            'Content-Length': String(data.length),
+            'X-Content-Type-Options': 'nosniff',
+          },
+        };
+      });
     } catch (error) {
       return handleError(context, error);
     }
@@ -1136,7 +1140,10 @@ registerHttp('reviews', {
   route: 'reviews',
   handler: async (_request, context) => {
     try {
-      const db = await getDb();
+      const db = await withDbRetry(async (candidate) => {
+        await candidate.command({ ping: 1 });
+        return candidate;
+      });
       const collection = db.collection('reviews');
       const reviews = await collection
         .find({ published: true })
@@ -1280,7 +1287,10 @@ registerHttp('flash-sale', {
   route: 'flash-sale',
   handler: async (_request, context) => {
     try {
-      const db = await getDb();
+      const db = await withDbRetry(async (candidate) => {
+        await candidate.command({ ping: 1 });
+        return candidate;
+      });
       const sale = await db.collection('flashSales').findOne({ id: 'homepage' });
       const response = json(sale && isFlashSaleActive(sale) ? cleanDocument(sale) : null);
       response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
