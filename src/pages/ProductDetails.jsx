@@ -14,7 +14,7 @@ import { businessContact } from '../config/contact';
 import { useReviews } from '../context/ReviewContext';
 import ReviewsSection from '../components/ReviewsSection';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
-import { productImageVariant } from '../utils/imageUrl';
+import { productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import ProductReviewForm from '../components/ProductReviewForm';
 
 const ProductDetails = () => {
@@ -178,7 +178,7 @@ const ProductDetails = () => {
                             e.currentTarget.style.setProperty('--bg-y', `${bgY}%`);
                         }}
                     >
-                        <img src={getImageVariant(selectedImage || product.images[0], 'listing')} alt={product.name} decoding="async" fetchPriority="high" />
+                        <img src={getImageVariant(selectedImage || product.images[0], 'listing')} alt={product.name} decoding="async" fetchPriority="high" onError={recoverProductImage} />
                         <div className="magnifier-lens"></div>
                         <div
                             className="zoom-window"
@@ -196,6 +196,7 @@ const ProductDetails = () => {
                                 loading="lazy"
                                 decoding="async"
                                 className={`thumbnail ${selectedImage === img || (!selectedImage && index === 0) ? 'active' : ''}`}
+                                onError={recoverProductImage}
                                 onClick={() => setSelectedImage(img)}
                             />
                         ))}
@@ -330,6 +331,7 @@ const ProductDetails = () => {
                         src={getImageVariant(selectedImage || product.images[0], 'listing')}
                         alt={`${product.name} enlarged`}
                         decoding="async"
+                        onError={recoverProductImage}
                         onClick={(event) => event.stopPropagation()}
                     />
                 </div>

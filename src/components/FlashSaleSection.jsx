@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock3, ShoppingBag, Sparkles } from 'lucide-react';
 import images from '../assets/images';
-import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
+import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import { useCart } from '../context/CartContext';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
@@ -96,6 +96,7 @@ const FlashSaleSection = () => {
                                             alt={product.name}
                                             loading="lazy"
                                             decoding="async"
+                                            onError={recoverProductImage}
                                         />
                                         <span>{product.discountPercent}% OFF</span>
                                     </div>

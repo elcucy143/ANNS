@@ -3,7 +3,7 @@ import { useCart } from '../context/CartContext';
 import './ProductCard.css';
 
 import images from '../assets/images';
-import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
+import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 
 const ProductCard = ({ product, priority = false }) => {
     const { addToCart } = useCart();
@@ -31,6 +31,7 @@ const ProductCard = ({ product, priority = false }) => {
                         loading={priority ? 'eager' : 'lazy'}
                         fetchPriority={priority ? 'high' : 'auto'}
                         decoding="async"
+                        onError={recoverProductImage}
                     />
                     <button className="add-to-cart-btn" onClick={handleAddToCart}>Add to Cart</button>
                 </div>

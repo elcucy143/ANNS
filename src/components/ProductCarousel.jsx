@@ -6,7 +6,7 @@ import './ProductCarousel.css';
 import images from '../assets/images';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { useCart } from '../context/CartContext';
-import { productImageSrcSet, productImageVariant } from '../utils/imageUrl';
+import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 
 // Flatten products from all categories and filter those marked as featured
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
@@ -34,6 +34,7 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                                                 alt={product.name}
                                                 loading="lazy"
                                                 decoding="async"
+                                                onError={recoverProductImage}
                                             />
                                             <button
                                                 className="add-to-cart-btn"
