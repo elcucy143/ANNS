@@ -3,6 +3,32 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 let clientPromise;
 let indexesPromise;
 
+const isRetryableMongoError = (error) => {
+  const name = String(error?.name || '');
+  const message = String(error?.message || '');
+  return [
+    'MongoNetworkError',
+    'MongoNetworkTimeoutError',
+    'MongoPoolClearedError',
+    'MongoServerSelectionError',
+  ].includes(name)
+    || error?.hasErrorLabel?.('ResetPool')
+    || /connection pool|server selection|socket|tls|econnreset|closed connection/i.test(message);
+};
+
+const discardClient = async (failedPromise) => {
+  if (clientPromise !== failedPromise) return;
+  clientPromise = undefined;
+  indexesPromise = undefined;
+  try {
+    const client = await failedPromise;
+    await client.close();
+  } catch {
+    // The failed connection has already been discarded. A later request will
+    // create a fresh client instead of reusing a poisoned serverless pool.
+  }
+};
+
 const getClient = () => {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error('MONGODB_URI is not configured');
@@ -15,13 +41,25 @@ const getClient = () => {
         deprecationErrors: true,
       },
       appName: 'ANNS-Azure-Functions',
-      maxPoolSize: 10,
+      // Keep each serverless instance deliberately small. Vercel can create
+      // several instances at once, so a large per-instance pool can overwhelm
+      // Atlas during a cold image load.
+      maxPoolSize: 4,
+      minPoolSize: 0,
+      maxConnecting: 1,
+      maxIdleTimeMS: 60_000,
+      waitQueueTimeoutMS: 10_000,
+      connectTimeoutMS: 10_000,
+      socketTimeoutMS: 20_000,
       serverSelectionTimeoutMS: 8000,
+      retryReads: true,
+      retryWrites: true,
     });
-    clientPromise = client.connect().catch((error) => {
-      clientPromise = undefined;
+    const connecting = client.connect().catch((error) => {
+      if (clientPromise === connecting) clientPromise = undefined;
       throw error;
     });
+    clientPromise = connecting;
   }
   return clientPromise;
 };
@@ -69,4 +107,19 @@ const getDb = async () => {
   return db;
 };
 
-module.exports = { getClient, getDb };
+const withDbRetry = async (operation) => {
+  const firstClientPromise = clientPromise || getClient();
+  try {
+    const client = await firstClientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME || 'anns');
+    await ensureIndexes(db);
+    return await operation(db);
+  } catch (error) {
+    if (!isRetryableMongoError(error)) throw error;
+    await discardClient(firstClientPromise);
+    const db = await getDb();
+    return operation(db);
+  }
+};
+
+module.exports = { getClient, getDb, isRetryableMongoError, withDbRetry };

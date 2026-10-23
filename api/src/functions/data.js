@@ -1,7 +1,7 @@
 const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
 const sharp = require('sharp');
-const { getClient, getDb } = require('../lib/db');
+const { getClient, getDb, withDbRetry } = require('../lib/db');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
   authenticateRequest,
@@ -457,8 +457,7 @@ registerHttp('health', {
   route: 'health',
   handler: async (_request, context) => {
     try {
-      const db = await getDb();
-      await db.command({ ping: 1 });
+      await withDbRetry((db) => db.command({ ping: 1 }));
       return json({ ok: true, database: process.env.MONGODB_DB_NAME || 'anns' });
     } catch (error) {
       return handleError(context, error);
@@ -477,8 +476,7 @@ registerHttp('readiness', {
     }
     const problems = configurationProblems();
     try {
-      const db = await getDb();
-      await db.command({ ping: 1 });
+      await withDbRetry((db) => db.command({ ping: 1 }));
       return json({ ready: problems.length === 0, database: true, missing: problems }, problems.length ? 503 : 200);
     } catch (error) {
       context.error(error);
@@ -1048,52 +1046,53 @@ registerHttp('product-image', {
       const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
       const requestedVariant = cleanText(url.searchParams.get('size'), 20).toLowerCase();
       if (!productId || !Number.isInteger(index) || index < 0 || index > 4 || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
-      const db = await getDb();
-      const supportedVariants = ['thumbnail', 'card', 'listing'];
-      const selectedVariant = supportedVariants.includes(requestedVariant) ? requestedVariant : 'listing';
-      const projection = selectedVariant === 'listing'
-        ? { data: 1, contentType: 1, 'variants.listing': 1 }
-        : { contentType: 1, [`variants.${selectedVariant}`]: 1 };
-      let image = await db.collection('productImages').findOne({ productId, index, version }, { projection });
-      if (!image) return json({ error: 'Image was not found' }, 404);
-      let variant = image.variants?.[selectedVariant] || (selectedVariant === 'listing' ? image.data : null);
-      let responseContentType = image.variants?.[selectedVariant] ? 'image/webp' : (image.contentType || 'image/jpeg');
-      if (!variant) {
+      return withDbRetry(async (db) => {
+        const supportedVariants = ['thumbnail', 'card', 'listing'];
+        const selectedVariant = supportedVariants.includes(requestedVariant) ? requestedVariant : 'listing';
+        const projection = selectedVariant === 'listing'
+          ? { data: 1, contentType: 1, 'variants.listing': 1 }
+          : { contentType: 1, [`variants.${selectedVariant}`]: 1 };
+        let image = await db.collection('productImages').findOne({ productId, index, version }, { projection });
+        if (!image) return json({ error: 'Image was not found' }, 404);
+        let variant = image.variants?.[selectedVariant] || (selectedVariant === 'listing' ? image.data : null);
+        let responseContentType = image.variants?.[selectedVariant] ? 'image/webp' : (image.contentType || 'image/jpeg');
+        if (!variant) {
         // Legacy records may not have a requested derivative. Fetch the stored
         // master only on that exceptional path, generate the derivative once,
         // and keep normal card requests small.
-        image = await db.collection('productImages').findOne(
-          { productId, index, version },
-          { projection: { data: 1, contentType: 1 } },
-        );
-        if (!image?.data) return json({ error: 'Image was not found' }, 404);
-        const original = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
-        const dimensions = selectedVariant === 'thumbnail'
-          ? { width: 320, height: 420, quality: 78 }
-          : selectedVariant === 'card'
-            ? { width: 600, height: 800, quality: 80 }
-            : { width: 900, height: 1200, quality: 84 };
-        variant = await sharp(original, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate()
-          .resize({ width: dimensions.width, height: dimensions.height, fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: dimensions.quality }).toBuffer();
-        responseContentType = 'image/webp';
-        if (selectedVariant !== 'listing') {
-          await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${selectedVariant}`]: variant } });
+          image = await db.collection('productImages').findOne(
+            { productId, index, version },
+            { projection: { data: 1, contentType: 1 } },
+          );
+          if (!image?.data) return json({ error: 'Image was not found' }, 404);
+          const original = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+          const dimensions = selectedVariant === 'thumbnail'
+            ? { width: 320, height: 420, quality: 78 }
+            : selectedVariant === 'card'
+              ? { width: 600, height: 800, quality: 80 }
+              : { width: 900, height: 1200, quality: 84 };
+          variant = await sharp(original, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate()
+            .resize({ width: dimensions.width, height: dimensions.height, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: dimensions.quality }).toBuffer();
+          responseContentType = 'image/webp';
+          if (selectedVariant !== 'listing') {
+            await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${selectedVariant}`]: variant } });
+          }
         }
-      }
-      const selected = variant;
-      const data = Buffer.isBuffer(selected) ? selected : Buffer.from(selected.buffer || selected.value?.() || []);
-      return {
-        status: 200,
-        body: data,
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-          'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
-          'Content-Type': responseContentType,
-          'Content-Length': String(data.length),
-          'X-Content-Type-Options': 'nosniff',
-        },
-      };
+        const selected = variant;
+        const data = Buffer.isBuffer(selected) ? selected : Buffer.from(selected.buffer || selected.value?.() || []);
+        return {
+          status: 200,
+          body: data,
+          headers: {
+            'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+            'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
+            'Content-Type': responseContentType,
+            'Content-Length': String(data.length),
+            'X-Content-Type-Options': 'nosniff',
+          },
+        };
+      });
     } catch (error) {
       return handleError(context, error);
     }
