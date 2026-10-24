@@ -23,6 +23,10 @@
     transition: transform 0.5s ease;
 }
 
+.product-image.show-complete-image img {
+    object-fit: contain;
+}
+
 .product-sale-badge {
     position: absolute;
     z-index: 2;

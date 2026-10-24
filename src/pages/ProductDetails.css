@@ -35,6 +35,17 @@
     display: block;
 }
 
+/* Jewellery photos often contain long chains or small pendants close to the
+   image edge. Cropping those images hides the actual product, so preserve the
+   complete source frame on both desktop and mobile product pages. */
+.main-image.show-complete-image {
+    background: #f5f2ef;
+}
+
+.main-image.show-complete-image > img {
+    object-fit: contain;
+}
+
 .magnifier-lens {
     position: absolute;
     width: 150px;
@@ -89,6 +100,11 @@
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.3s;
+    background: #f5f2ef;
+}
+
+.show-complete-image + .thumbnail-list .thumbnail {
+    object-fit: contain;
 }
 
 .thumbnail:hover,

@@ -9,6 +9,7 @@
 .flash-sale-product-link { color: inherit; text-decoration: none; }
 .flash-sale-image { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #eee9e5; }
 .flash-sale-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
+.flash-sale-image.show-complete-image img { object-fit: contain; }
 .flash-sale-card:hover .flash-sale-image img { transform: scale(1.04); }
 .flash-sale-image > span { position: absolute; top: 12px; left: 12px; padding: 7px 10px; border-radius: 5px; background: #b4372b; color: #fff; font-size: .72rem; font-weight: 800; letter-spacing: .05em; }
 .flash-sale-copy { padding: 18px 18px 14px; }

@@ -88,7 +88,7 @@ const FlashSaleSection = () => {
                         return (
                             <article className="flash-sale-card" key={product.id}>
                                 <Link to={`/product/${product.id}`} className="flash-sale-product-link">
-                                    <div className="flash-sale-image">
+                                    <div className={`flash-sale-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
                                         <img
                                             src={images[filename] || productImageVariant(product.image, 'card')}
                                             srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}

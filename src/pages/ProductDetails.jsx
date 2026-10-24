@@ -142,7 +142,7 @@ const ProductDetails = () => {
                 {/* Image Gallery */}
                 <div className="product-gallery">
                     <div
-                        className="main-image"
+                        className={`main-image ${/jewel/i.test(String(product.category || category || '')) ? 'show-complete-image' : ''}`}
                         role="button"
                         tabIndex="0"
                         aria-label={`Open larger image of ${product.name}`}

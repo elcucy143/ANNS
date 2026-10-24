@@ -49,6 +49,10 @@
     transition: transform 0.5s ease;
 }
 
+.product-image.show-complete-image img {
+    object-fit: contain;
+}
+
 .carousel-card:hover .product-image img {
     transform: scale(1.05);
 }

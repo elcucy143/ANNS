@@ -21,7 +21,7 @@ const ProductCard = ({ product, priority = false }) => {
     return (
         <div className="product-card">
             <Link to={`/product/${product.id}`} className="product-link">
-                <div className="product-image">
+                <div className={`product-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
                     {product.originalPrice > product.price && <span className="product-sale-badge">{product.flashSale ? 'FLASH SALE' : 'SALE'} · {product.discountPercent}% OFF</span>}
                     <img
                         src={images[filename] || productImageVariant(product.image, 'card')}

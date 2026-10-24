@@ -26,7 +26,7 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                             return (
                                 <div key={product.id} className="carousel-card">
                                     <Link to={`/product/${product.id}`} className="carousel-product-link">
-                                        <div className="product-image">
+                                        <div className={`product-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
                                             <img
                                                 src={images[filename] || productImageVariant(product.image, 'card')}
                                                 srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}
