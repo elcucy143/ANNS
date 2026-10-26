@@ -10,6 +10,8 @@
 .flash-sale-image { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #eee9e5; }
 .flash-sale-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s ease; }
 .flash-sale-image.show-complete-image img { object-fit: contain; }
+.flash-wishlist-btn { position: absolute; z-index: 3; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(40,30,26,.12); border-radius: 50%; color: #3a312d; background: rgba(255,255,255,.94); box-shadow: 0 4px 14px rgba(40,30,26,.12); cursor: pointer; }
+.flash-wishlist-btn.saved { color: #a43834; background: #fff6f5; }
 .flash-sale-card:hover .flash-sale-image img { transform: scale(1.04); }
 .flash-sale-image > span { position: absolute; top: 12px; left: 12px; padding: 7px 10px; border-radius: 5px; background: #b4372b; color: #fff; font-size: .72rem; font-weight: 800; letter-spacing: .05em; }
 .flash-sale-copy { padding: 18px 18px 14px; }

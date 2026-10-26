@@ -7,11 +7,14 @@ import images from '../assets/images';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { useCart } from '../context/CartContext';
 import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
+import { Heart } from 'lucide-react';
+import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 
 // Flatten products from all categories and filter those marked as featured
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
     const { products: catalogProducts } = useProductCatalog();
     const { addToCart } = useCart();
+    const { wishlistIds, toggleWishlist } = useShoppingHistory();
     const navigate = useNavigate();
     const products = inputProducts || catalogProducts.filter((product) => product.featured === 'yes').slice(0, 6);
 
@@ -23,10 +26,12 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                     <div className="carousel-track">
                         {products.map((product) => {
                             const filename = product.image ? product.image.split('/').pop() : '';
+                            const saved = wishlistIds.includes(String(product.id));
                             return (
                                 <div key={product.id} className="carousel-card">
                                     <Link to={`/product/${product.id}`} className="carousel-product-link">
                                         <div className={`product-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
+                                            <button type="button" className={`product-wishlist-btn ${saved ? 'saved' : ''}`} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} fill={saved ? 'currentColor' : 'none'} /></button>
                                             <img
                                                 src={images[filename] || productImageVariant(product.image, 'card')}
                                                 srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}

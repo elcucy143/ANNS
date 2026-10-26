@@ -1235,6 +1235,41 @@ registerHttp('customer-reviews', {
   },
 });
 
+registerHttp('customer-wishlist', {
+  methods: ['GET', 'PUT'],
+  authLevel: 'anonymous',
+  route: 'account/wishlist',
+  handler: async (request, context) => {
+    try {
+      const session = authenticateRequest(request);
+      if (!session) return json({ error: 'Sign in to access your wishlist' }, 401);
+      const db = await getDb();
+      const customer = await getActiveCustomer(db, session);
+      if (!customer) return json({ error: 'Your session has expired. Please sign in again' }, 401);
+
+      if (request.method === 'GET') {
+        return json({ ids: normalizeList(customer.wishlistIds).map((id) => cleanText(id, 100)).filter(Boolean).slice(0, 100) });
+      }
+
+      const body = await parseJson(request);
+      const requestedIds = Array.isArray(body?.ids) ? body.ids : [];
+      const uniqueIds = [...new Set(requestedIds.map((id) => cleanText(id, 100)).filter(Boolean))].slice(0, 100);
+      const existingProducts = uniqueIds.length
+        ? await db.collection('products').find({ id: { $in: uniqueIds } }, { projection: { id: 1 } }).toArray()
+        : [];
+      const existingIds = new Set(existingProducts.map((product) => String(product.id)));
+      const wishlistIds = uniqueIds.filter((id) => existingIds.has(id));
+      await db.collection('customers').updateOne(
+        { id: customer.id },
+        { $set: { wishlistIds, updatedAt: nowIso() } },
+      );
+      return json({ ok: true, ids: wishlistIds });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
 registerHttp('admin-reviews', {
   methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',

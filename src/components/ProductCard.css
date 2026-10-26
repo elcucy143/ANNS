@@ -27,6 +27,10 @@
     object-fit: contain;
 }
 
+.product-wishlist-btn { position: absolute; z-index: 3; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(40,30,26,.12); border-radius: 50%; color: #3a312d; background: rgba(255,255,255,.92); box-shadow: 0 4px 14px rgba(40,30,26,.1); cursor: pointer; }
+.product-wishlist-btn.saved { color: #a43834; background: #fff6f5; }
+.product-wishlist-btn:hover { transform: scale(1.06); }
+
 .product-sale-badge {
     position: absolute;
     z-index: 2;

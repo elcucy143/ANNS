@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clock3, ShoppingBag, Sparkles } from 'lucide-react';
+import { Clock3, Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import images from '../assets/images';
 import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import { useCart } from '../context/CartContext';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
+import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 import './FlashSaleSection.css';
 
 const money = (value) => Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
@@ -17,6 +18,7 @@ const FlashSaleSection = () => {
     const [previewOffset, setPreviewOffset] = useState(0);
     const { products } = useProductCatalog();
     const { addToCart } = useCart();
+    const { wishlistIds, toggleWishlist } = useShoppingHistory();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -85,10 +87,12 @@ const FlashSaleSection = () => {
                 <div className="flash-sale-grid" aria-live="polite">
                     {previewProducts.map((product) => {
                         const filename = product.image ? product.image.split('/').pop() : '';
+                        const saved = wishlistIds.includes(String(product.id));
                         return (
                             <article className="flash-sale-card" key={product.id}>
                                 <Link to={`/product/${product.id}`} className="flash-sale-product-link">
                                     <div className={`flash-sale-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
+                                        <button type="button" className={`flash-wishlist-btn ${saved ? 'saved' : ''}`} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} fill={saved ? 'currentColor' : 'none'} /></button>
                                         <img
                                             src={images[filename] || productImageVariant(product.image, 'card')}
                                             srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}

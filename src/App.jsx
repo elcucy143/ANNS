@@ -12,6 +12,7 @@ import ShippingPolicy from './pages/ShippingPolicy';
 import TermsConditions from './pages/TermsConditions';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Account from './pages/Account';
+import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import ProtectedRoute from './components/ProtectedRoute';
 import RouteScrollManager from './components/RouteScrollManager';
@@ -54,6 +55,7 @@ function App() {
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/product-manager" element={<Suspense fallback={<div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center' }}>Loading admin workspace…</div>}><ProductManager /></Suspense>} />
               <Route path="/account" element={<Account />} />
+              <Route path="/wishlist" element={<Wishlist />} />
             </Routes>
           </Layout>
         </Router>

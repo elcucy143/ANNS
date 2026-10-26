@@ -125,6 +125,10 @@ export const resetPassword = (token, password) => request('auth/reset-password',
   method: 'POST', body: JSON.stringify({ token, password }),
 });
 export const getMyOrders = () => request('account/orders', { auth: true });
+export const getMyWishlist = () => request('account/wishlist', { auth: true, cache: 'no-store' });
+export const saveMyWishlist = (ids) => request('account/wishlist', {
+  method: 'PUT', auth: true, body: JSON.stringify({ ids }),
+});
 export const getMyProductReview = (productId) => request(`account/reviews?productId=${encodeURIComponent(productId)}`, { auth: true });
 export const saveMyProductReview = (review) => request('account/reviews', {
   method: 'POST', auth: true, body: JSON.stringify(review),

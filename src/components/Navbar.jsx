@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, Menu, X, ShoppingBag, Search, User } from 'lucide-react';
+import { ChevronDown, Heart, Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
@@ -8,6 +8,7 @@ import logo from '../assets/logo-corrected.jpg';
 
 import categoriesData from '../assets/json/categories.json';
 import { displaySubcategoryLabel } from '../utils/productOptions';
+import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { getCartCount } = useCart();
   const { user } = useAuth();
+  const { wishlistIds } = useShoppingHistory();
   const navigate = useNavigate();
 
   const toggleMenu = () => {
@@ -57,6 +59,7 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons mobile-only">
+          <Link to="/wishlist" className="wishlist-icon-link" aria-label={`Wishlist with ${wishlistIds.length} items`}><Heart size={24} />{wishlistIds.length > 0 && <span className="wishlist-count">{wishlistIds.length}</span>}</Link>
           <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'}>
             <User size={24} />
             {user && <span className="signed-in-dot" />}
@@ -152,6 +155,7 @@ const Navbar = () => {
           ) : (
             <Search size={24} className="icon" onClick={toggleSearch} />
           )}
+          <Link to="/wishlist" className="wishlist-icon-link" aria-label={`Wishlist with ${wishlistIds.length} items`} title="Wishlist"><Heart size={24} className="icon" />{wishlistIds.length > 0 && <span className="wishlist-count">{wishlistIds.length}</span>}</Link>
           <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'} title={user ? `Account: ${user.name}` : 'Sign in or register'}>
             <User size={24} className="icon" />
             {user && <span className="signed-in-dot" />}

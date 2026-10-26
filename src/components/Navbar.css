@@ -147,6 +147,9 @@
     color: inherit;
 }
 
+.wishlist-icon-link { position: relative; display: flex; align-items: center; color: inherit; }
+.wishlist-count { position: absolute; top: -8px; right: -9px; min-width: 18px; height: 18px; padding: 0 4px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #fff; background: #a43834; font-size: .65rem; font-weight: 700; }
+
 .account-icon-link {
     position: relative;
     display: flex;
