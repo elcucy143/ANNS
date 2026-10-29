@@ -1798,7 +1798,7 @@ registerHttp('orders', {
         );
         let updatedOrder = await collection.findOne({ id: orderId });
         await recordAdminAudit(db, request, 'order.fulfillment_updated', orderId, { from: existing.fulfillmentStatus || 'processing', to: fulfillmentStatus, courier, trackingNumber });
-        if (changed && ['shipped', 'out_for_delivery', 'delivered'].includes(fulfillmentStatus) && process.env.RESEND_API_KEY) {
+        if (changed) {
           try {
             const result = await sendFulfillmentUpdateEmail(updatedOrder);
             await collection.updateOne(
@@ -1914,10 +1914,12 @@ registerHttp('email-retries', {
           await db.collection('orders').updateOne({ id: order.id }, { $set: { adminPurchaseEmail: { status: 'failed', error: cleanText(error.message, 300), attemptedAt: nowIso() }, updatedAt: nowIso() } });
         }
       }
-      const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['shipped', 'out_for_delivery', 'delivered'] } }).limit(50).toArray();
+      const failedFulfillment = await db.collection('orders').find({ paymentStatus: 'captured', fulfillmentStatus: { $in: ['processing', 'packed', 'shipped', 'out_for_delivery', 'delivered'] } }).limit(50).toArray();
       let fulfillmentRetried = 0;
       for (const order of failedFulfillment) {
-        if (order.fulfillmentNotifications?.[order.fulfillmentStatus]?.status !== 'failed') continue;
+        // Retry both explicit failures and a missing receipt (for example, if a
+        // server process stopped after saving the status but before sending).
+        if (order.fulfillmentNotifications?.[order.fulfillmentStatus]?.status === 'sent') continue;
         try {
           const result = await sendFulfillmentUpdateEmail(order);
           await db.collection('orders').updateOne({ id: order.id }, { $set: { [`fulfillmentNotifications.${order.fulfillmentStatus}`]: { status: 'sent', emailId: result.id, sentAt: nowIso() } } });

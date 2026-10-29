@@ -11,6 +11,7 @@
     color: var(--color-text);
     text-align: center;
 }
+.search-summary { margin: -18px 0 28px; color: #786f68; text-align: center; }
 
 .no-results {
     text-align: center;
@@ -18,9 +19,15 @@
     color: #666;
     font-size: 1.1rem;
 }
+.no-results small { display: block; margin-top: 10px; }
 
 .product-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 30px;
 }
+.search-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 7px; margin-top: 42px; }
+.search-pagination button { min-width: 38px; min-height: 38px; padding: 8px 11px; border: 1px solid #ddd4cd; border-radius: 5px; background: #fff; color: #29231f; cursor: pointer; }
+.search-pagination button.active { border-color: #29231f; background: #29231f; color: #fff; }
+.search-pagination button:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 540px) { .search-results-page { padding-top: 25px; } .search-title { font-size: 1.55rem; } .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }

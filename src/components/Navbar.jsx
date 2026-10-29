@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, Heart, Menu, X, ShoppingBag, Search, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -9,6 +9,9 @@ import logo from '../assets/logo-corrected.jpg';
 import categoriesData from '../assets/json/categories.json';
 import { displaySubcategoryLabel } from '../utils/productOptions';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
+import { useProductCatalog } from '../context/ProductCatalogContext';
+import { searchProducts } from '../utils/productSearch';
+import { productImageVariant, recoverProductImage } from '../utils/imageUrl';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,7 +21,11 @@ const Navbar = () => {
   const { getCartCount } = useCart();
   const { user } = useAuth();
   const { wishlistIds } = useShoppingHistory();
+  const { products } = useProductCatalog();
   const navigate = useNavigate();
+  const suggestions = useMemo(() => searchQuery.trim().length >= 2
+    ? searchProducts(products, searchQuery, 6)
+    : [], [products, searchQuery]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -37,7 +44,15 @@ const Navbar = () => {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setIsSearchOpen(false);
       setSearchQuery('');
+      setIsOpen(false);
     }
+  };
+
+  const openSuggestion = (product) => {
+    navigate(`/product/${product.id}`);
+    setSearchQuery('');
+    setIsSearchOpen(false);
+    setIsOpen(false);
   };
 
   const navLinks = [
@@ -59,6 +74,7 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons mobile-only">
+          <button type="button" className="nav-icon-button" onClick={toggleSearch} aria-label="Search products"><Search size={24} /></button>
           <Link to="/wishlist" className="wishlist-icon-link" aria-label={`Wishlist with ${wishlistIds.length} items`}><Heart size={24} />{wishlistIds.length > 0 && <span className="wishlist-count">{wishlistIds.length}</span>}</Link>
           <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'}>
             <User size={24} />
@@ -140,21 +156,7 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-icons desktop-only">
-          {isSearchOpen ? (
-            <form onSubmit={handleSearchSubmit} className="search-form">
-              <input
-                id="search-input"
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onBlur={() => !searchQuery && setIsSearchOpen(false)}
-              />
-              <button type="submit"><Search size={20} /></button>
-            </form>
-          ) : (
-            <Search size={24} className="icon" onClick={toggleSearch} />
-          )}
+          <button type="button" className="nav-icon-button" onClick={toggleSearch} aria-label="Search products"><Search size={24} className="icon" /></button>
           <Link to="/wishlist" className="wishlist-icon-link" aria-label={`Wishlist with ${wishlistIds.length} items`} title="Wishlist"><Heart size={24} className="icon" />{wishlistIds.length > 0 && <span className="wishlist-count">{wishlistIds.length}</span>}</Link>
           <Link to="/account" className={`account-icon-link ${user ? 'signed-in' : ''}`} aria-label={user ? `Account: ${user.name}` : 'Sign in or register'} title={user ? `Account: ${user.name}` : 'Sign in or register'}>
             <User size={24} className="icon" />
@@ -166,6 +168,30 @@ const Navbar = () => {
           </Link>
         </div>
       </div>
+      {isSearchOpen && <div className="smart-search-panel">
+        <form onSubmit={handleSearchSubmit} className="search-form smart-search-form">
+          <Search size={20} aria-hidden="true" />
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search products, categories, colours or product codes"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            autoComplete="off"
+            aria-label="Search products"
+          />
+          {searchQuery && <button type="button" className="search-clear" onClick={() => setSearchQuery('')} aria-label="Clear search"><X size={18} /></button>}
+          <button type="submit" className="search-submit">Search</button>
+        </form>
+        {searchQuery.trim().length >= 2 && <div className="search-suggestions" role="listbox" aria-label="Product suggestions">
+          {suggestions.map((product) => <button type="button" role="option" aria-selected="false" key={product.id} onMouseDown={(event) => event.preventDefault()} onClick={() => openSuggestion(product)}>
+            <img src={productImageVariant(product.image, 'thumb')} alt="" loading="lazy" onError={recoverProductImage} />
+            <span><strong>{product.name}</strong><small>{product.category}{product.color ? ` · ${product.color}` : ''} · {product.id}</small></span>
+            <b>₹{Number(product.price).toLocaleString('en-IN')}</b>
+          </button>)}
+          <button type="button" className="search-view-all" onClick={handleSearchSubmit}>View all results for “{searchQuery.trim()}”</button>
+        </div>}
+      </div>}
     </nav>
   );
 };

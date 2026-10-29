@@ -7,13 +7,39 @@ const {
 } = require('../src/lib/auth');
 const { configurationProblems } = require('../src/lib/config');
 const { verifyPaymentSignature, verifyWebhookSignature } = require('../src/lib/razorpay');
-const { getDeliveryEstimate } = require('../src/lib/orderEmail');
+const { getDeliveryEstimate, sendFulfillmentUpdateEmail } = require('../src/lib/orderEmail');
 
 test('paid orders receive a seven-day delivery estimate', () => {
   const paidAt = '2026-10-19T10:00:00.000Z';
   const estimate = getDeliveryEstimate(paidAt);
   assert.equal(estimate.start, '2026-10-26T10:00:00.000Z');
   assert.equal(estimate.end, estimate.start);
+});
+
+test('every fulfilment stage can notify the customer', async () => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.RESEND_API_KEY;
+  let requestBody;
+  process.env.RESEND_API_KEY = 're_test_delivery_notifications';
+  global.fetch = async (_url, options) => {
+    requestBody = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ id: 'email-test-1' }) };
+  };
+  try {
+    const result = await sendFulfillmentUpdateEmail({
+      id: 'order-test-1',
+      fulfillmentStatus: 'packed',
+      customer: { name: 'Customer', email: 'customer@example.com' },
+    });
+    assert.equal(result.id, 'email-test-1');
+    assert.deepEqual(requestBody.to, ['customer@example.com']);
+    assert.match(requestBody.subject, /packed/i);
+    assert.match(requestBody.html, /packed and will be handed to the courier/i);
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalApiKey;
+  }
 });
 
 test('customer sessions reject tampering', () => {

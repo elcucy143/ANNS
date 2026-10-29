@@ -463,8 +463,10 @@ const ProductManager = () => {
             setOrders((current) => current.map((order) => (order.id === orderId ? result.order : order)));
             const emailState = result.order?.fulfillmentNotifications?.[result.order.fulfillmentStatus]?.status;
             setNotification(emailState === 'failed'
-                ? 'Order updated, but the customer email could not be delivered.'
-                : 'Order updated successfully. The customer was notified when required.');
+                ? 'Order updated, but the customer email failed and was queued for retry.'
+                : emailState === 'sent'
+                    ? 'Order updated successfully. The customer notification was sent.'
+                    : 'No order details changed, so no duplicate customer email was sent.');
         } catch (error) {
             setNotification(error.message || 'The order could not be updated.');
         } finally {
