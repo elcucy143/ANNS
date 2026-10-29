@@ -201,22 +201,6 @@ const CategoryPage = ({ title }) => {
         { label: displayTitle, path: `/${displayTitle.toLowerCase().replace(/ /g, '-')}` }
     ];
 
-    useEffect(() => {
-        const observerOptions = { threshold: 0.1 };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('reveal');
-                }
-            });
-        }, observerOptions);
-
-        const cards = document.querySelectorAll('.product-card');
-        cards.forEach(card => observer.observe(card));
-
-        return () => cards.forEach(card => observer.unobserve(card));
-    }, [products]);
-
     return (
         <div className="category-page container">
             <Breadcrumbs items={breadcrumbItems} />

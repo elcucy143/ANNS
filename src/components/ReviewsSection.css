@@ -38,11 +38,13 @@
 .testimonials-empty p { margin: 0; color: #81766e; font-size: .9rem; }
 @media (max-width: 900px) { .testimonials-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 580px) {
-    .testimonials-section { padding: 58px 0; }
+    .testimonials-section { padding: 38px 0; }
+    .testimonials-heading { margin-bottom: 22px; }
+    .testimonials-heading h2 { margin-block: 5px 7px; font-size: 2rem; }
     .testimonials-grid { grid-template-columns: 1fr; }
     .testimonials-marquee { margin-inline: -15px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
     .testimonials-marquee .testimonial-card { width: min(82vw, 330px); }
-    .testimonial-copy { min-height: 0; }
+    .testimonial-copy { min-height: 0; padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
     .testimonials-marquee { overflow-x: auto; -webkit-mask-image: none; mask-image: none; scrollbar-width: thin; }

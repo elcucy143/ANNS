@@ -27,7 +27,14 @@ export const ProductCatalogProvider = ({ children }) => {
       const catalog = await getProductsFromDatabase();
       const normalized = (Array.isArray(catalog) ? catalog : []).map(normalizeCatalogProduct);
       setProducts(normalized);
-      try { localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(normalized)); } catch { /* Catalog remains available in memory. */ }
+      // Persisting a large catalogue can block the main thread on slower
+      // phones. Paint the fresh products first, then update the offline cache
+      // during idle time.
+      const persistCatalog = () => {
+        try { localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(normalized)); } catch { /* Catalog remains available in memory. */ }
+      };
+      if ('requestIdleCallback' in window) window.requestIdleCallback(persistCatalog, { timeout: 2000 });
+      else window.setTimeout(persistCatalog, 0);
       setError(null);
     } catch {
       const cached = readCatalogCache();

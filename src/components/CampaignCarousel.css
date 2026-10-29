@@ -1,5 +1,5 @@
 .campaign-carousel {
-    padding: 80px 0;
+    padding: 56px 0;
     background-color: var(--color-secondary);
 }
 
@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 40px;
+    margin-top: 16px;
 }
 
 .campaign-slide {
@@ -122,8 +122,10 @@
 }
 
 @media (max-width: 768px) {
+    .campaign-carousel { padding: 36px 0; }
+
     .campaign-slide {
-        height: 500px;
+        height: 410px;
     }
 
     .campaign-card {
@@ -137,16 +139,23 @@
     }
 
     .campaign-image {
-        height: 250px;
+        height: 205px;
     }
 
     .campaign-content {
-        padding: 30px 20px;
+        height: 205px;
+        padding: 20px 18px;
     }
 
     .campaign-content h3 {
-        font-size: 1.8rem;
+        margin-bottom: 8px;
+        font-size: 1.55rem;
     }
+
+    .campaign-content p { display: -webkit-box; overflow: hidden; margin-bottom: 14px; font-size: .88rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+    .campaign-content .btn { padding: 8px 18px; font-size: .78rem; }
+    .carousel-btn { width: 42px; height: 42px; }
+    .carousel-indicators { margin-top: 16px; }
 
     .carousel-btn.prev {
         left: 10px;

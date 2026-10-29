@@ -20,6 +20,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-main);
   color: var(--color-text);
@@ -88,4 +92,16 @@ img {
   text-align: center;
   margin-bottom: 2rem;
   color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  :root { --header-height: 76px; }
+  .container { padding-inline: 14px; }
+  .section-title { font-size: clamp(1.75rem, 8vw, 2.15rem); margin-bottom: 1.25rem; }
+  .btn { min-height: 44px; padding: 10px 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

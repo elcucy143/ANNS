@@ -208,17 +208,14 @@
 .catalog-pagination button.active { background:#29231f; color:#fff; }
 .catalog-pagination-count { flex-basis:100%; margin-top:4px; text-align:center; font-size:.78rem; }
 
-/* Scroll reveal animation styles */
+/* Cards appear immediately; network-ready products should never wait for a
+   scroll observer before becoming visible. */
 .products-list .product-card {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.products-list .product-card.reveal {
     opacity: 1;
     transform: translateY(0);
+    animation: catalog-card-in .24s ease-out both;
 }
+@keyframes catalog-card-in { from { opacity: .25; transform: translateY(8px); } }
 
 .subsection-title {
     text-align: center;
@@ -243,16 +240,32 @@
 }
 
 @media (max-width: 600px) {
+    .category-page { padding: 20px 14px 36px; }
+    .category-page .breadcrumbs { margin-bottom: 14px; font-size: .78rem; }
+    .category-header { margin-bottom: 18px; }
+    .category-header h1 { margin-bottom: 5px; }
+    .category-header p { font-size: .86rem; line-height: 1.45; }
+
     .products-list {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px 10px;
     }
 
     .controls-bar {
-        flex-direction: column;
-        gap: 15px;
-        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 18px;
+        padding: 10px 0;
     }
+
+    .filter-toggle-btn { flex: 0 0 auto; min-height: 44px; padding: 8px 12px; }
+    .sort-container { flex: 1; min-width: 0; justify-content: flex-end; gap: 6px; }
+    .sort-container label { flex: 0 0 auto; font-size: .78rem; }
+    .sort-container select { min-width: 0; width: 100%; max-width: 145px; min-height: 44px; padding: 7px 5px; font-size: .78rem; }
+    .catalog-pagination.top { display: none; }
+    .catalog-pagination { gap: 5px; margin-top: 30px; }
+    .catalog-pagination button { width: 38px; height: 38px; }
+    .catalog-pagination-count { font-size: .7rem; }
+    .empty-state { padding: 55px 20px; }
 
     .filter-sidebar {
         width: 100%;

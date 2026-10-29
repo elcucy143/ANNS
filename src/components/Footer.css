@@ -98,3 +98,14 @@
 .payment-methods span:first-child {
     color: #666;
 }
+
+@media (max-width: 700px) {
+    .footer { padding: 38px 0 16px; }
+    .footer-container { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 18px; margin-bottom: 28px; }
+    .footer-section:first-child, .footer-section:last-child { grid-column: 1 / -1; }
+    .footer-logo { max-width: 170px; margin-bottom: 12px; }
+    .footer-section h4 { margin-bottom: 11px; font-size: .9rem; }
+    .footer-section p, .footer-section a, .contact-info li { font-size: .8rem; }
+    .footer-section ul { gap: 7px; }
+    .footer-bottom { padding-top: 16px; }
+}

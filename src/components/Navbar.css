@@ -92,6 +92,7 @@
         display: flex;
     }
     .navbar-icons.mobile-only { gap: 13px; }
+    .logo-image { height: 64px; }
 
     .navbar-links {
         position: absolute;

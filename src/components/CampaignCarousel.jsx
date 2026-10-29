@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './CampaignCarousel.css';
 import cmpWw from '../assets/cmp-ww.jpg';
@@ -19,7 +20,7 @@ const campaigns = [
         title: 'Festive Specials',
         description: 'Celebrate in style with our festive collection',
         image: 'https://images.unsplash.com/photo-1583391733958-e02376e885d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-        link: '/sale'
+        link: '/jewellery'
     },
     {
         id: 3,
@@ -94,7 +95,7 @@ const CampaignCarousel = () => {
                                 <div className="campaign-content">
                                     <h3>{campaign.title}</h3>
                                     <p>{campaign.description}</p>
-                                    <a href={campaign.link} className="btn">Shop Now</a>
+                                    <Link to={campaign.link} className="btn">Shop Now</Link>
                                 </div>
                             </div>
                         ))}

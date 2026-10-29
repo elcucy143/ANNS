@@ -57,10 +57,14 @@
 }
 
 @media (max-width: 768px) {
+    .contact-page { padding: 24px 14px 40px; }
+    .contact-content { margin-top: 20px; }
     .contact-content {
         grid-template-columns: 1fr;
-        gap: 40px;
+        gap: 30px;
     }
+    .contact-form-container h2, .contact-info-container h2 { margin-bottom: 18px; font-size: 1.55rem; }
+    .contact-info-container .info-item { margin-bottom: 20px; }
 }
 
 .success-msg {

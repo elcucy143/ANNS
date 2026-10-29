@@ -1,5 +1,5 @@
 .product-carousel-section {
-    padding: 80px 0;
+    padding: 56px 0;
     background-color: var(--color-white);
 }
 
@@ -101,4 +101,19 @@
     text-decoration: none;
     color: inherit;
     display: block;
+}
+
+@media (max-width: 768px) {
+    .product-carousel-section { padding: 36px 0; }
+    .carousel-container { margin-right: -14px; padding-bottom: 10px; scroll-snap-type: x proximity; }
+    .carousel-track { gap: 12px; padding-right: 14px; }
+    .carousel-card { width: min(70vw, 245px); scroll-snap-align: start; }
+    .carousel-card .product-image { height: auto; aspect-ratio: 4 / 5; margin-bottom: 9px; }
+    .carousel-card .product-info h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .carousel-card .add-to-cart-btn { bottom: 0; padding: 11px; font-size: .72rem; }
+    .carousel-card:hover { transform: none; }
+    .carousel-card:hover .product-image img { transform: none; }
 }
