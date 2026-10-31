@@ -1,0 +1,9 @@
+.marketing-consent { position: fixed; z-index: 12000; right: 20px; bottom: 20px; left: 20px; max-width: 880px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 18px 20px; border: 1px solid #d9cfc7; border-radius: 12px; background: #fff; color: #29231f; box-shadow: 0 18px 55px rgba(35,28,24,.2); }
+.marketing-consent strong { display: block; margin-bottom: 4px; }
+.marketing-consent p { margin: 0; color: #6f665f; font-size: .82rem; line-height: 1.45; }
+.marketing-consent a { color: #8b5737; text-decoration: underline; }
+.marketing-consent-actions { display: flex; flex: 0 0 auto; gap: 9px; }
+.marketing-consent button { min-height: 42px; padding: 9px 14px; border: 1px solid #29231f; border-radius: 5px; cursor: pointer; font: 600 .76rem var(--font-main); }
+.consent-essential { background: #fff; color: #29231f; }
+.consent-accept { background: #29231f; color: #fff; }
+@media (max-width: 680px) { .marketing-consent { right: 10px; bottom: 10px; left: 10px; align-items: stretch; flex-direction: column; gap: 13px; padding: 16px; } .marketing-consent-actions { display: grid; grid-template-columns: 1fr 1fr; } }

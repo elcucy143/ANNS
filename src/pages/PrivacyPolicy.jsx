@@ -25,6 +25,12 @@ const PrivacyPolicy = () => {
                 </section>
 
                 <section className="policy-section">
+                    <h2>Advertising Analytics and Meta Pixel</h2>
+                    <p>With your optional consent, Annsonline uses Meta Pixel to understand how visitors arriving from Facebook and Instagram advertisements use the website. This may record page visits, searches, product views, wishlist and cart activity, checkout starts and verified purchases. Failed or cancelled payments are not reported as purchases.</p>
+                    <p>Meta may use this information to measure advertising performance, create advertising audiences and show more relevant advertisements. You can choose “Only necessary” when the preference notice appears and continue using shopping, account and payment features without Meta advertising analytics.</p>
+                </section>
+
+                <section className="policy-section">
                     <h2>Customer Reviews and Testimonials</h2>
                     <p>We will use all the testimonials and reviews given by customers on our web site which may contain personally identifiable information. If you would like to have your testimonial or review removed from our site, you have to mail us at <strong>astrendsandgifts@gmail.com</strong></p>
                 </section>

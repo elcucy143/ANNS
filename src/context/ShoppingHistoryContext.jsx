@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { getMyWishlist, saveMyWishlist } from '../services/apiClient';
+import { trackMetaEvent } from '../utils/metaPixel';
 
 const ShoppingHistoryContext = createContext(null);
 const WISHLIST_KEY = 'anns-wishlist-v1';
@@ -66,9 +67,12 @@ export const ShoppingHistoryProvider = ({ children }) => {
     return () => window.clearTimeout(timer);
   }, [user?.id, wishlistIds, wishlistReady]);
   useEffect(() => { try { localStorage.setItem(RECENT_KEY, JSON.stringify(recentIds)); } catch { /* optional persistence */ } }, [recentIds]);
-  const toggleWishlist = useCallback((id) => setWishlistIds((current) => current.includes(String(id))
-    ? current.filter((value) => value !== String(id))
-    : [String(id), ...current].slice(0, 100)), []);
+  const toggleWishlist = useCallback((id) => setWishlistIds((current) => {
+    const productId = String(id);
+    if (current.includes(productId)) return current.filter((value) => value !== productId);
+    trackMetaEvent('AddToWishlist', { content_ids: [productId], content_type: 'product' });
+    return [productId, ...current].slice(0, 100);
+  }), []);
   const recordView = useCallback((id) => setRecentIds((current) => [String(id), ...current.filter((value) => value !== String(id))].slice(0, 12)), []);
   return <ShoppingHistoryContext.Provider value={{ wishlistIds, recentIds, wishlistReady, toggleWishlist, recordView }}>{children}</ShoppingHistoryContext.Provider>;
 };

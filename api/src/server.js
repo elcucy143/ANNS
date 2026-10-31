@@ -31,9 +31,9 @@ server.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://www.google.com', 'https://www.gstatic.com', 'https://checkout.razorpay.com', 'https://www.googletagmanager.com'],
+      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://www.google.com', 'https://www.gstatic.com', 'https://checkout.razorpay.com', 'https://www.googletagmanager.com', 'https://connect.facebook.net'],
       frameSrc: ["'self'", 'https://accounts.google.com', 'https://www.google.com', 'https://recaptcha.google.com', 'https://api.razorpay.com', 'https://*.razorpay.com'],
-      connectSrc: ["'self'", 'https://accounts.google.com', 'https://identitytoolkit.googleapis.com', 'https://securetoken.googleapis.com', 'https://www.googleapis.com', 'https://*.razorpay.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://identitytoolkit.googleapis.com', 'https://securetoken.googleapis.com', 'https://www.googleapis.com', 'https://*.razorpay.com', 'https://www.google-analytics.com', 'https://www.googletagmanager.com', 'https://connect.facebook.net', 'https://www.facebook.com'],
       imgSrc: ["'self'", 'data:', 'https:'],
       styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
       fontSrc: ["'self'", 'data:', 'https:'],

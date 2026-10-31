@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useProductCatalog } from './ProductCatalogContext';
+import { metaProduct, trackMetaEvent } from '../utils/metaPixel';
 
 const CartContext = createContext();
 export const CART_STORAGE_KEY = 'anns-cart-v2';
@@ -109,6 +110,7 @@ export const CartProvider = ({ children }) => {
         });
         setLastAddedItem(addedItem);
         setIsPopupVisible(true);
+        trackMetaEvent('AddToCart', metaProduct(addedItem, addedItem.quantity));
         return true;
     }, []);
 

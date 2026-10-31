@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, ChevronLeft, CreditCard, LoaderCircle, LockKeyhole, ShieldCheck, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { createRazorpayOrder, verifyRazorpayPayment } from '../services/apiClient';
 import './Checkout.css';
+import { trackMetaEvent } from '../utils/metaPixel';
 
 const loadRazorpay = () => new Promise((resolve, reject) => {
   if (window.Razorpay) return resolve(true);
@@ -29,6 +30,7 @@ const Checkout = () => {
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
+  const checkoutTracked = useRef(false);
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -41,6 +43,19 @@ const Checkout = () => {
   });
 
   const handleChange = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+
+  useEffect(() => {
+    if (checkoutTracked.current || !cartItems.length) return;
+    checkoutTracked.current = true;
+    trackMetaEvent('InitiateCheckout', {
+      content_ids: cartItems.map((item) => String(item.id)),
+      content_type: 'product',
+      contents: cartItems.map((item) => ({ id: String(item.id), quantity: Number(item.quantity), item_price: Number(item.price) })),
+      value: getCartTotal() + getShippingTotal(),
+      currency: 'INR',
+      num_items: cartItems.reduce((total, item) => total + Number(item.quantity), 0),
+    });
+  }, [cartItems, getCartTotal, getShippingTotal]);
 
   const handlePayment = async (event) => {
     event.preventDefault();
@@ -71,6 +86,13 @@ const Checkout = () => {
         })),
       });
 
+      trackMetaEvent('AddPaymentInfo', {
+        content_ids: cartItems.map((item) => String(item.id)),
+        content_type: 'product',
+        value: Number(checkoutOrder.amount) / 100,
+        currency: checkoutOrder.currency || 'INR',
+      });
+
       const razorpay = new window.Razorpay({
         key: checkoutOrder.keyId,
         amount: checkoutOrder.amount,
@@ -93,6 +115,14 @@ const Checkout = () => {
         handler: async (payment) => {
           try {
             const result = await verifyRazorpayPayment(payment);
+            trackMetaEvent('Purchase', {
+              content_ids: cartItems.map((item) => String(item.id)),
+              content_type: 'product',
+              contents: cartItems.map((item) => ({ id: String(item.id), quantity: Number(item.quantity), item_price: Number(item.price) })),
+              value: Number(result.order?.total || checkoutOrder.amount / 100),
+              currency: checkoutOrder.currency || 'INR',
+              num_items: cartItems.reduce((total, item) => total + Number(item.quantity), 0),
+            }, result.order?.id || checkoutOrder.localOrderId);
             setCompletedOrder(result.order);
             clearCart();
           } catch (verificationError) {

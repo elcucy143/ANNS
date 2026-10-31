@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { recordPageView } from '../services/apiClient';
+import { trackMetaPageView } from '../utils/metaPixel';
 
 const safeStorageId = (storage, key) => {
   try {
@@ -37,6 +38,7 @@ export default function AnalyticsTracker() {
       page_location: window.location.href,
       page_title: document.title,
     });
+    trackMetaPageView();
   }, [location.pathname, location.search]);
 
   return null;

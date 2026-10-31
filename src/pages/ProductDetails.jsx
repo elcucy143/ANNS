@@ -16,6 +16,7 @@ import ReviewsSection from '../components/ReviewsSection';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 import { productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import ProductReviewForm from '../components/ProductReviewForm';
+import { metaProduct, trackMetaEvent } from '../utils/metaPixel';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -72,6 +73,10 @@ const ProductDetails = () => {
             setSelectedSize(null);
         }
     }, [id, productColor, productSizeKey]);
+
+    React.useEffect(() => {
+        if (productData?.id) trackMetaEvent('ViewContent', metaProduct(productData));
+    }, [productData]);
 
     if (loading) {
         return <div className="container" style={{ padding: '100px', textAlign: 'center' }}>Loading product…</div>;

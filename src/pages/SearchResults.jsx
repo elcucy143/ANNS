@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard';
 import './SearchResults.css';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { searchProducts } from '../utils/productSearch';
+import { trackMetaEvent } from '../utils/metaPixel';
 
 const PAGE_SIZE = 24;
 
@@ -16,6 +17,9 @@ const SearchResults = () => {
     const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
     const visibleResults = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
     useEffect(() => { queueMicrotask(() => setPage(1)); }, [query]);
+    useEffect(() => {
+        if (query) trackMetaEvent('Search', { search_string: query, content_category: 'products' });
+    }, [query]);
 
     return (
         <div className="search-results-page container">
