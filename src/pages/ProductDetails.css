@@ -457,3 +457,6 @@
 .review-form-error { margin: 0; color: #b2362b; }
 .review-form-success { display: flex; align-items: center; gap: 7px; margin: 0; color: #287a49; }
 @media (max-width: 580px) { .product-review-form { margin-top: 34px; padding: 22px 16px; } .review-primary-button { width: 100%; } }
+.product-bogo-message { display:flex; flex-direction:column; gap:4px; margin:14px 0 18px; padding:13px 15px; border:1px solid #b8dbc8; border-radius:6px; background:#f2faf6; color:#24583d; }
+.product-bogo-message strong { font-size:.8rem; letter-spacing:.12em; }
+.product-bogo-message span { font-size:.88rem; line-height:1.45; }

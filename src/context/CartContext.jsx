@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useProductCatalog } from './ProductCatalogContext';
 import { metaProduct, trackMetaEvent } from '../utils/metaPixel';
+import { calculateBogoPricing, isBogoEligible } from '../utils/promotions';
 
 const CartContext = createContext();
 export const CART_STORAGE_KEY = 'anns-cart-v2';
@@ -29,6 +30,7 @@ const normalizeCartItem = (item) => {
         quantity: normalizeQuantity(item.quantity),
         size: String(item.size || ''),
         color: String(item.color || ''),
+        buyOneGetOne: isBogoEligible(item.buyOneGetOne),
     };
 };
 
@@ -82,8 +84,9 @@ export const CartProvider = ({ children }) => {
             const nextPrice = parsePrice(product.price);
             const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
             const nextShippingCharge = parsePrice(product.shippingCharge);
-            if (item.price === nextPrice && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage) return item;
-            return { ...item, name: product.name, price: nextPrice, shippingCharge: nextShippingCharge, image: nextImage };
+            const nextBuyOneGetOne = isBogoEligible(product.buyOneGetOne);
+            if (item.price === nextPrice && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage && item.buyOneGetOne === nextBuyOneGetOne) return item;
+            return { ...item, name: product.name, price: nextPrice, shippingCharge: nextShippingCharge, image: nextImage, buyOneGetOne: nextBuyOneGetOne };
         }));
     }, [products]);
 
@@ -135,12 +138,9 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
     };
 
-    const getCartTotal = () => {
-        return cartItems.reduce((total, item) => {
-            // Remove currency symbol and commas if present, assume price is string like "₹ 1,299"
-            return total + parsePrice(item.price) * item.quantity;
-        }, 0);
-    };
+    const getCartPricing = () => calculateBogoPricing(cartItems);
+    const getCartTotal = () => getCartPricing().subtotal;
+    const getBogoDiscount = () => getCartPricing().bogoDiscount;
 
     const getShippingTotal = () => cartItems.reduce(
         (total, item) => total + parsePrice(item.shippingCharge) * item.quantity,
@@ -159,6 +159,8 @@ export const CartProvider = ({ children }) => {
             updateQuantity,
             clearCart,
             getCartTotal,
+            getBogoDiscount,
+            getCartPricing,
             getShippingTotal,
             getCartCount,
             lastAddedItem,

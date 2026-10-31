@@ -26,7 +26,7 @@ const loadRazorpay = () => new Promise((resolve, reject) => {
 
 const Checkout = () => {
   const { user } = useAuth();
-  const { cartItems, clearCart, getCartTotal, getShippingTotal } = useCart();
+  const { cartItems, clearCart, getCartTotal, getShippingTotal, getBogoDiscount, getCartPricing } = useCart();
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
@@ -216,7 +216,12 @@ const Checkout = () => {
               </div>
             ))}
           </div>
-          <div className="checkout-totals"><span>Shipping<strong>{getShippingTotal() > 0 ? `₹${getShippingTotal().toLocaleString('en-IN')}` : 'Free'}</strong></span><span className="grand-total">Total<strong>₹{(getCartTotal() + getShippingTotal()).toLocaleString('en-IN')}</strong></span></div>
+          <div className="checkout-totals">
+            <span>Merchandise<strong>₹{getCartPricing().grossSubtotal.toLocaleString('en-IN')}</strong></span>
+            {getBogoDiscount() > 0 && <span>Buy 1 Get 1 savings<strong>− ₹{getBogoDiscount().toLocaleString('en-IN')}</strong></span>}
+            <span>Shipping<strong>{getShippingTotal() > 0 ? `₹${getShippingTotal().toLocaleString('en-IN')}` : 'Free'}</strong></span>
+            <span className="grand-total">Total<strong>₹{(getCartTotal() + getShippingTotal()).toLocaleString('en-IN')}</strong></span>
+          </div>
           <div className="checkout-trust"><ShieldCheck size={19} /><span><strong>Secure online payment</strong><small>UPI, cards, netbanking and supported wallets</small></span></div>
         </aside>
       </div>

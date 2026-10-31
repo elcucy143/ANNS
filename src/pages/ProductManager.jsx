@@ -126,6 +126,7 @@ const getInitialFormData = () => ({
     reviews: [],
     shipping: [],
     featured: 'no',
+    buyOneGetOne: 'no',
     campaign: [],
     showOnCategory: true,
 });
@@ -752,6 +753,7 @@ const ProductManager = () => {
             ...getInitialFormData(),
             ...product,
             hasShippingCharge: toNumber(product.shippingCharge) > 0 ? 'yes' : 'no',
+            buyOneGetOne: product.buyOneGetOne === true || String(product.buyOneGetOne).toLowerCase() === 'yes' ? 'yes' : 'no',
             stock: product.stockValue,
             sold: product.soldValue,
             sizes: normalizeSizeList(product.sizes),
@@ -910,6 +912,7 @@ const ProductManager = () => {
             price: String(originalPrice),
             discount: formData.discount === '' ? '' : String(discountedPrice),
             shippingCharge: formData.hasShippingCharge === 'yes' ? Math.max(0, toNumber(formData.shippingCharge)) : 0,
+            buyOneGetOne: formData.buyOneGetOne === 'yes',
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
@@ -970,6 +973,20 @@ const ProductManager = () => {
         await saveProducts(nextProducts, `Stock updated for ${changedProducts.length} products.`, changedProducts);
         setSelectedProductIds([]);
         setBulkStockValue('');
+    };
+
+    const applyBulkBogo = async (enabled) => {
+        if (!selectedProductIds.length) return;
+        const selected = new Set(selectedProductIds);
+        const changedProducts = [];
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+            if (!selected.has(product.id)) return product;
+            const updated = { ...product, buyOneGetOne: enabled };
+            changedProducts.push({ ...updated, category });
+            return updated;
+        })]));
+        await saveProducts(nextProducts, `Buy 1 Get 1 ${enabled ? 'enabled' : 'removed'} for ${changedProducts.length} products.`, changedProducts);
+        setSelectedProductIds([]);
     };
 
     const removeSelectedProducts = async () => {
@@ -1034,6 +1051,7 @@ const ProductManager = () => {
         const legacyShippingCharge = valueFrom(row, 'shippingcharge', 'deliverycharge', 'shippingfee', 'deliveryfee');
         const shippingAmount = valueFrom(row, 'shippingchargeamount', 'shippingamount', 'deliverychargeamount', 'deliveryamount') || legacyShippingCharge;
         const numericShippingCharge = toNumber(shippingAmount, NaN);
+        const bogoChoice = String(valueFrom(row, 'buyonegetone', 'bogo', 'buy1get1')).trim().toLowerCase();
         const hasShippingCharge = shippingChoice
             ? ['yes', 'y', 'true', '1', 'paid'].includes(shippingChoice)
             : shippingAmount !== '' && numericShippingCharge > 0;
@@ -1052,6 +1070,7 @@ const ProductManager = () => {
         if (!hasShippingCharge && shippingAmount !== '' && (!Number.isFinite(numericShippingCharge) || numericShippingCharge < 0)) {
             errors.push('Shipping charge must be ₹0 or more');
         }
+        if (bogoChoice && !['yes', 'y', 'true', '1', 'no', 'n', 'false', '0'].includes(bogoChoice)) errors.push('Buy One Get One must be Yes or No');
 
         return {
             rowNumber: index + 2,
@@ -1067,6 +1086,7 @@ const ProductManager = () => {
                 discount: discountedPrice === '' || numericDiscountedPrice === 0 ? '' : String(discountedPrice).trim(),
                 hasShippingCharge: hasShippingCharge ? 'yes' : 'no',
                 shippingCharge: hasShippingCharge ? numericShippingCharge : 0,
+                buyOneGetOne: ['yes', 'y', 'true', '1'].includes(bogoChoice),
                 stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
                 sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
                 image: String(valueFrom(row, 'image', 'imageurl')).trim(),
@@ -1269,6 +1289,7 @@ const ProductManager = () => {
             discountedPrice: 449,
             hasShippingCharge: 'Yes',
             shippingChargeAmount: 60,
+            buyOneGetOne: 'No',
             stock: 25,
             sold: 5,
             image: '/src/assets/img/example.jpg',
@@ -1650,7 +1671,7 @@ const ProductManager = () => {
                             <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
-                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
+                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(true)}>Enable BOGO</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(false)}>Remove BOGO</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
                         <div className="admin-table-wrap">
                             <table className="admin-table">
                                 <thead><tr><th><input type="checkbox" aria-label="Select this page" checked={pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id))} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedProducts.map((product) => product.id)])] : current.filter((id) => !pagedProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
@@ -1660,7 +1681,7 @@ const ProductManager = () => {
                                         return (
                                             <tr key={`${product.category}-${product.id}`}>
                                                 <td><input type="checkbox" aria-label={`Select ${product.name}`} checked={selectedProductIds.includes(product.id)} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} /></td>
-                                                <td><strong>{product.name}</strong><small>{product.id}</small></td>
+                                                <td><strong>{product.name}</strong><small>{product.id}{product.buyOneGetOne ? ' · BUY 1 GET 1' : ''}</small></td>
                                                 <td>{product.category}</td>
                                                 <td>{formatCurrency(product.price)}</td>
                                                 <td>{product.stockValue.toLocaleString('en-IN')}</td>
@@ -1927,6 +1948,7 @@ const ProductManager = () => {
                             <article className="admin-panel"><span>6</span><h3>Orders and tracking</h3><p>Update status in order: Processing, Packed, Shipped, Out for delivery, Delivered. Add courier, tracking number and link before marking shipped.</p><button type="button" onClick={() => handleNavigation('orders')}>Open Orders</button></article>
                             <article className="admin-panel"><span>7</span><h3>Customer data</h3><p>Use CSV exports for backup and reporting. Delete a customer only when the record is genuinely unnecessary and purchase history has been checked.</p></article>
                             <article className="admin-panel"><span>8</span><h3>Before finishing</h3><p>Confirm “Atlas connected”, refresh the inventory, search the product code, and open the live category page to verify the product and images.</p><small>Do not close the tab while an upload is processing.</small></article>
+                            <article className="admin-panel"><span>9</span><h3>Buy 1 Get 1</h3><p>Set “Buy 1 Get 1?” to Yes on each eligible product, or use the same column in the Excel template. Customers may mix eligible products; the lower-priced product in every pair becomes free automatically.</p><small>An odd unpaired item is charged normally. Shipping still applies to every physical item.</small></article>
                         </section>
                     </div>
                 )}
@@ -2021,6 +2043,7 @@ const ProductManager = () => {
                                     <label>Discounted price (₹)<input name="discount" type="number" min="1" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /><small>Leave blank if this product is not discounted.</small></label>
                                     <label>Shipping charge?<select name="hasShippingCharge" value={formData.hasShippingCharge} onChange={handleInputChange}><option value="no">No — free shipping</option><option value="yes">Yes</option></select></label>
                                     {formData.hasShippingCharge === 'yes' && <label>Shipping amount per item (₹)<input name="shippingCharge" type="number" min="0.01" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} required /><small>Added to the cart and Razorpay total.</small></label>}
+                                    <label>Buy 1 Get 1?<select name="buyOneGetOne" value={formData.buyOneGetOne} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes — eligible</option></select><small>Eligible products can be mixed. For each pair, the lower-priced product is free.</small></label>
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">

@@ -10,7 +10,7 @@ import images from '../assets/images';
 import { productImageVariant } from '../utils/imageUrl';
 
 const Cart = () => {
-    const { cartItems, removeFromCart, updateQuantity, getCartTotal, getShippingTotal } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, getCartTotal, getShippingTotal, getBogoDiscount, getCartPricing } = useCart();
     const { products } = useProductCatalog();
     const { user, isLoading } = useAuth();
 
@@ -45,6 +45,7 @@ const Cart = () => {
                                     <h3>{item.name}</h3>
                                     <p className="item-variant">Size: {item.size} | Color: {item.color}</p>
                                     <p className="item-price">₹{item.price}</p>
+                                    {item.buyOneGetOne && <p className="item-variant"><strong>BUY 1 GET 1 eligible</strong></p>}
                                 </div>
                                 <div className="cart-item-actions">
                                     <div className="quantity-selector small">
@@ -70,10 +71,9 @@ const Cart = () => {
 
                 <div className="cart-summary">
                     <h2>Order Summary</h2>
-                    <div className="summary-row">
-                        <span>Subtotal</span>
-                        <span>₹ {getCartTotal().toFixed(2)}</span>
-                    </div>
+                    <div className="summary-row"><span>Merchandise</span><span>₹ {getCartPricing().grossSubtotal.toFixed(2)}</span></div>
+                    {getBogoDiscount() > 0 && <div className="summary-row"><span>Buy 1 Get 1 savings</span><span>− ₹ {getBogoDiscount().toFixed(2)}</span></div>}
+                    <div className="summary-row"><span>Subtotal</span><span>₹ {getCartTotal().toFixed(2)}</span></div>
                     <div className="summary-row">
                         <span>Shipping</span>
                         <span>{getShippingTotal() > 0 ? `₹ ${getShippingTotal().toFixed(2)}` : 'Free'}</span>

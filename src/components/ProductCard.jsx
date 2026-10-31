@@ -28,6 +28,7 @@ const ProductCard = ({ product, priority = false }) => {
                 <div className={`product-image ${/jewel/i.test(String(product.category || '')) ? 'show-complete-image' : ''}`}>
                     <button type="button" className={`product-wishlist-btn ${saved ? 'saved' : ''}`} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`} onClick={(event) => { event.preventDefault(); event.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} fill={saved ? 'currentColor' : 'none'} /></button>
                     {product.originalPrice > product.price && <span className="product-sale-badge">{product.flashSale ? 'FLASH SALE' : 'SALE'} · {product.discountPercent}% OFF</span>}
+                    {product.buyOneGetOne && <span className={`product-bogo-badge ${product.originalPrice > product.price ? 'below-sale' : ''}`}>BUY 1 GET 1</span>}
                     <img
                         src={images[filename] || productImageVariant(product.image, 'card')}
                         srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}

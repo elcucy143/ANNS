@@ -2,6 +2,7 @@ const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const { getClient, getDb, withDbRetry } = require('../lib/db');
+const { applyBuyOneGetOne } = require('../lib/promotions');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
   authenticateRequest,
@@ -155,6 +156,7 @@ const normalizeProduct = (product) => {
     reviews: normalizeList(product.reviews),
     shipping: normalizeList(product.shipping),
     featured: product.featured === true || String(product.featured).toLowerCase() === 'yes' ? 'yes' : 'no',
+    buyOneGetOne: product.buyOneGetOne === true || ['yes', 'true', '1'].includes(String(product.buyOneGetOne || '').toLowerCase()),
     campaign: normalizeList(product.campaign),
     showOnCategory: product.showOnCategory !== false,
     category: cleanText(product.category, 100),
@@ -1511,14 +1513,16 @@ registerHttp('razorpay-create-order', {
           color: cleanText(requestedItem.color, 80),
           quantity,
           price,
-          lineTotal: Number((price * quantity).toFixed(2)),
+          buyOneGetOne: product.buyOneGetOne === true || ['yes', 'true', '1'].includes(String(product.buyOneGetOne || '').toLowerCase()),
           shippingCharge: Number(Math.max(0, numericPrice(product.shippingCharge)).toFixed(2)),
           lineShipping: Number((Math.max(0, numericPrice(product.shippingCharge)) * quantity).toFixed(2)),
         };
       });
 
-      const subtotal = Number(items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
-      const shippingTotal = Number(items.reduce((sum, item) => sum + item.lineShipping, 0).toFixed(2));
+      const promotionPricing = applyBuyOneGetOne(items);
+      const pricedItems = promotionPricing.items;
+      const subtotal = promotionPricing.subtotal;
+      const shippingTotal = Number(pricedItems.reduce((sum, item) => sum + item.lineShipping, 0).toFixed(2));
       const total = Number((subtotal + shippingTotal).toFixed(2));
       const amount = Math.round(total * 100);
       if (!Number.isSafeInteger(amount) || amount < 100) {
@@ -1555,7 +1559,9 @@ registerHttp('razorpay-create-order', {
           postalCode: cleanText(shippingAddress.postalCode, 20),
           country: 'India',
         },
-        items,
+        items: pricedItems,
+        merchandiseSubtotal: promotionPricing.grossSubtotal,
+        bogoDiscount: promotionPricing.bogoDiscount,
         subtotal,
         shippingTotal,
         total,
