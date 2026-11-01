@@ -2,7 +2,7 @@ const { app } = require('@azure/functions');
 const crypto = require('node:crypto');
 const sharp = require('sharp');
 const { getClient, getDb, withDbRetry } = require('../lib/db');
-const { applyBuyOneGetOne } = require('../lib/promotions');
+const { applyBuyOneGetOne, getBillableUnitPrice, isBogoEligible } = require('../lib/promotions');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
   authenticateRequest,
@@ -122,6 +122,7 @@ const normalizeFlashSale = (sale = {}) => ({
   items: (Array.isArray(sale.items) ? sale.items : []).slice(0, 2000).map((item) => ({
     productId: cleanText(item.productId, 100),
     salePrice: Number(numericPrice(item.salePrice).toFixed(2)),
+    source: item.source === 'catalog' ? 'catalog' : 'manual',
   })).filter((item) => item.productId && Number.isFinite(item.salePrice) && item.salePrice > 0),
 });
 const isFlashSaleActive = (sale, at = new Date()) => {
@@ -1489,12 +1490,20 @@ registerHttp('razorpay-create-order', {
         const id = cleanText(requestedItem.id, 100);
         const product = productsById.get(id);
         const quantity = Math.max(1, Math.min(20, Math.trunc(Number(requestedItem.quantity) || 1)));
+        if (!product) {
+          const error = new Error(`Product ${id || 'unknown'} is unavailable`);
+          error.status = 400;
+          throw error;
+        }
+        const mrp = numericPrice(product.price);
         const regularPrice = catalogPrice(product);
         const configuredSalePrice = activeSalePrices.get(id);
-        const price = Number.isFinite(configuredSalePrice) && configuredSalePrice > 0 && configuredSalePrice < regularPrice
+        const sellingPrice = Number.isFinite(configuredSalePrice) && configuredSalePrice > 0 && configuredSalePrice < regularPrice
           ? configuredSalePrice
           : regularPrice;
-        if (!product || !Number.isFinite(price) || price <= 0) {
+        const buyOneGetOne = isBogoEligible(product.buyOneGetOne);
+        const price = getBillableUnitPrice({ mrp, sellingPrice, buyOneGetOne });
+        if (!Number.isFinite(price) || price <= 0) {
           const error = new Error(`Product ${id || 'unknown'} is unavailable`);
           error.status = 400;
           throw error;
@@ -1513,7 +1522,7 @@ registerHttp('razorpay-create-order', {
           color: cleanText(requestedItem.color, 80),
           quantity,
           price,
-          buyOneGetOne: product.buyOneGetOne === true || ['yes', 'true', '1'].includes(String(product.buyOneGetOne || '').toLowerCase()),
+          buyOneGetOne,
           shippingCharge: Number(Math.max(0, numericPrice(product.shippingCharge)).toFixed(2)),
           lineShipping: Number((Math.max(0, numericPrice(product.shippingCharge)) * quantity).toFixed(2)),
         };

@@ -1,6 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { applyBuyOneGetOne } = require('../src/lib/promotions');
+const { applyBuyOneGetOne, getBillableUnitPrice } = require('../src/lib/promotions');
+
+test('BOGO uses MRP instead of stacking a Flash Sale price', () => {
+  assert.equal(getBillableUnitPrice({ mrp: 1500, sellingPrice: 999, buyOneGetOne: true }), 1500);
+  assert.equal(getBillableUnitPrice({ mrp: 1500, sellingPrice: 999, buyOneGetOne: false }), 999);
+});
 
 test('BOGO charges once for two equal-priced eligible units', () => {
   const result = applyBuyOneGetOne([{ id: 'a', price: 1500, quantity: 2, buyOneGetOne: true }]);

@@ -143,6 +143,16 @@ const getCurrentCatalogPrice = (product) => {
     const discountedPrice = toNumber(product?.discount);
     return discountedPrice > 0 && discountedPrice < originalPrice ? discountedPrice : originalPrice;
 };
+const mergeCatalogDiscountsIntoSale = (items = [], catalogProducts = []) => {
+    const manualItems = items.filter((item) => item.source !== 'catalog');
+    const manualIds = new Set(manualItems.map((item) => String(item.productId)));
+    const catalogItems = catalogProducts.filter((product) => {
+        const mrp = toNumber(product.price);
+        const discount = toNumber(product.discount);
+        return !manualIds.has(String(product.id)) && mrp > 0 && discount > 0 && discount < mrp;
+    }).map((product) => ({ productId: product.id, salePrice: toNumber(product.discount), source: 'catalog' }));
+    return [...manualItems, ...catalogItems];
+};
 
 const getStock = (product) => {
     if (product.stock !== '' && product.stock !== undefined) return Math.max(0, toNumber(product.stock));
@@ -281,6 +291,7 @@ const ProductManager = () => {
     const [bulkImageReport, setBulkImageReport] = useState(null);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [bulkStockValue, setBulkStockValue] = useState('');
+    const [bulkShippingValue, setBulkShippingValue] = useState('');
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
     const [ordersPage, setOrdersPage] = useState(1);
@@ -305,6 +316,19 @@ const ProductManager = () => {
     }, []);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
+
+    // A valid product-level discounted price is automatically represented in
+    // the Flash Sale manager. Manual campaign entries remain independently editable.
+    useEffect(() => {
+        setFlashSale((current) => {
+            const nextItems = mergeCatalogDiscountsIntoSale(current.items, allProducts);
+            const unchanged = nextItems.length === current.items.length
+                && nextItems.every((item, index) => item.productId === current.items[index]?.productId
+                    && toNumber(item.salePrice) === toNumber(current.items[index]?.salePrice)
+                    && item.source === current.items[index]?.source);
+            return unchanged ? current : { ...current, items: nextItems };
+        });
+    }, [allProducts]);
 
     const duplicateGroups = useMemo(() => {
         const groups = new Map();
@@ -403,13 +427,14 @@ const ProductManager = () => {
 
     const refreshFlashSale = async () => {
         try {
-            const sale = await getAdminFlashSale();
+            const [sale, databaseProducts] = await Promise.all([getAdminFlashSale(), getProductsFromDatabase()]);
+            const catalogProducts = flattenProducts(groupDatabaseProducts(databaseProducts));
             setFlashSale({
                 ...getInitialFlashSaleForm(),
                 ...(sale || {}),
                 startsAt: toLocalDateTimeInput(sale?.startsAt),
                 endsAt: toLocalDateTimeInput(sale?.endsAt),
-                items: Array.isArray(sale?.items) ? sale.items : [],
+                items: mergeCatalogDiscountsIntoSale(Array.isArray(sale?.items) ? sale.items : [], catalogProducts),
             });
             setDatabaseStatus('connected');
         } catch (error) {
@@ -973,6 +998,25 @@ const ProductManager = () => {
         await saveProducts(nextProducts, `Stock updated for ${changedProducts.length} products.`, changedProducts);
         setSelectedProductIds([]);
         setBulkStockValue('');
+    };
+
+    const applyBulkShipping = async () => {
+        const shippingCharge = Number(bulkShippingValue);
+        if (!selectedProductIds.length || !Number.isFinite(shippingCharge) || shippingCharge < 0) {
+            setNotification('Select products and enter a shipping charge of ₹0 or more.');
+            return;
+        }
+        const selected = new Set(selectedProductIds);
+        const changedProducts = [];
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+            if (!selected.has(product.id)) return product;
+            const updated = { ...product, shippingCharge };
+            changedProducts.push({ ...updated, category });
+            return updated;
+        })]));
+        await saveProducts(nextProducts, `Shipping updated for ${changedProducts.length} products.`, changedProducts);
+        setSelectedProductIds([]);
+        setBulkShippingValue('');
     };
 
     const applyBulkBogo = async (enabled) => {
@@ -1671,7 +1715,7 @@ const ProductManager = () => {
                             <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
-                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(true)}>Enable BOGO</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(false)}>Remove BOGO</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
+                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><label>Shipping/item ₹<input type="number" min="0" step="0.01" value={bulkShippingValue} onChange={(event) => setBulkShippingValue(event.target.value)} placeholder="0 = free" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkShipping}>Apply shipping</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(true)}>Enable BOGO</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(false)}>Remove BOGO</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
                         <div className="admin-table-wrap">
                             <table className="admin-table">
                                 <thead><tr><th><input type="checkbox" aria-label="Select this page" checked={pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id))} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedProducts.map((product) => product.id)])] : current.filter((id) => !pagedProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
@@ -1916,15 +1960,17 @@ const ProductManager = () => {
                                 {pagedFlashSaleItems.map((item) => {
                                     const product = allProducts.find((entry) => entry.id === item.productId);
                                     const originalPrice = toNumber(product?.price);
-                                    const regularPrice = getCurrentCatalogPrice(product);
+                                    const regularPrice = originalPrice;
                                     const salePrice = toNumber(item.salePrice);
                                     const percent = regularPrice > salePrice && regularPrice ? Math.round((1 - salePrice / regularPrice) * 100) : 0;
                                     return <article key={item.productId}>
                                         {product?.image && <img src={product.image} alt="" />}
-                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · Current {formatCurrency(regularPrice)}{originalPrice > regularPrice ? ` · Original ${formatCurrency(originalPrice)}` : ''}</small></div>
-                                        <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value } : entry) }))} /></label>
+                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · MRP {formatCurrency(originalPrice)}{item.source === 'catalog' ? ' · Synced from discounted price' : ''}</small></div>
+                                        <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value, source: 'manual' } : entry) }))} /></label>
                                         <span className={percent > 0 ? 'valid' : 'invalid'}>{percent > 0 ? `${percent}% off` : 'Must be lower'}</span>
-                                        <button type="button" className="delete" title="Remove from sale" onClick={() => setFlashSale((current) => ({ ...current, items: current.items.filter((entry) => entry.productId !== item.productId) }))}><Trash2 size={17} /></button>
+                                        {item.source === 'catalog'
+                                            ? <button type="button" title="Edit the product discounted price" onClick={() => product && openProduct(product)}><Edit3 size={17} /></button>
+                                            : <button type="button" className="delete" title="Remove from sale" onClick={() => setFlashSale((current) => ({ ...current, items: current.items.filter((entry) => entry.productId !== item.productId) }))}><Trash2 size={17} /></button>}
                                     </article>;
                                 })}
                             </div>
@@ -1948,7 +1994,7 @@ const ProductManager = () => {
                             <article className="admin-panel"><span>6</span><h3>Orders and tracking</h3><p>Update status in order: Processing, Packed, Shipped, Out for delivery, Delivered. Add courier, tracking number and link before marking shipped.</p><button type="button" onClick={() => handleNavigation('orders')}>Open Orders</button></article>
                             <article className="admin-panel"><span>7</span><h3>Customer data</h3><p>Use CSV exports for backup and reporting. Delete a customer only when the record is genuinely unnecessary and purchase history has been checked.</p></article>
                             <article className="admin-panel"><span>8</span><h3>Before finishing</h3><p>Confirm “Atlas connected”, refresh the inventory, search the product code, and open the live category page to verify the product and images.</p><small>Do not close the tab while an upload is processing.</small></article>
-                            <article className="admin-panel"><span>9</span><h3>Buy 1 Get 1</h3><p>Set “Buy 1 Get 1?” to Yes on each eligible product, or use the same column in the Excel template. Customers may mix eligible products; the lower-priced product in every pair becomes free automatically.</p><small>An odd unpaired item is charged normally. Shipping still applies to every physical item.</small></article>
+                            <article className="admin-panel"><span>9</span><h3>Buy 1 Get 1</h3><p>Set “Buy 1 Get 1?” to Yes on each eligible product, or use the same column in the Excel template. Customers may mix eligible products; the lower-MRP product in every pair becomes free automatically.</p><small>BOGO uses MRP and does not stack with Flash Sale pricing. An odd unpaired item is charged normally. Shipping applies to every physical item.</small></article>
                         </section>
                     </div>
                 )}

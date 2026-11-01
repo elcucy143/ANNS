@@ -3,6 +3,12 @@ const money = (value) => Number((Number(value) || 0).toFixed(2));
 const isBogoEligible = (value) => value === true
   || ['yes', 'true', '1'].includes(String(value || '').trim().toLowerCase());
 
+// BOGO is not stacked on top of a Flash Sale/catalog discount. The customer
+// buys the higher-MRP eligible item and receives the lower-MRP item free.
+const getBillableUnitPrice = ({ mrp, sellingPrice, buyOneGetOne }) => (
+  isBogoEligible(buyOneGetOne) ? money(mrp) : money(sellingPrice)
+);
+
 const applyBuyOneGetOne = (sourceItems = []) => {
   const items = sourceItems.map((item) => {
     const quantity = Math.max(1, Math.trunc(Number(item.quantity) || 1));
@@ -25,4 +31,4 @@ const applyBuyOneGetOne = (sourceItems = []) => {
   return { items: pricedItems, grossSubtotal, bogoDiscount, subtotal: money(grossSubtotal - bogoDiscount), eligibleUnitCount: eligibleUnits.length };
 };
 
-module.exports = { applyBuyOneGetOne, isBogoEligible };
+module.exports = { applyBuyOneGetOne, getBillableUnitPrice, isBogoEligible };

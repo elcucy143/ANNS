@@ -231,7 +231,7 @@ const ProductDetails = () => {
                         </>}
                     </div>
                     <p className="product-description">{product.description}</p>
-                    {product.buyOneGetOne && <div className="product-bogo-message"><strong>BUY 1 GET 1</strong><span>Add any two eligible products. The lower-priced product in each pair is free automatically.</span></div>}
+                    {product.buyOneGetOne && <div className="product-bogo-message"><strong>BUY 1 GET 1</strong><span>Add any two eligible products. The lower-MRP product in each pair is free. BOGO uses MRP and is not combined with another sale price.</span></div>}
 
                     {category === 'Gifts' && (
                         <section className="gift-customization" aria-labelledby="gift-customization-title">

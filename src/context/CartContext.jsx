@@ -21,16 +21,19 @@ const normalizeQuantity = (value) => Math.min(MAX_QUANTITY, Math.max(1, Math.flo
 const normalizeCartItem = (item) => {
     if (!item?.id || !item?.name) return null;
     const image = typeof item.image === 'string' && !item.image.startsWith('data:') ? item.image : '';
+    const buyOneGetOne = isBogoEligible(item.buyOneGetOne);
+    const mrp = parsePrice(item.originalPrice ?? item.regularPrice ?? item.mrp ?? item.price);
     return {
         id: String(item.id),
         name: String(item.name),
-        price: parsePrice(item.price),
+        price: buyOneGetOne ? mrp : parsePrice(item.price),
+        mrp,
         shippingCharge: parsePrice(item.shippingCharge),
         image,
         quantity: normalizeQuantity(item.quantity),
         size: String(item.size || ''),
         color: String(item.color || ''),
-        buyOneGetOne: isBogoEligible(item.buyOneGetOne),
+        buyOneGetOne,
     };
 };
 
@@ -81,12 +84,13 @@ export const CartProvider = ({ children }) => {
         setCartItems((current) => current.map((item) => {
             const product = catalog.get(String(item.id));
             if (!product) return item;
-            const nextPrice = parsePrice(product.price);
+            const nextBuyOneGetOne = isBogoEligible(product.buyOneGetOne);
+            const nextMrp = parsePrice(product.originalPrice ?? product.regularPrice ?? product.price);
+            const nextPrice = nextBuyOneGetOne ? nextMrp : parsePrice(product.price);
             const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
             const nextShippingCharge = parsePrice(product.shippingCharge);
-            const nextBuyOneGetOne = isBogoEligible(product.buyOneGetOne);
-            if (item.price === nextPrice && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage && item.buyOneGetOne === nextBuyOneGetOne) return item;
-            return { ...item, name: product.name, price: nextPrice, shippingCharge: nextShippingCharge, image: nextImage, buyOneGetOne: nextBuyOneGetOne };
+            if (item.price === nextPrice && item.mrp === nextMrp && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage && item.buyOneGetOne === nextBuyOneGetOne) return item;
+            return { ...item, name: product.name, price: nextPrice, mrp: nextMrp, shippingCharge: nextShippingCharge, image: nextImage, buyOneGetOne: nextBuyOneGetOne };
         }));
     }, [products]);
 
