@@ -450,6 +450,7 @@
 .capacity-limits span { margin-top: 5px; color: #857a72; font-size: .64rem; line-height: 1.4; }
 .capacity-guidance { display: flex; gap: 10px; margin-top: 16px; padding: 14px; border-radius: 7px; color: #725a37; background: #fff8e8; font-size: .69rem; line-height: 1.55; }
 .capacity-guidance svg { flex: 0 0 auto; margin-top: 2px; }
+.flash-sale-admin-list article.flash-sale-search-match { border-color: #b87948; background: #fff8ed; box-shadow: 0 0 0 3px rgba(184, 121, 72, .12); }
 .instructions-hero { display: flex; align-items: center; gap: 18px; }
 .instructions-hero > svg { flex: 0 0 auto; color: #a66a42; }
 .instructions-hero h2 { margin: 3px 0 5px; }

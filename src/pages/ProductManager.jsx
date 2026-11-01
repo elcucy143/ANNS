@@ -138,6 +138,21 @@ const toNumber = (value, fallback = 0) => {
     const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
     return Number.isFinite(parsed) ? parsed : fallback;
 };
+
+const normalizeSearchText = (value) => String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+const normalizeProductCode = (value) => normalizeSearchText(value).replace(/[^a-z0-9]/g, '');
+const productMatchesSearch = (product, value) => {
+    const query = normalizeSearchText(value);
+    if (!query) return true;
+    const compactQuery = normalizeProductCode(query);
+    const productCode = normalizeProductCode(product?.id);
+    const subcategories = Array.isArray(product?.subcategory) ? product.subcategory : [product?.subcategory];
+    const searchableText = [product?.id, product?.name, product?.category, ...subcategories]
+        .filter(Boolean)
+        .map(normalizeSearchText)
+        .join(' ');
+    return searchableText.includes(query) || Boolean(compactQuery && productCode.includes(compactQuery));
+};
 const getCurrentCatalogPrice = (product) => {
     const originalPrice = toNumber(product?.price);
     const discountedPrice = toNumber(product?.discount);
@@ -317,18 +332,21 @@ const ProductManager = () => {
     }, []);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
+    const flashSaleProductIds = useMemo(() => new Set(flashSale.items.map((item) => normalizeProductCode(item.productId))), [flashSale.items]);
+    const matchingFlashSaleProducts = useMemo(() => (
+        allProducts.filter((product) => productMatchesSearch(product, flashSaleProductSearch))
+    ), [allProducts, flashSaleProductSearch]);
     const availableFlashSaleProducts = useMemo(() => {
-        const query = flashSaleProductSearch.trim().toLowerCase();
-        return allProducts
-            .filter((product) => !flashSale.items.some((item) => String(item.productId) === String(product.id)))
-            .filter((product) => !query || [
-                product.id,
-                product.name,
-                product.category,
-                ...(Array.isArray(product.subcategory) ? product.subcategory : [product.subcategory]),
-            ].filter(Boolean).join(' ').toLowerCase().includes(query))
-            .slice(0, 50);
-    }, [allProducts, flashSale.items, flashSaleProductSearch]);
+        return matchingFlashSaleProducts
+            .filter((product) => !flashSaleProductIds.has(normalizeProductCode(product.id)));
+    }, [matchingFlashSaleProducts, flashSaleProductIds]);
+    const exactFlashSaleSearchProduct = useMemo(() => {
+        const queryCode = normalizeProductCode(flashSaleProductSearch);
+        if (!queryCode) return null;
+        return allProducts.find((product) => normalizeProductCode(product.id) === queryCode) || null;
+    }, [allProducts, flashSaleProductSearch]);
+    const exactSearchIsInFlashSale = Boolean(exactFlashSaleSearchProduct
+        && flashSaleProductIds.has(normalizeProductCode(exactFlashSaleSearchProduct.id)));
 
     // A valid product-level discounted price is automatically represented in
     // the Flash Sale manager. Manual campaign entries remain independently editable.
@@ -1980,18 +1998,31 @@ const ProductManager = () => {
                                     onChange={(event) => {
                                         const query = event.target.value;
                                         setFlashSaleProductSearch(query);
-                                        const exactProduct = allProducts.find((product) => String(product.id).toLowerCase() === query.trim().toLowerCase());
-                                        setFlashSaleProductId(exactProduct && !flashSale.items.some((item) => String(item.productId) === String(exactProduct.id)) ? exactProduct.id : '');
+                                        setFlashSalePage(1);
+                                        const queryCode = normalizeProductCode(query);
+                                        const exactProduct = queryCode
+                                            ? allProducts.find((product) => normalizeProductCode(product.id) === queryCode)
+                                            : null;
+                                        const existingSaleIndex = exactProduct
+                                            ? flashSale.items.findIndex((item) => normalizeProductCode(item.productId) === normalizeProductCode(exactProduct.id))
+                                            : -1;
+                                        if (existingSaleIndex >= 0) setFlashSalePage(Math.floor(existingSaleIndex / FLASH_SALE_PAGE_SIZE) + 1);
+                                        setFlashSaleProductId(exactProduct && existingSaleIndex < 0 ? exactProduct.id : '');
                                     }}
-                                    placeholder="Search product code, name or category"
+                                    placeholder={`Search all ${allProducts.length.toLocaleString('en-IN')} inventory products by code, name or category`}
                                     autoComplete="off"
                                 /></div>
                                 <select value={flashSaleProductId} onChange={(event) => setFlashSaleProductId(event.target.value)}>
-                                    <option value="">{flashSaleProductSearch ? `${availableFlashSaleProducts.length} matching product${availableFlashSaleProducts.length === 1 ? '' : 's'}` : 'Search or select a product'}</option>
+                                    <option value="">{exactSearchIsInFlashSale
+                                        ? `${exactFlashSaleSearchProduct.id} is already in Flash Sale — shown below`
+                                        : flashSaleProductSearch
+                                            ? `${matchingFlashSaleProducts.length} matching product${matchingFlashSaleProducts.length === 1 ? '' : 's'} · ${availableFlashSaleProducts.length} available to add`
+                                            : 'Search or select a product'}</option>
                                     {availableFlashSaleProducts.map((product) => <option key={product.id} value={product.id}>{product.id} · {product.name} · {categoryDisplayName(product.category)} · {formatCurrency(getCurrentCatalogPrice(product))}</option>)}
                                 </select>
                                 <button type="button" className="admin-secondary-button" onClick={addFlashSaleProduct} disabled={!flashSaleProductId}><Plus size={17} /> Add product</button>
                             </div>
+                            <div className="inventory-summary-line"><strong>{matchingFlashSaleProducts.length.toLocaleString('en-IN')}</strong> inventory product{matchingFlashSaleProducts.length === 1 ? '' : 's'} match <span>·</span> <strong>{availableFlashSaleProducts.length.toLocaleString('en-IN')}</strong> available to add{exactSearchIsInFlashSale ? ` · ${exactFlashSaleSearchProduct.id} is already in Flash Sale and highlighted below` : ''}</div>
                             <div className="flash-sale-admin-list">
                                 {pagedFlashSaleItems.map((item) => {
                                     const product = allProducts.find((entry) => entry.id === item.productId);
@@ -1999,7 +2030,9 @@ const ProductManager = () => {
                                     const regularPrice = originalPrice;
                                     const salePrice = toNumber(item.salePrice);
                                     const percent = regularPrice > salePrice && regularPrice ? Math.round((1 - salePrice / regularPrice) * 100) : 0;
-                                    return <article key={item.productId}>
+                                    const isSearchedProduct = exactFlashSaleSearchProduct
+                                        && normalizeProductCode(exactFlashSaleSearchProduct.id) === normalizeProductCode(item.productId);
+                                    return <article key={item.productId} className={isSearchedProduct ? 'flash-sale-search-match' : ''}>
                                         {product?.image && <img src={product.image} alt="" />}
                                         <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · MRP {formatCurrency(originalPrice)}{item.source === 'catalog' ? ' · Synced from discounted price' : ''}</small></div>
                                         <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value, source: 'manual' } : entry) }))} /></label>
@@ -2051,7 +2084,7 @@ const ProductManager = () => {
                             <button type="button" className="import-dropzone" onClick={() => fileInputRef.current?.click()}>
                                 <span><UploadCloud size={27} /></span>
                                 <strong>{importFileName || 'Choose an Excel, CSV or JSON file'}</strong>
-                                <small>Required columns: category, name and price · Maximum quality comes from using the template</small>
+                                <small>Required columns: category, product code (ID), name and original price · Maximum quality comes from using the template</small>
                             </button>
                             {importError && <div className="import-error"><XCircle size={18} /> {importError}</div>}
                         </section>
@@ -2093,7 +2126,7 @@ const ProductManager = () => {
                                             <tr key={row.rowNumber}>
                                                 <td>{row.rowNumber}</td>
                                                 <td>{row.valid ? <span className="import-row-valid"><CheckCircle2 size={15} /> Ready</span> : <span className="import-row-invalid" title={row.errors.join(', ')}><XCircle size={15} /> {row.errors.join(', ')}</span>}</td>
-                                                <td><strong>{row.product.name || 'Missing name'}</strong><small>{row.product.id || 'ID will be generated'}</small></td>
+                                                <td><strong>{row.product.name || 'Missing name'}</strong><small>{row.product.id || 'Missing required product code'}</small></td>
                                                 <td>{row.category || '—'}</td>
                                                 <td>{row.product.price === '' ? '—' : formatCurrency(row.product.price)}</td>
                                                 <td>{row.product.discount === '' ? '—' : formatCurrency(row.product.discount)}</td>
@@ -2119,7 +2152,7 @@ const ProductManager = () => {
                                 <div className="admin-panel-heading"><div><p className="admin-kicker">BASIC DETAILS</p><h2>{selectedProductId === 'new' ? 'New product' : formData.name}</h2></div></div>
                                 <div className="editor-form-grid">
                                     <label>Category<select value={selectedCategory} onChange={(event) => { setSelectedCategory(event.target.value); setSelectedProductId('new'); }} disabled={selectedProductId !== 'new'}>{Object.keys(products).map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-                                    <label>Product ID<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Example: WW300125" required autoCapitalize="characters" spellCheck="false" disabled={selectedProductId !== 'new'} /><small>This exact code is used on the storefront, orders and emails. It cannot change after creation.</small></label>
+                                    <label>Product code / ID (required)<input name="id" value={formData.id} onChange={handleInputChange} placeholder="Example: WW300125" required autoCapitalize="characters" spellCheck="false" disabled={selectedProductId !== 'new'} /><small>Enter the exact unique stock code. It is used in Flash Sale, orders and emails and cannot change after creation.</small></label>
                                     <label className="full-width">Product name<input name="name" value={formData.name} onChange={handleInputChange} required /></label>
                                     <label className="full-width">Description<textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" /></label>
                                     <label>Original price (₹)<input name="price" type="number" min="1" value={formData.price} onChange={handleInputChange} required /></label>
