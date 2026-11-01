@@ -820,6 +820,16 @@ registerHttp('products', {
         } else {
           products = migrated;
         }
+        // One existing offer was created before custom BOGO pair pricing was
+        // persisted. Backfill its confirmed admin price once; the conditional
+        // filter never overwrites a later value chosen in Product Studio.
+        const legacyPairPrice = await collection.updateOne(
+          { id: 'ww300001', buyOneGetOne: true, $or: [{ bogoPairPrice: { $exists: false } }, { bogoPairPrice: { $lte: 0 } }] },
+          { $set: { bogoPairPrice: 4999, updatedAt: nowIso() } },
+        );
+        if (legacyPairPrice.modifiedCount) {
+          products = products.map((product) => (String(product.id) === 'ww300001' ? { ...product, bogoPairPrice: 4999 } : product));
+        }
         products = products.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
         const response = json(products.map(cleanDocument));
         response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';

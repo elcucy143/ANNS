@@ -1810,7 +1810,7 @@ const ProductManager = () => {
                                         return (
                                             <tr key={`${product.category}-${product.id}`}>
                                                 <td><input type="checkbox" aria-label={`Select ${product.name}`} checked={selectedProductIds.includes(product.id)} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} /></td>
-                                                <td><strong>{product.name}</strong><small>{product.id}{product.buyOneGetOne ? ' · BUY 1 GET 1' : ''}</small></td>
+                                                <td><strong>{product.name}</strong><small>{product.id}{product.buyOneGetOne ? ` · BOGO${toNumber(product.bogoPairPrice) > 0 ? ` 2 for ${formatCurrency(product.bogoPairPrice)}` : ''}` : ''}</small></td>
                                                 <td>{product.category}</td>
                                                 <td>{formatCurrency(product.price)}</td>
                                                 <td>{product.stockValue.toLocaleString('en-IN')}</td>
@@ -2213,7 +2213,7 @@ const ProductManager = () => {
                                     <label>Shipping charge?<select name="hasShippingCharge" value={formData.hasShippingCharge} onChange={handleInputChange}><option value="no">No — free shipping</option><option value="yes">Yes</option></select></label>
                                     {formData.hasShippingCharge === 'yes' && <label>Shipping amount per item (₹)<input name="shippingCharge" type="number" min="0.01" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} required /><small>Added to the cart and Razorpay total.</small></label>}
                                     <label>Buy 1 Get 1?<select name="buyOneGetOne" value={formData.buyOneGetOne} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes — eligible</option></select><small>One item keeps its current sale price. The BOGO offer starts only when two eligible items are added.</small></label>
-                                    {formData.buyOneGetOne === 'yes' && <label>BOGO price for 2 matching items (₹)<input name="bogoPairPrice" type="number" min="0.01" step="0.01" value={formData.bogoPairPrice} onChange={handleInputChange} placeholder="Example: 4999" /><small>Optional. Example: one item ₹2,999; enter ₹4,999 here to charge ₹4,999 for two of this product.</small></label>}
+                                    <label>BOGO price for 2 matching items (₹)<input name="bogoPairPrice" type="number" min="0.01" step="0.01" value={formData.bogoPairPrice} onChange={handleInputChange} placeholder="Example: 4999" disabled={formData.buyOneGetOne !== 'yes'} /><small>{formData.buyOneGetOne === 'yes' ? 'Optional. Example: one item ₹2,999; enter ₹4,999 here to charge ₹4,999 for two of this product.' : 'Enable Buy 1 Get 1 above to enter a special price for two matching items.'}</small></label>
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">
