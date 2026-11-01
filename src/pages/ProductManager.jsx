@@ -73,6 +73,7 @@ const PRODUCT_SAVE_BATCH_SIZE = 100;
 const PRODUCT_SAVE_BATCH_BYTES = 2.5 * 1024 * 1024;
 const INVENTORY_PAGE_SIZE = 20;
 const FLASH_SALE_PAGE_SIZE = 10;
+const BOGO_PAGE_SIZE = 20;
 const ORDERS_PAGE_SIZE = 10;
 const CUSTOMERS_PAGE_SIZE = 20;
 const REVIEWS_PAGE_SIZE = 10;
@@ -278,7 +279,7 @@ const ProductManager = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const initialParams = new URLSearchParams(window.location.search);
-    const initialView = ['overview', 'analytics', 'inventory', 'orders', 'customers', 'reviews', 'banners', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const initialView = ['overview', 'analytics', 'inventory', 'orders', 'customers', 'reviews', 'banners', 'flash-sale', 'bogo', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
     const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -314,6 +315,9 @@ const ProductManager = () => {
     const [bulkStockValue, setBulkStockValue] = useState('');
     const [bulkShippingValue, setBulkShippingValue] = useState('');
     const [bulkBogoPairPrice, setBulkBogoPairPrice] = useState('');
+    const [bogoSearch, setBogoSearch] = useState('');
+    const [bogoDrafts, setBogoDrafts] = useState({});
+    const [bogoPage, setBogoPage] = useState(1);
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
     const [ordersPage, setOrdersPage] = useState(1);
@@ -340,6 +344,9 @@ const ProductManager = () => {
     }, []);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
+    const matchingBogoProducts = useMemo(() => allProducts
+        .filter((product) => productMatchesSearch(product, bogoSearch))
+        .sort((first, second) => Number(Boolean(second.buyOneGetOne)) - Number(Boolean(first.buyOneGetOne)) || String(first.id).localeCompare(String(second.id))), [allProducts, bogoSearch]);
     const flashSaleProductIds = useMemo(() => new Set(flashSale.items.map((item) => normalizeProductCode(item.productId))), [flashSale.items]);
     const matchingFlashSaleProducts = useMemo(() => (
         allProducts.filter((product) => productMatchesSearch(product, flashSaleProductSearch))
@@ -644,6 +651,9 @@ const ProductManager = () => {
     const inventoryPageCount = Math.max(1, Math.ceil(filteredProducts.length / INVENTORY_PAGE_SIZE));
     const activeInventoryPage = Math.min(inventoryPage, inventoryPageCount);
     const pagedProducts = filteredProducts.slice((activeInventoryPage - 1) * INVENTORY_PAGE_SIZE, activeInventoryPage * INVENTORY_PAGE_SIZE);
+    const bogoPageCount = Math.max(1, Math.ceil(matchingBogoProducts.length / BOGO_PAGE_SIZE));
+    const activeBogoPage = Math.min(bogoPage, bogoPageCount);
+    const pagedBogoProducts = matchingBogoProducts.slice((activeBogoPage - 1) * BOGO_PAGE_SIZE, activeBogoPage * BOGO_PAGE_SIZE);
     const flashSalePageCount = Math.max(1, Math.ceil(flashSale.items.length / FLASH_SALE_PAGE_SIZE));
     const activeFlashSalePage = Math.min(flashSalePage, flashSalePageCount);
     const pagedFlashSaleItems = flashSale.items.slice((activeFlashSalePage - 1) * FLASH_SALE_PAGE_SIZE, activeFlashSalePage * FLASH_SALE_PAGE_SIZE);
@@ -1185,6 +1195,27 @@ const ProductManager = () => {
         setBulkBogoPairPrice('');
     };
 
+    const saveBogoProduct = async (product) => {
+        const draft = bogoDrafts[product.id] || {};
+        const enabled = draft.enabled ?? Boolean(product.buyOneGetOne);
+        const pairText = draft.pairPrice ?? (toNumber(product.bogoPairPrice) > 0 ? String(toNumber(product.bogoPairPrice)) : '');
+        const pairPrice = pairText === '' ? 0 : Number(pairText);
+        const mrp = toNumber(product.price);
+        if (enabled && (!Number.isFinite(pairPrice) || pairPrice < 0 || pairPrice >= mrp * 2)) {
+            setNotification(`Enter a BOGO price below ${formatCurrency(mrp * 2)}, or leave it blank to charge one MRP for each pair.`);
+            return;
+        }
+        const category = product.category;
+        const changedProduct = { ...product, buyOneGetOne: enabled, bogoPairPrice: enabled ? pairPrice : 0 };
+        delete changedProduct.category;
+        delete changedProduct.stockValue;
+        delete changedProduct.soldValue;
+        delete changedProduct.remainingValue;
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((item) => item.id === product.id ? changedProduct : item)]));
+        await saveProducts(nextProducts, `${enabled ? 'Buy 1 Get 1 saved' : 'Buy 1 Get 1 removed'} for ${product.id}.`, [{ ...changedProduct, category }]);
+        setBogoDrafts((current) => { const next = { ...current }; delete next[product.id]; return next; });
+    };
+
     const removeSelectedProducts = async () => {
         if (!selectedProductIds.length) return;
         const selected = new Set(selectedProductIds);
@@ -1705,6 +1736,7 @@ const ProductManager = () => {
         { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
         { id: 'banners', label: 'Homepage banners', icon: ImagePlus },
         { id: 'flash-sale', label: 'Flash sale', icon: BadgePercent },
+        { id: 'bogo', label: 'Buy 1 Get 1', icon: Sparkles },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
         { id: 'instructions', label: 'Instructions', icon: BookOpenCheck },
         { id: 'editor', label: selectedProductId === 'new' ? 'Add product' : 'Edit product', icon: Edit3 },
@@ -1717,6 +1749,7 @@ const ProductManager = () => {
         if (view === 'reviews') refreshReviews();
         if (view === 'banners') refreshHomepageBanners();
         if (view === 'flash-sale') refreshFlashSale();
+        if (view === 'bogo') { setBogoDrafts({}); refreshProductsFromDatabase(); }
         if (view === 'analytics') refreshAnalytics();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) {
             refreshProductsFromDatabase();
@@ -2158,6 +2191,41 @@ const ProductManager = () => {
                         </section>
                         <div className="editor-save-bar"><p>Changes normally appear publicly within 15 seconds. Keep at least one banner active.</p><button type="submit" className="admin-primary-button" disabled={homepageBannersSaving}><Save size={18} /> {homepageBannersSaving ? 'Saving…' : 'Save banner order & details'}</button></div>
                     </form>
+                )}
+
+                {activeView === 'bogo' && (
+                    <div className="admin-view-stack">
+                        <section className="admin-panel bogo-manager-intro">
+                            <div className="admin-panel-heading"><div><p className="admin-kicker">INDEPENDENT OFFER</p><h2>Buy 1 Get 1 products</h2></div><strong>{allProducts.filter((product) => product.buyOneGetOne).length} enabled</strong></div>
+                            <p className="review-editor-intro">BOGO is independent from Flash Sale. Select any catalog product here—even if it is not in Flash Sale. A single item keeps its current selling price; once a complete pair is added, the cart values both items at MRP and applies the BOGO saving.</p>
+                            <div className="bogo-pricing-example"><span>Example</span><strong>2 × ₹4,999 MRP = ₹9,998 merchandise</strong><b>− ₹4,999 BOGO saving</b><strong>Pair subtotal = ₹4,999</strong></div>
+                        </section>
+                        <section className="admin-panel">
+                            <div className="inventory-toolbar"><div className="admin-search"><Search size={18} /><input value={bogoSearch} onChange={(event) => { setBogoSearch(event.target.value); setBogoPage(1); }} placeholder="Search any product by code, name or category" /></div></div>
+                            <div className="inventory-summary-line"><strong>{matchingBogoProducts.length}</strong> products found <span>·</span> Enabled products are shown first</div>
+                            <div className="admin-table-wrap">
+                                <table className="admin-table bogo-admin-table">
+                                    <thead><tr><th>Product</th><th>Category</th><th>MRP</th><th>Single-item price</th><th>BOGO enabled</th><th>Price for 2 matching items</th><th aria-label="Actions" /></tr></thead>
+                                    <tbody>{pagedBogoProducts.map((product) => {
+                                        const draft = bogoDrafts[product.id] || {};
+                                        const enabled = draft.enabled ?? Boolean(product.buyOneGetOne);
+                                        const pairPrice = draft.pairPrice ?? (toNumber(product.bogoPairPrice) > 0 ? String(toNumber(product.bogoPairPrice)) : '');
+                                        return <tr key={`bogo-${product.id}`}>
+                                            <td><strong>{product.name}</strong><small>{product.id}</small></td>
+                                            <td>{categoryDisplayName(product.category)}</td>
+                                            <td><strong>{formatCurrency(product.price)}</strong></td>
+                                            <td>{formatCurrency(getCurrentCatalogPrice(product))}</td>
+                                            <td><label className="bogo-table-toggle"><input type="checkbox" checked={enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], enabled: event.target.checked, pairPrice } }))} /><span>{enabled ? 'Enabled' : 'Not selected'}</span></label></td>
+                                            <td><input className="bogo-pair-input" type="number" min="0" max={Math.max(0, toNumber(product.price) * 2 - .01)} step="0.01" value={pairPrice} disabled={!enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], enabled, pairPrice: event.target.value } }))} placeholder={`Default ${formatCurrency(product.price)}`} /><small>Blank = one MRP for the pair</small></td>
+                                            <td><button type="button" className="admin-primary-button compact" onClick={() => saveBogoProduct(product)}>Save offer</button></td>
+                                        </tr>;
+                                    })}</tbody>
+                                </table>
+                            </div>
+                            <AdminPagination page={activeBogoPage} pageCount={bogoPageCount} onChange={setBogoPage} total={matchingBogoProducts.length} noun="products" />
+                            {!matchingBogoProducts.length && <div className="admin-empty-state"><Search size={28} /><p>No products match this search.</p></div>}
+                        </section>
+                    </div>
                 )}
 
                 {activeView === 'flash-sale' && (

@@ -9,15 +9,15 @@ test('a single BOGO item retains its Flash Sale price', () => {
 
 test('BOGO uses an optional same-product pair price', () => {
   const result = applyBuyOneGetOne([{ id: 'a', price: 2999, mrp: 5000, bogoPairPrice: 4999, quantity: 2, buyOneGetOne: true }]);
-  assert.equal(result.grossSubtotal, 5998);
-  assert.equal(result.bogoDiscount, 999);
+  assert.equal(result.grossSubtotal, 10000);
+  assert.equal(result.bogoDiscount, 5001);
   assert.equal(result.subtotal, 4999);
 });
 
-test('BOGO charges the higher MRP for a mixed pair without exceeding current sale prices', () => {
+test('BOGO values a mixed pair from MRP and charges the higher MRP', () => {
   const result = applyBuyOneGetOne([{ id: 'a', price: 1200, mrp: 1500, quantity: 1, buyOneGetOne: true }, { id: 'b', price: 900, mrp: 900, quantity: 1, buyOneGetOne: true }]);
-  assert.equal(result.grossSubtotal, 2100);
-  assert.equal(result.bogoDiscount, 600);
+  assert.equal(result.grossSubtotal, 2400);
+  assert.equal(result.bogoDiscount, 900);
   assert.equal(result.subtotal, 1500);
 });
 
@@ -29,14 +29,16 @@ test('one eligible unit is charged at its current selling price', () => {
 
 test('custom pair pricing applies to every pair in a larger quantity', () => {
   const result = applyBuyOneGetOne([{ id: 'a', price: 2999, mrp: 5000, bogoPairPrice: 4999, quantity: 6, buyOneGetOne: true }]);
-  assert.equal(result.bogoDiscount, 2997);
+  assert.equal(result.grossSubtotal, 30000);
+  assert.equal(result.bogoDiscount, 15003);
   assert.equal(result.subtotal, 14997);
 });
 
-test('default BOGO never makes a discounted pair more expensive', () => {
+test('default BOGO uses MRP even when the product also has a sale price', () => {
   const result = applyBuyOneGetOne([{ id: 'a', price: 999, mrp: 5000, quantity: 2, buyOneGetOne: true }]);
-  assert.equal(result.bogoDiscount, 0);
-  assert.equal(result.subtotal, 1998);
+  assert.equal(result.grossSubtotal, 10000);
+  assert.equal(result.bogoDiscount, 5000);
+  assert.equal(result.subtotal, 5000);
 });
 
 test('BOGO charges the higher price when eligible prices differ', () => {

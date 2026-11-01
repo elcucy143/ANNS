@@ -35,16 +35,19 @@ const applyBuyOneGetOne = (sourceItems = []) => {
   for (let index = 0; index + 1 < eligibleUnits.length; index += 2) {
     const firstUnit = eligibleUnits[index];
     const secondUnit = eligibleUnits[index + 1];
-    const sellingTotal = money(firstUnit.price + secondUnit.price);
+    const pairMrpTotal = money(firstUnit.mrp + secondUnit.mrp);
     const sameProductPairPrice = firstUnit.id === secondUnit.id
       && firstUnit.bogoPairPrice > 0
       && firstUnit.bogoPairPrice === secondUnit.bogoPairPrice
       ? firstUnit.bogoPairPrice
       : 0;
-    // A configured same-product pair price wins. Mixed/default BOGO charges the
-    // higher MRP, but never more than the two current selling prices combined.
-    const pairCharge = money(Math.min(sellingTotal, sameProductPairPrice || Math.max(firstUnit.mrp, secondUnit.mrp)));
-    allocateDiscount(items, firstUnit, secondUnit, sellingTotal - pairCharge);
+    // A complete BOGO pair is valued from MRP. A configured same-product pair
+    // price wins; otherwise the higher-MRP product is charged and the lower is free.
+    // Unpaired units continue to use their current catalogue/Flash Sale price.
+    items[firstUnit.lineIndex].grossLineTotal = money(items[firstUnit.lineIndex].grossLineTotal + firstUnit.mrp - firstUnit.price);
+    items[secondUnit.lineIndex].grossLineTotal = money(items[secondUnit.lineIndex].grossLineTotal + secondUnit.mrp - secondUnit.price);
+    const pairCharge = money(Math.min(pairMrpTotal, sameProductPairPrice || Math.max(firstUnit.mrp, secondUnit.mrp)));
+    allocateDiscount(items, firstUnit, secondUnit, pairMrpTotal - pairCharge);
   }
   const pricedItems = items.map((item) => ({ ...item, lineTotal: money(item.grossLineTotal - item.bogoDiscount) }));
   const grossSubtotal = money(pricedItems.reduce((sum, item) => sum + item.grossLineTotal, 0));

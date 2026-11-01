@@ -17,16 +17,19 @@ export const calculateBogoPricing = (sourceItems = []) => {
   for (let index = 0; index + 1 < units.length; index += 2) {
     const first = units[index];
     const second = units[index + 1];
-    const sellingTotal = first.price + second.price;
     const customPairPrice = first.id === second.id && first.bogoPairPrice > 0 && first.bogoPairPrice === second.bogoPairPrice ? first.bogoPairPrice : 0;
-    let remaining = Math.max(0, sellingTotal - Math.min(sellingTotal, customPairPrice || Math.max(first.mrp, second.mrp)));
+    const pairMrpTotal = first.mrp + second.mrp;
+    lines[first.lineIndex].grossLineTotal = (lines[first.lineIndex].grossLineTotal ?? lines[first.lineIndex].price * lines[first.lineIndex].quantity) + (first.mrp - first.price);
+    lines[second.lineIndex].grossLineTotal = (lines[second.lineIndex].grossLineTotal ?? lines[second.lineIndex].price * lines[second.lineIndex].quantity) + (second.mrp - second.price);
+    let remaining = Math.max(0, pairMrpTotal - Math.min(pairMrpTotal, customPairPrice || Math.max(first.mrp, second.mrp)));
     [second, first].forEach((unit) => {
-      const applied = Math.min((lines[unit.lineIndex].price * lines[unit.lineIndex].quantity) - lines[unit.lineIndex].discount, remaining);
+      const applied = Math.min(lines[unit.lineIndex].grossLineTotal - lines[unit.lineIndex].discount, remaining);
       lines[unit.lineIndex].discount += applied;
       remaining -= applied;
     });
   }
-  const grossSubtotal = lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  lines.forEach((line) => { if (line.grossLineTotal === undefined) line.grossLineTotal = line.price * line.quantity; });
+  const grossSubtotal = lines.reduce((sum, line) => sum + line.grossLineTotal, 0);
   const bogoDiscount = lines.reduce((sum, line) => sum + line.discount, 0);
-  return { grossSubtotal, bogoDiscount, subtotal: grossSubtotal - bogoDiscount, lineDiscounts: lines.map((line) => line.discount) };
+  return { grossSubtotal, bogoDiscount, subtotal: grossSubtotal - bogoDiscount, lines, lineDiscounts: lines.map((line) => line.discount) };
 };

@@ -14,6 +14,7 @@ const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal, getShippingTotal, getBogoDiscount, getCartPricing } = useCart();
     const { products } = useProductCatalog();
     const { user, isLoading } = useAuth();
+    const cartPricing = getCartPricing();
     const offerPricing = calculateCheckoutOffers({ subtotal: getCartTotal(), shippingTotal: getShippingTotal() });
     const freeShippingRemaining = Math.max(0, FREE_SHIPPING_MINIMUM - getCartTotal());
     const cartDiscountRemaining = Math.max(0, CART_DISCOUNT_MINIMUM - getCartTotal());
@@ -75,7 +76,7 @@ const Cart = () => {
 
                 <div className="cart-summary">
                     <h2>Order Summary</h2>
-                    <div className="summary-row"><span>Merchandise</span><span>₹ {getCartPricing().grossSubtotal.toFixed(2)}</span></div>
+                    <div className="summary-row"><span>Merchandise</span><span>₹ {cartPricing.grossSubtotal.toFixed(2)}</span></div>
                     {getBogoDiscount() > 0 && <div className="summary-row"><span>Buy 1 Get 1 savings</span><span>− ₹ {getBogoDiscount().toFixed(2)}</span></div>}
                     <div className="summary-row"><span>Subtotal</span><span>₹ {getCartTotal().toFixed(2)}</span></div>
                     {offerPricing.cartDiscount > 0 && <div className="summary-row"><span>Shop ₹2,999 offer</span><span>− ₹ {offerPricing.cartDiscount.toFixed(2)}</span></div>}

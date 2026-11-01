@@ -44,6 +44,7 @@ const Checkout = () => {
     state: '',
     postalCode: '',
   });
+  const cartPricing = getCartPricing();
 
   const handleChange = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   const offerPricing = calculateCheckoutOffers({
@@ -254,15 +255,15 @@ const Checkout = () => {
           <p className="checkout-kicker">YOUR ORDER</p>
           <h2>{cartItems.reduce((sum, item) => sum + item.quantity, 0)} items</h2>
           <div className="checkout-items">
-            {cartItems.map((item) => (
+            {cartItems.map((item, index) => (
               <div key={`${item.id}-${item.size}-${item.color}`}>
                 <span>{item.quantity} × {item.name}<small>{[item.size, item.color].filter(Boolean).join(' · ')}</small></span>
-                <strong>₹{(Number(String(item.price).replace(/[^0-9.]/g, '')) * item.quantity).toLocaleString('en-IN')}</strong>
+                <strong>₹{Number(cartPricing.lines?.[index]?.grossLineTotal ?? (Number(String(item.price).replace(/[^0-9.]/g, '')) * item.quantity)).toLocaleString('en-IN')}</strong>
               </div>
             ))}
           </div>
           <div className="checkout-totals">
-            <span>Merchandise<strong>₹{getCartPricing().grossSubtotal.toLocaleString('en-IN')}</strong></span>
+            <span>Merchandise<strong>₹{cartPricing.grossSubtotal.toLocaleString('en-IN')}</strong></span>
             {getBogoDiscount() > 0 && <span>Buy 1 Get 1 savings<strong>− ₹{getBogoDiscount().toLocaleString('en-IN')}</strong></span>}
             {offerPricing.firstOrderDiscount > 0 && <span className="checkout-saving">First order ({FIRST_ORDER_COUPON})<strong>− ₹{offerPricing.firstOrderDiscount.toLocaleString('en-IN')}</strong></span>}
             {offerPricing.cartDiscount > 0 && <span className="checkout-saving">Shop ₹2,999 offer<strong>− ₹{offerPricing.cartDiscount.toLocaleString('en-IN')}</strong></span>}

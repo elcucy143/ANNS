@@ -435,6 +435,14 @@
 .homepage-banner-card-heading > strong { font: 500 1.35rem/1.2 var(--font-heading); }
 .homepage-banner-card-heading label { display: flex; align-items: center; gap: 7px; }
 .homepage-banner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bogo-manager-intro { display: grid; gap: 16px; }
+.bogo-pricing-example { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 16px 18px; border: 1px solid #badbc9; border-radius: 9px; color: #23553b; background: #f1faf5; }
+.bogo-pricing-example span { padding: 5px 8px; border-radius: 4px; color: #fff; background: #237047; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.bogo-pricing-example b { color: #a13f30; }
+.bogo-table-toggle { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: .78rem; font-weight: 700; }
+.bogo-pair-input { width: 145px; min-height: 39px; padding: 8px 10px; border: 1px solid #d9cfc8; border-radius: 5px; }
+.bogo-admin-table td > small { display: block; margin-top: 4px; color: #857971; font-size: .7rem; }
+.admin-primary-button.compact { min-width: max-content; padding: 10px 13px; font-size: .76rem; }
 
 @media (max-width: 900px) {
     .homepage-banner-card { grid-template-columns: 1fr; }
