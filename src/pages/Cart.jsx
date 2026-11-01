@@ -49,7 +49,7 @@ const Cart = () => {
                                     <h3>{item.name}</h3>
                                     <p className="item-variant">Size: {item.size} | Color: {item.color}</p>
                                     <p className="item-price">₹{item.price}</p>
-                                    {item.buyOneGetOne && <p className="item-variant"><strong>BUY 1 GET 1 · MRP pricing</strong></p>}
+                                    {item.buyOneGetOne && <p className="item-variant"><strong>{Number(item.bogoPairPrice) > 0 ? `BUY 1 GET 1 · 2 for ₹${Number(item.bogoPairPrice).toLocaleString('en-IN')}` : 'BUY 1 GET 1 · applies to each complete pair'}</strong></p>}
                                 </div>
                                 <div className="cart-item-actions">
                                     <div className="quantity-selector small">

@@ -127,6 +127,7 @@ const getInitialFormData = () => ({
     shipping: [],
     featured: 'no',
     buyOneGetOne: 'no',
+    bogoPairPrice: '',
     campaign: [],
     showOnCategory: true,
 });
@@ -814,6 +815,7 @@ const ProductManager = () => {
             ...product,
             hasShippingCharge: toNumber(product.shippingCharge) > 0 ? 'yes' : 'no',
             buyOneGetOne: product.buyOneGetOne === true || String(product.buyOneGetOne).toLowerCase() === 'yes' ? 'yes' : 'no',
+            bogoPairPrice: toNumber(product.bogoPairPrice) > 0 ? toNumber(product.bogoPairPrice) : '',
             stock: product.stockValue,
             sold: product.soldValue,
             sizes: normalizeSizeList(product.sizes),
@@ -955,6 +957,11 @@ const ProductManager = () => {
             setNotification('The discounted price must be above ₹0 and lower than the original price.');
             return;
         }
+        const bogoPairPrice = toNumber(formData.bogoPairPrice, NaN);
+        if (formData.buyOneGetOne === 'yes' && formData.bogoPairPrice !== '' && (!Number.isFinite(bogoPairPrice) || bogoPairPrice <= 0 || bogoPairPrice >= originalPrice * 2)) {
+            setNotification(`The BOGO price for two must be above ₹0 and below ${formatCurrency(originalPrice * 2)}.`);
+            return;
+        }
         const similarProductIds = [...new Set(parseList(similarProductIdsInput))].filter((id) => id !== productId);
         const selectedSubcategories = normalizeImportedSubcategories(formData.subcategory, selectedCategory);
         if (!selectedSubcategories.normalized.length) {
@@ -973,6 +980,7 @@ const ProductManager = () => {
             discount: formData.discount === '' ? '' : String(discountedPrice),
             shippingCharge: formData.hasShippingCharge === 'yes' ? Math.max(0, toNumber(formData.shippingCharge)) : 0,
             buyOneGetOne: formData.buyOneGetOne === 'yes',
+            bogoPairPrice: formData.buyOneGetOne === 'yes' && formData.bogoPairPrice !== '' ? bogoPairPrice : 0,
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
             sizes: normalizeSizeList(formData.sizes),
@@ -1131,6 +1139,8 @@ const ProductManager = () => {
         const shippingAmount = valueFrom(row, 'shippingchargeamount', 'shippingamount', 'deliverychargeamount', 'deliveryamount') || legacyShippingCharge;
         const numericShippingCharge = toNumber(shippingAmount, NaN);
         const bogoChoice = String(valueFrom(row, 'buyonegetone', 'bogo', 'buy1get1')).trim().toLowerCase();
+        const importedBogoPairPrice = valueFrom(row, 'bogopairprice', 'pricefortwo', 'bogo2price', 'buyonegetoneprice');
+        const numericBogoPairPrice = toNumber(importedBogoPairPrice, NaN);
         const hasShippingCharge = shippingChoice
             ? ['yes', 'y', 'true', '1', 'paid'].includes(shippingChoice)
             : shippingAmount !== '' && numericShippingCharge > 0;
@@ -1150,6 +1160,7 @@ const ProductManager = () => {
             errors.push('Shipping charge must be ₹0 or more');
         }
         if (bogoChoice && !['yes', 'y', 'true', '1', 'no', 'n', 'false', '0'].includes(bogoChoice)) errors.push('Buy One Get One must be Yes or No');
+        if (importedBogoPairPrice !== '' && (!Number.isFinite(numericBogoPairPrice) || numericBogoPairPrice <= 0 || numericBogoPairPrice >= numericPrice * 2)) errors.push('BOGO price for two must be above ₹0 and below twice the original price');
 
         return {
             rowNumber: index + 2,
@@ -1166,6 +1177,7 @@ const ProductManager = () => {
                 hasShippingCharge: hasShippingCharge ? 'yes' : 'no',
                 shippingCharge: hasShippingCharge ? numericShippingCharge : 0,
                 buyOneGetOne: ['yes', 'y', 'true', '1'].includes(bogoChoice),
+                bogoPairPrice: ['yes', 'y', 'true', '1'].includes(bogoChoice) && importedBogoPairPrice !== '' ? numericBogoPairPrice : 0,
                 stock: Math.max(0, toNumber(valueFrom(row, 'stock', 'totalstock', 'quantity'))),
                 sold: Math.max(0, toNumber(valueFrom(row, 'sold', 'soldquantity', 'unitssold'))),
                 image: String(valueFrom(row, 'image', 'imageurl')).trim(),
@@ -1369,6 +1381,7 @@ const ProductManager = () => {
             hasShippingCharge: 'Yes',
             shippingChargeAmount: 60,
             buyOneGetOne: 'No',
+            bogoPairPrice: '',
             stock: 25,
             sold: 5,
             image: '/src/assets/img/example.jpg',
@@ -2199,7 +2212,8 @@ const ProductManager = () => {
                                     <label>Discounted price (₹)<input name="discount" type="number" min="1" value={formData.discount} onChange={handleInputChange} placeholder="Optional" /><small>Leave blank if this product is not discounted.</small></label>
                                     <label>Shipping charge?<select name="hasShippingCharge" value={formData.hasShippingCharge} onChange={handleInputChange}><option value="no">No — free shipping</option><option value="yes">Yes</option></select></label>
                                     {formData.hasShippingCharge === 'yes' && <label>Shipping amount per item (₹)<input name="shippingCharge" type="number" min="0.01" step="0.01" value={formData.shippingCharge} onChange={handleInputChange} required /><small>Added to the cart and Razorpay total.</small></label>}
-                                    <label>Buy 1 Get 1?<select name="buyOneGetOne" value={formData.buyOneGetOne} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes — eligible</option></select><small>Eligible products can be mixed. For each pair, the lower-priced product is free.</small></label>
+                                    <label>Buy 1 Get 1?<select name="buyOneGetOne" value={formData.buyOneGetOne} onChange={handleInputChange}><option value="no">No</option><option value="yes">Yes — eligible</option></select><small>One item keeps its current sale price. The BOGO offer starts only when two eligible items are added.</small></label>
+                                    {formData.buyOneGetOne === 'yes' && <label>BOGO price for 2 matching items (₹)<input name="bogoPairPrice" type="number" min="0.01" step="0.01" value={formData.bogoPairPrice} onChange={handleInputChange} placeholder="Example: 4999" /><small>Optional. Example: one item ₹2,999; enter ₹4,999 here to charge ₹4,999 for two of this product.</small></label>}
                                 </div>
                             </section>
                             <section className="admin-panel editor-section">

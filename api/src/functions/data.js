@@ -159,6 +159,7 @@ const normalizeProduct = (product) => {
     shipping: normalizeList(product.shipping),
     featured: product.featured === true || String(product.featured).toLowerCase() === 'yes' ? 'yes' : 'no',
     buyOneGetOne: product.buyOneGetOne === true || ['yes', 'true', '1'].includes(String(product.buyOneGetOne || '').toLowerCase()),
+    bogoPairPrice: Number(Math.max(0, numericPrice(product.bogoPairPrice)).toFixed(2)),
     campaign: normalizeList(product.campaign),
     showOnCategory: product.showOnCategory !== false,
     category: cleanText(product.category, 100),
@@ -1585,6 +1586,7 @@ registerHttp('razorpay-create-order', {
           : regularPrice;
         const buyOneGetOne = isBogoEligible(product.buyOneGetOne);
         const price = getBillableUnitPrice({ mrp, sellingPrice, buyOneGetOne });
+        const bogoPairPrice = Number(Math.max(0, numericPrice(product.bogoPairPrice)).toFixed(2));
         if (!Number.isFinite(price) || price <= 0) {
           const error = new Error(`Product ${id || 'unknown'} is unavailable`);
           error.status = 400;
@@ -1604,7 +1606,9 @@ registerHttp('razorpay-create-order', {
           color: cleanText(requestedItem.color, 80),
           quantity,
           price,
+          mrp,
           buyOneGetOne,
+          bogoPairPrice,
           shippingCharge: Number(Math.max(0, numericPrice(product.shippingCharge)).toFixed(2)),
           lineShipping: Number((Math.max(0, numericPrice(product.shippingCharge)) * quantity).toFixed(2)),
         };

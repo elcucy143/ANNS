@@ -26,8 +26,9 @@ const normalizeCartItem = (item) => {
     return {
         id: String(item.id),
         name: String(item.name),
-        price: buyOneGetOne ? mrp : parsePrice(item.price),
+        price: parsePrice(item.price),
         mrp,
+        bogoPairPrice: parsePrice(item.bogoPairPrice),
         shippingCharge: parsePrice(item.shippingCharge),
         image,
         quantity: normalizeQuantity(item.quantity),
@@ -86,11 +87,12 @@ export const CartProvider = ({ children }) => {
             if (!product) return item;
             const nextBuyOneGetOne = isBogoEligible(product.buyOneGetOne);
             const nextMrp = parsePrice(product.originalPrice ?? product.regularPrice ?? product.price);
-            const nextPrice = nextBuyOneGetOne ? nextMrp : parsePrice(product.price);
+            const nextPrice = parsePrice(product.price);
+            const nextBogoPairPrice = parsePrice(product.bogoPairPrice);
             const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
             const nextShippingCharge = parsePrice(product.shippingCharge);
-            if (item.price === nextPrice && item.mrp === nextMrp && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage && item.buyOneGetOne === nextBuyOneGetOne) return item;
-            return { ...item, name: product.name, price: nextPrice, mrp: nextMrp, shippingCharge: nextShippingCharge, image: nextImage, buyOneGetOne: nextBuyOneGetOne };
+            if (item.price === nextPrice && item.mrp === nextMrp && item.bogoPairPrice === nextBogoPairPrice && item.shippingCharge === nextShippingCharge && item.name === product.name && item.image === nextImage && item.buyOneGetOne === nextBuyOneGetOne) return item;
+            return { ...item, name: product.name, price: nextPrice, mrp: nextMrp, bogoPairPrice: nextBogoPairPrice, shippingCharge: nextShippingCharge, image: nextImage, buyOneGetOne: nextBuyOneGetOne };
         }));
     }, [products]);
 
