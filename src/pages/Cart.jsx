@@ -8,11 +8,15 @@ import './Cart.css';
 
 import images from '../assets/images';
 import { productImageVariant } from '../utils/imageUrl';
+import { calculateCheckoutOffers, CART_DISCOUNT_MINIMUM, FREE_SHIPPING_MINIMUM } from '../utils/storeOffers';
 
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal, getShippingTotal, getBogoDiscount, getCartPricing } = useCart();
     const { products } = useProductCatalog();
     const { user, isLoading } = useAuth();
+    const offerPricing = calculateCheckoutOffers({ subtotal: getCartTotal(), shippingTotal: getShippingTotal() });
+    const freeShippingRemaining = Math.max(0, FREE_SHIPPING_MINIMUM - getCartTotal());
+    const cartDiscountRemaining = Math.max(0, CART_DISCOUNT_MINIMUM - getCartTotal());
 
     if (cartItems.length === 0) {
         return (
@@ -74,14 +78,18 @@ const Cart = () => {
                     <div className="summary-row"><span>Merchandise</span><span>₹ {getCartPricing().grossSubtotal.toFixed(2)}</span></div>
                     {getBogoDiscount() > 0 && <div className="summary-row"><span>Buy 1 Get 1 savings</span><span>− ₹ {getBogoDiscount().toFixed(2)}</span></div>}
                     <div className="summary-row"><span>Subtotal</span><span>₹ {getCartTotal().toFixed(2)}</span></div>
+                    {offerPricing.cartDiscount > 0 && <div className="summary-row"><span>Shop ₹2,999 offer</span><span>− ₹ {offerPricing.cartDiscount.toFixed(2)}</span></div>}
                     <div className="summary-row">
                         <span>Shipping</span>
-                        <span>{getShippingTotal() > 0 ? `₹ ${getShippingTotal().toFixed(2)}` : 'Free'}</span>
+                        <span>{offerPricing.freeShippingApplied ? 'Free' : offerPricing.shippingTotal > 0 ? `₹ ${offerPricing.shippingTotal.toFixed(2)}` : 'Free'}</span>
                     </div>
+                    {freeShippingRemaining > 0 && <p className="cart-offer-hint">Add ₹{freeShippingRemaining.toLocaleString('en-IN')} more for free shipping.</p>}
+                    {freeShippingRemaining === 0 && cartDiscountRemaining > 0 && <p className="cart-offer-hint">Add ₹{cartDiscountRemaining.toLocaleString('en-IN')} more to save ₹150.</p>}
+                    <p className="cart-offer-hint">First order? Use <strong>FIRST10</strong> at checkout for 10% off.</p>
                     <div className="summary-divider"></div>
                     <div className="summary-row total">
                         <span>Total</span>
-                        <span>₹ {(getCartTotal() + getShippingTotal()).toFixed(2)}</span>
+                        <span>₹ {offerPricing.total.toFixed(2)}</span>
                     </div>
                     <Link
                         to={user ? '/checkout' : '/account'}

@@ -63,9 +63,21 @@ const Navbar = () => {
     { name: 'Flash Sale', path: '/flash-sale' },
     { name: 'Contact', path: '/contact' },
   ];
+  const offers = [
+    'FIRST ORDER: USE FIRST10 FOR 10% OFF',
+    'FREE SHIPPING ABOVE ₹2,000',
+    'SHOP ₹2,999 & GET ₹150 OFF',
+    'FLASH SALE PRICES LIVE',
+    'BUY 1 GET 1 ON SELECTED PRODUCTS',
+  ];
 
   return (
     <nav className="navbar">
+      <div className="offer-ticker" aria-label="Current store offers">
+        <div className="offer-ticker-track">
+          {[...offers, ...offers].map((offer, index) => <span key={`${offer}-${index}`}>{offer}</span>)}
+        </div>
+      </div>
       <div className="container navbar-container">
         <div className="navbar-logo">
           <Link to="/">

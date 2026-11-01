@@ -1947,6 +1947,17 @@ const ProductManager = () => {
                             </div>
                         </section>
 
+                        <section className="admin-panel capacity-panel">
+                            <div className="admin-panel-heading"><div><p className="admin-kicker">AUTOMATIC CHECKOUT OFFERS</p><h2>Offers customers receive</h2></div></div>
+                            <div className="capacity-summary">
+                                <article><span>First paid order</span><strong>10% off</strong><small>Customer enters coupon FIRST10</small></article>
+                                <article><span>Cart from ₹2,000</span><strong>Free shipping</strong><small>Applied automatically at checkout</small></article>
+                                <article><span>Cart from ₹2,999</span><strong>₹150 off</strong><small>Applied automatically at checkout</small></article>
+                                <article><span>Selected products</span><strong>Buy 1 Get 1</strong><small>Enable on the product or in Excel</small></article>
+                            </div>
+                            <p className="capacity-guidance"><BadgePercent size={17} /><span><strong>How pricing works:</strong> Flash Sale and BOGO are calculated first. Cart offers then use the payable merchandise subtotal. Razorpay receives only the final server-verified amount.</span></p>
+                        </section>
+
                         <section className="admin-panel flash-sale-products-editor">
                             <div className="admin-panel-heading"><div><p className="admin-kicker">DISCOUNTED PRODUCTS</p><h2>{flashSale.items.length} sale item{flashSale.items.length === 1 ? '' : 's'}</h2></div></div>
                             <div className="flash-sale-product-picker">
@@ -1995,6 +2006,7 @@ const ProductManager = () => {
                             <article className="admin-panel"><span>7</span><h3>Customer data</h3><p>Use CSV exports for backup and reporting. Delete a customer only when the record is genuinely unnecessary and purchase history has been checked.</p></article>
                             <article className="admin-panel"><span>8</span><h3>Before finishing</h3><p>Confirm “Atlas connected”, refresh the inventory, search the product code, and open the live category page to verify the product and images.</p><small>Do not close the tab while an upload is processing.</small></article>
                             <article className="admin-panel"><span>9</span><h3>Buy 1 Get 1</h3><p>Set “Buy 1 Get 1?” to Yes on each eligible product, or use the same column in the Excel template. Customers may mix eligible products; the lower-MRP product in every pair becomes free automatically.</p><small>BOGO uses MRP and does not stack with Flash Sale pricing. An odd unpaired item is charged normally. Shipping applies to every physical item.</small></article>
+                            <article className="admin-panel"><span>10</span><h3>Automatic checkout offers</h3><p>FIRST10 gives a signed-in customer 10% off only on their first paid order. Orders from ₹2,000 receive free shipping, and orders from ₹2,999 receive ₹150 off automatically.</p><small>These offers are calculated and verified by the server before Razorpay opens. Flash Sale and BOGO products continue to appear in their normal subcategories.</small></article>
                         </section>
                     </div>
                 )}

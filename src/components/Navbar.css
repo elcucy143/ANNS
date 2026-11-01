@@ -1,12 +1,13 @@
 .navbar {
-    height: var(--header-height);
+    min-height: var(--header-height);
     background-color: var(--color-white);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .navbar-container {
@@ -14,7 +15,15 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    min-height: var(--header-height);
 }
+
+.offer-ticker { width: 100%; overflow: hidden; color: #fff; background: #29231f; }
+.offer-ticker-track { width: max-content; display: flex; align-items: center; min-height: 30px; animation: offer-ticker-scroll 34s linear infinite; }
+.offer-ticker-track span { display: inline-flex; align-items: center; padding: 0 34px; font-size: .68rem; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.offer-ticker-track span::before { content: '✦'; margin-right: 12px; color: #d49a70; }
+@keyframes offer-ticker-scroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .offer-ticker-track { animation: none; } }
 
 .navbar-logo a {
     display: flex;
@@ -96,7 +105,7 @@
 
     .navbar-links {
         position: absolute;
-        top: var(--header-height);
+        top: 100%;
         left: 0;
         width: 100%;
         background-color: var(--color-white);

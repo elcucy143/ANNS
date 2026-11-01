@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const sharp = require('sharp');
 const { getClient, getDb, withDbRetry } = require('../lib/db');
 const { applyBuyOneGetOne, getBillableUnitPrice, isBogoEligible } = require('../lib/promotions');
+const { FIRST_ORDER_COUPON, calculateCheckoutOffers } = require('../lib/storeOffers');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
   authenticateRequest,
@@ -1458,6 +1459,7 @@ registerHttp('razorpay-create-order', {
     try {
       const body = await parseJson(request);
       const requestedItems = Array.isArray(body?.items) ? body.items.slice(0, 50) : [];
+      const couponCode = cleanText(body?.couponCode, 40).trim().toUpperCase();
       const customer = body?.customer || {};
       const shippingAddress = body?.shippingAddress || {};
       const session = authenticateRequest(request);
@@ -1531,8 +1533,22 @@ registerHttp('razorpay-create-order', {
       const promotionPricing = applyBuyOneGetOne(items);
       const pricedItems = promotionPricing.items;
       const subtotal = promotionPricing.subtotal;
-      const shippingTotal = Number(pricedItems.reduce((sum, item) => sum + item.lineShipping, 0).toFixed(2));
-      const total = Number((subtotal + shippingTotal).toFixed(2));
+      const shippingBeforeOffers = Number(pricedItems.reduce((sum, item) => sum + item.lineShipping, 0).toFixed(2));
+      if (couponCode && couponCode !== FIRST_ORDER_COUPON) return json({ error: 'Coupon code is invalid' }, 400);
+      const previousPaidOrders = couponCode === FIRST_ORDER_COUPON
+        ? await db.collection('orders').countDocuments({ customerId: activeCustomer.id, paymentStatus: 'captured' }, { limit: 1 })
+        : 0;
+      if (couponCode === FIRST_ORDER_COUPON && previousPaidOrders > 0) {
+        return json({ error: 'FIRST10 is available only on your first paid order' }, 409);
+      }
+      const offerPricing = calculateCheckoutOffers({
+        subtotal,
+        shippingTotal: shippingBeforeOffers,
+        couponCode,
+        firstOrderEligible: previousPaidOrders === 0,
+      });
+      const shippingTotal = offerPricing.shippingTotal;
+      const total = offerPricing.total;
       const amount = Math.round(total * 100);
       if (!Number.isSafeInteger(amount) || amount < 100) {
         return json({ error: 'Order total must be at least ₹1.00' }, 400);
@@ -1572,6 +1588,12 @@ registerHttp('razorpay-create-order', {
         merchandiseSubtotal: promotionPricing.grossSubtotal,
         bogoDiscount: promotionPricing.bogoDiscount,
         subtotal,
+        couponCode: offerPricing.couponCode,
+        firstOrderDiscount: offerPricing.firstOrderDiscount,
+        cartDiscount: offerPricing.cartDiscount,
+        freeShippingApplied: offerPricing.freeShippingApplied,
+        shippingBeforeOffers: offerPricing.shippingBeforeOffers,
+        shippingDiscount: offerPricing.shippingDiscount,
         shippingTotal,
         total,
         amountPaise: amount,
@@ -1590,6 +1612,17 @@ registerHttp('razorpay-create-order', {
         localOrderId,
         amount,
         currency: 'INR',
+        pricing: {
+          merchandiseSubtotal: promotionPricing.grossSubtotal,
+          bogoDiscount: promotionPricing.bogoDiscount,
+          subtotal,
+          firstOrderDiscount: offerPricing.firstOrderDiscount,
+          cartDiscount: offerPricing.cartDiscount,
+          shippingBeforeOffers: offerPricing.shippingBeforeOffers,
+          shippingDiscount: offerPricing.shippingDiscount,
+          shippingTotal,
+          total,
+        },
       }, 201);
     } catch (error) {
       return paymentError(context, error);
