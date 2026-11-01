@@ -309,6 +309,7 @@ const ProductManager = () => {
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [bulkStockValue, setBulkStockValue] = useState('');
     const [bulkShippingValue, setBulkShippingValue] = useState('');
+    const [bulkBogoPairPrice, setBulkBogoPairPrice] = useState('');
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
     const [ordersPage, setOrdersPage] = useState(1);
@@ -1068,12 +1069,37 @@ const ProductManager = () => {
         const changedProducts = [];
         const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
             if (!selected.has(product.id)) return product;
-            const updated = { ...product, buyOneGetOne: enabled };
+            const updated = { ...product, buyOneGetOne: enabled, ...(enabled ? {} : { bogoPairPrice: 0 }) };
             changedProducts.push({ ...updated, category });
             return updated;
         })]));
         await saveProducts(nextProducts, `Buy 1 Get 1 ${enabled ? 'enabled' : 'removed'} for ${changedProducts.length} products.`, changedProducts);
         setSelectedProductIds([]);
+    };
+
+    const applyBulkBogoPairPrice = async () => {
+        const pairPrice = Number(bulkBogoPairPrice);
+        if (!selectedProductIds.length || !Number.isFinite(pairPrice) || pairPrice <= 0) {
+            setNotification('Select products and enter a valid BOGO price for two.');
+            return;
+        }
+        const selected = new Set(selectedProductIds);
+        const selectedProducts = allProducts.filter((product) => selected.has(product.id));
+        const invalidProducts = selectedProducts.filter((product) => pairPrice >= toNumber(product.price) * 2);
+        if (invalidProducts.length) {
+            setNotification(`BOGO price must be below twice the MRP for: ${invalidProducts.slice(0, 5).map((product) => product.id).join(', ')}${invalidProducts.length > 5 ? '…' : ''}`);
+            return;
+        }
+        const changedProducts = [];
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+            if (!selected.has(product.id)) return product;
+            const updated = { ...product, buyOneGetOne: true, bogoPairPrice: pairPrice };
+            changedProducts.push({ ...updated, category });
+            return updated;
+        })]));
+        await saveProducts(nextProducts, `BOGO enabled at ${formatCurrency(pairPrice)} for two on ${changedProducts.length} products.`, changedProducts);
+        setSelectedProductIds([]);
+        setBulkBogoPairPrice('');
     };
 
     const removeSelectedProducts = async () => {
@@ -1800,7 +1826,7 @@ const ProductManager = () => {
                             <button type="button" className="admin-icon-button" onClick={exportInventoryCsv} title="Download complete stock CSV"><Download size={18} /></button>
                         </div>
                         <div className="inventory-summary-line"><strong>{filteredProducts.length}</strong> products shown <span>·</span> Remaining = total stock − sold</div>
-                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><label>Shipping/item ₹<input type="number" min="0" step="0.01" value={bulkShippingValue} onChange={(event) => setBulkShippingValue(event.target.value)} placeholder="0 = free" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkShipping}>Apply shipping</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(true)}>Enable BOGO</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(false)}>Remove BOGO</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
+                        {selectedProductIds.length > 0 && <div className="bulk-product-toolbar"><strong>{selectedProductIds.length} selected</strong><label>Total stock<input type="number" min="0" value={bulkStockValue} onChange={(event) => setBulkStockValue(event.target.value)} placeholder="Set stock" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkStock}>Update stock</button><label>Shipping/item ₹<input type="number" min="0" step="0.01" value={bulkShippingValue} onChange={(event) => setBulkShippingValue(event.target.value)} placeholder="0 = free" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkShipping}>Apply shipping</button><button type="button" className="admin-secondary-button" onClick={addSelectedToFlashSale}><BadgePercent size={16} /> Add to Flash Sale</button><label>BOGO price for 2 ₹<input type="number" min="0.01" step="0.01" value={bulkBogoPairPrice} onChange={(event) => setBulkBogoPairPrice(event.target.value)} placeholder="Example: 4999" /></label><button type="button" className="admin-secondary-button" onClick={applyBulkBogoPairPrice}>Enable BOGO + set price</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(true)}>Enable standard BOGO</button><button type="button" className="admin-secondary-button" onClick={() => applyBulkBogo(false)}>Remove BOGO</button><button type="button" className="admin-danger-button" onClick={removeSelectedProducts}><Trash2 size={16} /> Delete selected</button><button type="button" className="admin-secondary-button" onClick={() => setSelectedProductIds([])}>Clear</button></div>}
                         <div className="admin-table-wrap">
                             <table className="admin-table">
                                 <thead><tr><th><input type="checkbox" aria-label="Select this page" checked={pagedProducts.length > 0 && pagedProducts.every((product) => selectedProductIds.includes(product.id))} onChange={(event) => setSelectedProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedProducts.map((product) => product.id)])] : current.filter((id) => !pagedProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>Price</th><th>Total stock</th><th>Sold</th><th>Remaining</th><th>Status</th><th aria-label="Actions" /></tr></thead>
