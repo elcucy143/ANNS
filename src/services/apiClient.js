@@ -61,8 +61,10 @@ export const approveOrderCancellation = (id) => request('orders', {
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 export const getFlashSale = () => request('flash-sale');
+export const getHomepageBanners = () => request('homepage-banners');
 export const getInstagramReels = () => request('instagram/reels');
 export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true, cache: 'no-store' });
+export const getAdminHomepageBanners = () => request('admin/homepage-banners', { admin: true, cache: 'no-store' });
 export const getAdminAnalytics = (days = 30, page = 1, limit = 50) => request(`analytics?days=${days}&page=${page}&limit=${limit}`, { admin: true, cache: 'no-store' });
 export const getAdminStorageCapacity = () => request('admin/storage-capacity', { admin: true, cache: 'no-store' });
 
@@ -98,6 +100,12 @@ export const saveFlashSale = (sale) => request('admin/flash-sale', {
 export const deleteFlashSale = () => request('admin/flash-sale', {
   method: 'DELETE',
   admin: true,
+});
+
+export const saveHomepageBanners = (slides) => request('admin/homepage-banners', {
+  method: 'POST',
+  admin: true,
+  body: JSON.stringify({ slides }),
 });
 
 export const deleteCustomersFromDatabase = (ids) => request('customers', {

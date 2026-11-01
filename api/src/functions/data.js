@@ -126,6 +126,20 @@ const normalizeFlashSale = (sale = {}) => ({
     source: item.source === 'catalog' ? 'catalog' : 'manual',
   })).filter((item) => item.productId && Number.isFinite(item.salePrice) && item.salePrice > 0),
 });
+const normalizeHomepageBannerLink = (value) => {
+  const link = cleanText(value, 240);
+  return link.startsWith('/') && !link.startsWith('//') ? link : '/womens-wear';
+};
+const normalizeHomepageBanners = (value = {}) => ({
+  id: 'homepage',
+  slides: (Array.isArray(value.slides) ? value.slides : []).slice(0, 8).map((slide) => ({
+    id: cleanText(slide.id, 80).replace(/[^a-z0-9-]/gi, '') || crypto.randomUUID(),
+    image: normalizeBannerImage(slide.image),
+    alt: cleanText(slide.alt, 160) || 'ANNS featured collection',
+    link: normalizeHomepageBannerLink(slide.link),
+    active: slide.active !== false,
+  })).filter((slide) => slide.image),
+});
 const isFlashSaleActive = (sale, at = new Date()) => {
   if (!sale?.active) return false;
   const startsAt = sale.startsAt ? new Date(sale.startsAt) : null;
@@ -1355,6 +1369,67 @@ registerHttp('admin-reviews', {
       );
       await recordAdminAudit(db, request, 'review.saved', review.id, { published: review.published, featured: review.featured });
       return json({ ok: true, review: cleanDocument(await collection.findOne({ id: review.id })) });
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('homepage-banners', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'homepage-banners',
+  handler: async (_request, context) => {
+    try {
+      const db = await getDb();
+      const banners = await db.collection('homepageBanners').findOne({ id: 'homepage' });
+      const slides = (banners?.slides || []).filter((slide) => slide.active !== false && slide.image);
+      const response = json({ slides: slides.map((slide) => ({
+        id: slide.id, image: slide.image, alt: slide.alt, link: slide.link, active: true,
+      })) });
+      response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
+      response.headers['Vercel-CDN-Cache-Control'] = 'public, s-maxage=15, stale-while-revalidate=300';
+      return response;
+    } catch (error) {
+      return handleError(context, error);
+    }
+  },
+});
+
+registerHttp('admin-homepage-banners', {
+  methods: ['GET', 'POST'],
+  authLevel: 'anonymous',
+  route: 'admin/homepage-banners',
+  handler: async (request, context) => {
+    try {
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+      const db = await getDb();
+      const collection = db.collection('homepageBanners');
+      if (request.method === 'GET') {
+        return json(cleanDocument(await collection.findOne({ id: 'homepage' }) || { id: 'homepage', slides: [] }));
+      }
+
+      const body = await parseJson(request);
+      const banners = normalizeHomepageBanners(body || {});
+      const operationTime = nowIso();
+      const existing = await collection.findOne({ id: 'homepage' });
+      const existingIds = new Set((existing?.slides || []).map((slide) => slide.id));
+      for (const slide of banners.slides) {
+        slide.image = await externalizeMediaImage(db, `homepage-banner-${slide.id}`, slide.image, operationTime);
+      }
+      const retainedIds = new Set(banners.slides.map((slide) => slide.id));
+      const removedKeys = [...existingIds]
+        .filter((id) => !retainedIds.has(id))
+        .map((id) => `homepage-banner-${id}`);
+      if (removedKeys.length) await db.collection('mediaImages').deleteMany({ key: { $in: removedKeys } });
+      await collection.updateOne(
+        { id: 'homepage' },
+        { $set: { ...banners, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        { upsert: true },
+      );
+      await recordAdminAudit(db, request, 'homepage_banners.saved', 'homepage', { slideCount: banners.slides.length });
+      return json({ ok: true, banners: cleanDocument(await collection.findOne({ id: 'homepage' })) });
     } catch (error) {
       return handleError(context, error);
     }

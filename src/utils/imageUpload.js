@@ -109,3 +109,36 @@ export const prepareImageFile = async (file) => {
   });
   return encode(0.86);
 };
+
+export const prepareBannerImageFile = async (file) => {
+  if (!isSupportedImageFile(file)) throw new Error(`${file?.name || 'This file'} is not an image.`);
+  if (!file.size) throw new Error(`${file.name} is empty. Please choose the original image again.`);
+  if (file.size > MAX_SOURCE_IMAGE_BYTES) throw new Error(`${file.name} is larger than 75 MB. Export or resend it at a smaller size.`);
+
+  let image;
+  try {
+    image = await decodeImage(file);
+  } catch {
+    throw new Error(`${file.name} could not be prepared as a banner. Export it once as JPEG or PNG and retry.`);
+  }
+
+  const scale = Math.min(1, 2400 / image.naturalWidth, 1400 / image.naturalHeight);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const context = canvas.getContext('2d', { alpha: false });
+  if (!context) throw new Error(`${file.name} could not be processed by this browser.`);
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  const maximumBytes = 850 * 1024;
+  const encode = (quality) => new Promise((resolve, reject) => {
+    canvas.toBlob(async (blob) => {
+      if (!blob) return reject(new Error(`${file.name} could not be converted.`));
+      if (blob.size > maximumBytes && quality > 0.5) return resolve(encode(quality - 0.07));
+      try { return resolve(await readBlobAsDataUrl(blob)); } catch (error) { return reject(error); }
+    }, 'image/jpeg', quality);
+  });
+  return encode(0.9);
+};

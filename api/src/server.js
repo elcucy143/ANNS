@@ -69,7 +69,7 @@ const publicReadLimiter = rateLimit({
   message: { error: 'Too many catalogue requests. Please try again shortly.' },
 });
 const publicReadPaths = new Set([
-  '/health', '/products', '/product-image', '/media-image', '/reviews', '/flash-sale', '/instagram/reels',
+  '/health', '/products', '/product-image', '/media-image', '/reviews', '/flash-sale', '/homepage-banners', '/instagram/reels',
 ]);
 // Product grids can legitimately request hundreds of immutable images from a
 // shared office/mobile-network IP. Keep mutation and private APIs protected by

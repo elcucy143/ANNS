@@ -46,6 +46,7 @@ import {
     deleteReviewsFromDatabase,
     deleteFlashSale,
     getAdminFlashSale,
+    getAdminHomepageBanners,
     getAdminAnalytics,
     getAdminReviews,
     getAdminStorageCapacity,
@@ -56,12 +57,13 @@ import {
     saveProductsToDatabase,
     saveReviewToDatabase,
     saveFlashSale,
+    saveHomepageBanners,
     updateOrderFulfillment,
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
 import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSubcategoryList, subcategoryMatchKey, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
-import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareImageFile } from '../utils/imageUpload';
+import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareBannerImageFile, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
 const LOW_STOCK_LIMIT = 10;
@@ -276,7 +278,7 @@ const ProductManager = () => {
     const [passwordInput, setPasswordInput] = useState('');
     const [loginError, setLoginError] = useState('');
     const initialParams = new URLSearchParams(window.location.search);
-    const initialView = ['overview', 'analytics', 'inventory', 'orders', 'customers', 'reviews', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
+    const initialView = ['overview', 'analytics', 'inventory', 'orders', 'customers', 'reviews', 'banners', 'flash-sale', 'import', 'instructions', 'editor'].includes(initialParams.get('view')) ? initialParams.get('view') : 'overview';
     const [activeView, setActiveView] = useState(initialView);
     const [notification, setNotification] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -304,6 +306,8 @@ const ProductManager = () => {
     const [flashSaleProductId, setFlashSaleProductId] = useState('');
     const [flashSaleProductSearch, setFlashSaleProductSearch] = useState('');
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
+    const [homepageBanners, setHomepageBanners] = useState([]);
+    const [homepageBannersSaving, setHomepageBannersSaving] = useState(false);
     const [bulkImageBusy, setBulkImageBusy] = useState(false);
     const [bulkImageReport, setBulkImageReport] = useState(null);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -325,6 +329,7 @@ const ProductManager = () => {
     const bulkImageInputRef = useRef(null);
     const reviewImageInputRef = useRef(null);
     const flashSaleImageInputRef = useRef(null);
+    const homepageBannerInputRef = useRef(null);
     const linkedOrderId = initialParams.get('order') || '';
 
     useEffect(() => {
@@ -476,6 +481,16 @@ const ProductManager = () => {
         }
     };
 
+    const refreshHomepageBanners = async () => {
+        try {
+            const result = await getAdminHomepageBanners();
+            setHomepageBanners(Array.isArray(result?.slides) ? result.slides : []);
+            setDatabaseStatus('connected');
+        } catch (error) {
+            setNotification(error.message || 'Homepage banners could not be loaded.');
+        }
+    };
+
     const refreshCustomerData = async () => {
         try {
             const [databaseCustomers, databaseOrders] = await Promise.all([
@@ -593,6 +608,7 @@ const ProductManager = () => {
         void refreshCustomerData();
         void refreshReviews();
         void refreshFlashSale();
+        void refreshHomepageBanners();
         void refreshStorageCapacity();
         const interval = window.setInterval(() => { void refreshProductsFromDatabase(); }, 30000);
         const onVisibilityChange = () => {
@@ -680,7 +696,7 @@ const ProductManager = () => {
             setIsAuthenticated(true);
             setLoginError('');
             setDatabaseStatus('connected');
-            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews(), refreshFlashSale(), refreshStorageCapacity()]);
+            await Promise.all([refreshProductsFromDatabase(), refreshCustomerData(), refreshReviews(), refreshFlashSale(), refreshHomepageBanners(), refreshStorageCapacity()]);
         } catch {
             setLoginError('Incorrect admin password.');
         }
@@ -768,6 +784,73 @@ const ProductManager = () => {
             setFlashSale((current) => ({ ...current, bannerImage }));
             setNotification('Sale banner is ready. Save the sale to publish it.');
         } catch (error) { setNotification(error.message || 'The banner could not be prepared.'); }
+    };
+
+    const persistHomepageBanners = async (slides, successMessage) => {
+        setHomepageBannersSaving(true);
+        try {
+            const result = await saveHomepageBanners(slides);
+            setHomepageBanners(Array.isArray(result?.banners?.slides) ? result.banners.slides : []);
+            setNotification(successMessage || 'Homepage banners saved and published.');
+            setDatabaseStatus('connected');
+            return true;
+        } catch (error) {
+            setNotification(error.message || 'Homepage banners could not be saved.');
+            return false;
+        } finally {
+            setHomepageBannersSaving(false);
+            window.setTimeout(() => setNotification(''), 4000);
+        }
+    };
+
+    const handleHomepageBannerImage = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (homepageBanners.length >= 8) {
+            setNotification('The homepage supports up to 8 banner slides. Remove one before adding another.');
+            return;
+        }
+        if (!isSupportedImageFile(file) || file.size > MAX_SOURCE_IMAGE_BYTES) {
+            setNotification('Choose an image file smaller than 75 MB. JPEG, PNG, WebP and camera formats are supported.');
+            return;
+        }
+        try {
+            setHomepageBannersSaving(true);
+            setNotification('Preparing the wide homepage banner…');
+            const image = await prepareBannerImageFile(file);
+            const slide = {
+                id: `banner-${Date.now()}`,
+                image,
+                alt: file.name.replace(/\.[^.]+$/, '').slice(0, 160) || 'ANNS featured collection',
+                link: '/womens-wear',
+                active: true,
+            };
+            await persistHomepageBanners([...homepageBanners, slide], 'Banner uploaded and published on the homepage.');
+        } catch (error) {
+            setHomepageBannersSaving(false);
+            setNotification(error.message || 'The banner could not be prepared.');
+            window.setTimeout(() => setNotification(''), 4000);
+        }
+    };
+
+    const updateHomepageBanner = (id, field, value) => {
+        setHomepageBanners((current) => current.map((slide) => slide.id === id ? { ...slide, [field]: value } : slide));
+    };
+
+    const moveHomepageBanner = (index, direction) => {
+        setHomepageBanners((current) => {
+            const target = index + direction;
+            if (target < 0 || target >= current.length) return current;
+            const next = [...current];
+            [next[index], next[target]] = [next[target], next[index]];
+            return next;
+        });
+    };
+
+    const removeHomepageBanner = async (slide) => {
+        if (!window.confirm(`Remove this homepage banner: ${slide.alt || 'Untitled banner'}?`)) return;
+        await persistHomepageBanners(homepageBanners.filter((item) => item.id !== slide.id), 'Banner removed from the homepage.');
     };
 
     const addFlashSaleProduct = () => {
@@ -1620,6 +1703,7 @@ const ProductManager = () => {
         { id: 'orders', label: 'Orders', icon: ReceiptText },
         { id: 'customers', label: 'Customers', icon: Users },
         { id: 'reviews', label: 'Reviews', icon: MessageSquareQuote },
+        { id: 'banners', label: 'Homepage banners', icon: ImagePlus },
         { id: 'flash-sale', label: 'Flash sale', icon: BadgePercent },
         { id: 'import', label: 'Bulk import', icon: UploadCloud },
         { id: 'instructions', label: 'Instructions', icon: BookOpenCheck },
@@ -1631,6 +1715,7 @@ const ProductManager = () => {
         if (view === 'customers') refreshCustomerData();
         if (view === 'orders') refreshCustomerData();
         if (view === 'reviews') refreshReviews();
+        if (view === 'banners') refreshHomepageBanners();
         if (view === 'flash-sale') refreshFlashSale();
         if (view === 'analytics') refreshAnalytics();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) {
@@ -2035,6 +2120,44 @@ const ProductManager = () => {
                             </section>
                         </section>
                     </div>
+                )}
+
+                {activeView === 'banners' && (
+                    <form className="admin-view-stack" onSubmit={(event) => { event.preventDefault(); void persistHomepageBanners(homepageBanners, 'Banner order and details saved on the homepage.'); }}>
+                        <section className="admin-panel homepage-banner-manager">
+                            <div className="admin-panel-heading">
+                                <div><p className="admin-kicker">HOMEPAGE HERO</p><h2>Homepage banner slides</h2></div>
+                                <strong>{homepageBanners.length} / 8 banners</strong>
+                            </div>
+                            <p className="review-editor-intro">Upload wide promotional artwork and control the order shown at the top of the homepage. The current two bundled banners remain visible until the first custom banner is published.</p>
+                            <div className="banner-upload-guidance">
+                                <span><strong>Recommended:</strong> 2200 × 1100 px (2:1 landscape)</span>
+                                <span><strong>Source limit:</strong> 75 MB</span>
+                                <span><strong>Website copy:</strong> automatically compressed below 850 KB</span>
+                                <span><strong>Accepted:</strong> JPEG, PNG, WebP, HEIC and common camera formats</span>
+                            </div>
+                            <input ref={homepageBannerInputRef} className="visually-hidden" type="file" accept={IMAGE_FILE_ACCEPT} onChange={handleHomepageBannerImage} />
+                            <button type="button" className="homepage-banner-upload" onClick={() => homepageBannerInputRef.current?.click()} disabled={homepageBannersSaving || homepageBanners.length >= 8}>
+                                <ImagePlus size={28} /><strong>{homepageBanners.length >= 8 ? 'Maximum 8 banners reached' : 'Upload homepage banner'}</strong><small>Large images are resized safely for fast desktop and mobile loading</small>
+                            </button>
+
+                            <div className="homepage-banner-list">
+                                {homepageBanners.map((slide, index) => (
+                                    <article key={slide.id} className="homepage-banner-card">
+                                        <div className="homepage-banner-preview"><img src={slide.image} alt={slide.alt || `Banner ${index + 1}`} /></div>
+                                        <div className="homepage-banner-fields">
+                                            <div className="homepage-banner-card-heading"><strong>Slide {index + 1}</strong><label><input type="checkbox" checked={slide.active !== false} onChange={(event) => updateHomepageBanner(slide.id, 'active', event.target.checked)} /> Show on website</label></div>
+                                            <label>Image description<input value={slide.alt || ''} maxLength="160" onChange={(event) => updateHomepageBanner(slide.id, 'alt', event.target.value)} placeholder="Example: Diwali fashion collection" /></label>
+                                            <label>Shop button destination<select value={slide.link || '/womens-wear'} onChange={(event) => updateHomepageBanner(slide.id, 'link', event.target.value)}><option value="/womens-wear">Women's Wear</option><option value="/gifts">Gifts</option><option value="/jewellery">Jewellery</option><option value="/flash-sale">Flash Sale</option><option value="/buy-one-get-one">Buy 1 Get 1</option></select></label>
+                                            <div className="homepage-banner-actions"><button type="button" className="admin-secondary-button" disabled={index === 0} onClick={() => moveHomepageBanner(index, -1)}>Move up</button><button type="button" className="admin-secondary-button" disabled={index === homepageBanners.length - 1} onClick={() => moveHomepageBanner(index, 1)}>Move down</button><button type="button" className="admin-danger-button" onClick={() => removeHomepageBanner(slide)}><Trash2 size={16} /> Remove</button></div>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                            {!homepageBanners.length && <div className="admin-empty-state"><ImagePlus size={30} /><p>No custom banners yet. The existing two homepage banners are still live. Upload the first custom banner when ready.</p></div>}
+                        </section>
+                        <div className="editor-save-bar"><p>Changes normally appear publicly within 15 seconds. Keep at least one banner active.</p><button type="submit" className="admin-primary-button" disabled={homepageBannersSaving}><Save size={18} /> {homepageBannersSaving ? 'Saving…' : 'Save banner order & details'}</button></div>
+                    </form>
                 )}
 
                 {activeView === 'flash-sale' && (
