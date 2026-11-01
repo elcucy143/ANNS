@@ -820,22 +820,6 @@ registerHttp('products', {
         } else {
           products = migrated;
         }
-        // Repair the confirmed offer that was saved by the legacy editor before
-        // Flash Sale + custom BOGO fields could be persisted together.
-        const repairedAt = nowIso();
-        await collection.updateOne(
-          { id: 'ww300001', name: 'Chikankari Dobby cotton 3pc Sets' },
-          { $set: { price: '5000', discount: '2999', buyOneGetOne: true, bogoPairPrice: 4999, updatedAt: repairedAt } },
-        );
-        products = products.map((product) => (String(product.id) === 'ww300001'
-          ? { ...product, price: '5000', discount: '2999', buyOneGetOne: true, bogoPairPrice: 4999, updatedAt: repairedAt }
-          : product));
-        const sale = await db.collection('flashSales').findOne({ id: 'homepage' });
-        if (sale) {
-          const items = (Array.isArray(sale.items) ? sale.items : []).filter((item) => String(item?.productId) !== 'ww300001');
-          items.push({ productId: 'ww300001', salePrice: 2999 });
-          await db.collection('flashSales').updateOne({ id: 'homepage' }, { $set: { items, updatedAt: repairedAt } });
-        }
         products = products.sort((first, second) => String(first.category || '').localeCompare(String(second.category || '')) || String(first.id || '').localeCompare(String(second.id || '')));
         const response = json(products.map(cleanDocument));
         response.headers['Cache-Control'] = 'public, max-age=5, s-maxage=15, stale-while-revalidate=300';
