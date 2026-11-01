@@ -286,6 +286,7 @@ const ProductManager = () => {
     const [reviewSaving, setReviewSaving] = useState(false);
     const [flashSale, setFlashSale] = useState(getInitialFlashSaleForm);
     const [flashSaleProductId, setFlashSaleProductId] = useState('');
+    const [flashSaleProductSearch, setFlashSaleProductSearch] = useState('');
     const [flashSaleSaving, setFlashSaleSaving] = useState(false);
     const [bulkImageBusy, setBulkImageBusy] = useState(false);
     const [bulkImageReport, setBulkImageReport] = useState(null);
@@ -316,6 +317,18 @@ const ProductManager = () => {
     }, []);
 
     const allProducts = useMemo(() => flattenProducts(products), [products]);
+    const availableFlashSaleProducts = useMemo(() => {
+        const query = flashSaleProductSearch.trim().toLowerCase();
+        return allProducts
+            .filter((product) => !flashSale.items.some((item) => String(item.productId) === String(product.id)))
+            .filter((product) => !query || [
+                product.id,
+                product.name,
+                product.category,
+                ...(Array.isArray(product.subcategory) ? product.subcategory : [product.subcategory]),
+            ].filter(Boolean).join(' ').toLowerCase().includes(query))
+            .slice(0, 50);
+    }, [allProducts, flashSale.items, flashSaleProductSearch]);
 
     // A valid product-level discounted price is automatically represented in
     // the Flash Sale manager. Manual campaign entries remain independently editable.
@@ -744,6 +757,7 @@ const ProductManager = () => {
             items: [...current.items, { productId: flashSaleProductId, salePrice: Math.max(1, Math.round(regularPrice * .9)) }],
         }));
         setFlashSaleProductId('');
+        setFlashSaleProductSearch('');
     };
 
     const submitFlashSale = async (event) => {
@@ -1961,9 +1975,20 @@ const ProductManager = () => {
                         <section className="admin-panel flash-sale-products-editor">
                             <div className="admin-panel-heading"><div><p className="admin-kicker">DISCOUNTED PRODUCTS</p><h2>{flashSale.items.length} sale item{flashSale.items.length === 1 ? '' : 's'}</h2></div></div>
                             <div className="flash-sale-product-picker">
+                                <div className="admin-search flash-sale-product-search"><Search size={18} /><input
+                                    value={flashSaleProductSearch}
+                                    onChange={(event) => {
+                                        const query = event.target.value;
+                                        setFlashSaleProductSearch(query);
+                                        const exactProduct = allProducts.find((product) => String(product.id).toLowerCase() === query.trim().toLowerCase());
+                                        setFlashSaleProductId(exactProduct && !flashSale.items.some((item) => String(item.productId) === String(exactProduct.id)) ? exactProduct.id : '');
+                                    }}
+                                    placeholder="Search product code, name or category"
+                                    autoComplete="off"
+                                /></div>
                                 <select value={flashSaleProductId} onChange={(event) => setFlashSaleProductId(event.target.value)}>
-                                    <option value="">Select a product</option>
-                                    {allProducts.filter((product) => !flashSale.items.some((item) => item.productId === product.id)).map((product) => <option key={product.id} value={product.id}>{product.name} · {product.id} · {formatCurrency(getCurrentCatalogPrice(product))}</option>)}
+                                    <option value="">{flashSaleProductSearch ? `${availableFlashSaleProducts.length} matching product${availableFlashSaleProducts.length === 1 ? '' : 's'}` : 'Search or select a product'}</option>
+                                    {availableFlashSaleProducts.map((product) => <option key={product.id} value={product.id}>{product.id} · {product.name} · {categoryDisplayName(product.category)} · {formatCurrency(getCurrentCatalogPrice(product))}</option>)}
                                 </select>
                                 <button type="button" className="admin-secondary-button" onClick={addFlashSaleProduct} disabled={!flashSaleProductId}><Plus size={17} /> Add product</button>
                             </div>

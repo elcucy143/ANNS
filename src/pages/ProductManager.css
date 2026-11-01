@@ -416,8 +416,9 @@
 .flash-sale-banner-preview { position: relative; overflow: hidden; border-radius: 10px; background: #2a1d18; }
 .flash-sale-banner-preview img { width: 100%; max-height: 320px; object-fit: cover; }
 .flash-sale-banner-preview button { position: absolute; right: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 9px 11px; border: 0; border-radius: 5px; color: #fff; background: rgba(40,32,27,.9); cursor: pointer; }
-.flash-sale-product-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin: 16px 0 20px; }
+.flash-sale-product-picker { display: grid; grid-template-columns: minmax(220px, .75fr) minmax(280px, 1.25fr) auto; gap: 10px; margin: 16px 0 20px; }
 .flash-sale-product-picker select { min-height: 43px; padding: 0 12px; border: 1px solid #ddd5ce; border-radius: 5px; background: #fff; font: inherit; font-size: .75rem; }
+.flash-sale-product-search { min-width: 0; }
 .flash-sale-admin-list { display: flex; flex-direction: column; }
 .flash-sale-admin-list article { display: grid; grid-template-columns: 58px minmax(160px, 1fr) minmax(140px, .5fr) 80px 34px; align-items: center; gap: 13px; padding: 15px 0; border-top: 1px solid #eee9e5; }
 .flash-sale-admin-list article > img { width: 58px; height: 68px; border-radius: 6px; object-fit: cover; background: #eee9e5; }
