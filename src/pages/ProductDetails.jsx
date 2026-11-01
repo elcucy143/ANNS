@@ -188,7 +188,7 @@ const ProductDetails = () => {
                         <div
                             className="zoom-window"
                             style={{
-                                backgroundImage: `url("${getImageVariant(selectedImage || product.images[0], 'listing')}")`
+                                backgroundImage: `url("${getImageVariant(selectedImage || product.images[0], 'zoom')}")`
                             }}
                         ></div>
                     </div>
@@ -334,7 +334,7 @@ const ProductDetails = () => {
                 <div className="image-lightbox" role="dialog" aria-modal="true" aria-label={`${product.name} enlarged image`} onClick={() => setZoomOpen(false)}>
                     <button type="button" className="image-lightbox-close" onClick={() => setZoomOpen(false)} aria-label="Close enlarged image"><X size={24} /></button>
                     <img
-                        src={getImageVariant(selectedImage || product.images[0], 'listing')}
+                        src={getImageVariant(selectedImage || product.images[0], 'zoom')}
                         alt={`${product.name} enlarged`}
                         decoding="async"
                         onError={recoverProductImage}

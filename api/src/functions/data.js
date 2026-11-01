@@ -206,19 +206,19 @@ const externalizeProductImages = async (db, rawProduct, operationTime = nowIso()
     const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
     const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
     const optimized = sharp(data, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate();
-    const [thumbnail, card, listing] = await Promise.all([
+    const [thumbnail, card, listing, zoom] = await Promise.all([
       optimized.clone().resize({ width: 320, height: 420, fit: 'inside', withoutEnlargement: true }).webp({ quality: 78 }).toBuffer(),
       optimized.clone().resize({ width: 600, height: 800, fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toBuffer(),
       optimized.clone().resize({ width: 900, height: 1200, fit: 'inside', withoutEnlargement: true }).webp({ quality: 84 }).toBuffer(),
+      optimized.clone().resize({ width: 1600, height: 2133, fit: 'inside', withoutEnlargement: true }).webp({ quality: 88 }).toBuffer(),
     ]);
     imageOperations.push({
       updateOne: {
         filter: { productId, index },
-        // Keep the storefront-sized image as the stored master. Retaining the
-        // multi-megabyte upload as well as three derivatives made image storage
-        // grow several times faster than the catalogue. The 900x1200 WebP is
-        // also the largest size the storefront and zoom viewer serve.
-        update: { $set: { productId, index, contentType: 'image/webp', data: listing, version, variants: { thumbnail, card }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+        // Keep a compressed high-resolution WebP for the zoom viewer and small
+        // purpose-built variants for listings. This preserves visible detail
+        // without serving the original multi-megabyte upload to shoppers.
+        update: { $set: { productId, index, contentType: 'image/webp', data: zoom, version, variants: { thumbnail, card, listing }, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
         upsert: true,
       },
     });
@@ -1066,7 +1066,7 @@ registerHttp('admin-storage-capacity', {
           maximumImagesPerProduct: 5,
           recommendedProductsPerBatch: 20,
           maximumProductsPerRequest: 100,
-          zoomDimensions: '900 × 1200 px',
+          zoomDimensions: 'up to 1600 × 2133 px',
           acceptedFormats: ['JPG', 'JPEG', 'PNG', 'WebP', 'AVIF', 'HEIC/HEIF', 'GIF', 'BMP'],
         },
       });
@@ -1089,14 +1089,18 @@ registerHttp('product-image', {
       const requestedVariant = cleanText(url.searchParams.get('size'), 20).toLowerCase();
       if (!productId || !Number.isInteger(index) || index < 0 || index > 4 || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
       return withDbRetry(async (db) => {
-        const supportedVariants = ['thumbnail', 'card', 'listing'];
+        const supportedVariants = ['thumbnail', 'card', 'listing', 'zoom'];
         const selectedVariant = supportedVariants.includes(requestedVariant) ? requestedVariant : 'listing';
-        const projection = selectedVariant === 'listing'
-          ? { data: 1, contentType: 1, 'variants.listing': 1 }
+        const projection = selectedVariant === 'zoom'
+          ? { data: 1, contentType: 1 }
+          : selectedVariant === 'listing'
+            ? { data: 1, contentType: 1, 'variants.listing': 1 }
           : { contentType: 1, [`variants.${selectedVariant}`]: 1 };
         let image = await db.collection('productImages').findOne({ productId, index, version }, { projection });
         if (!image) return json({ error: 'Image was not found' }, 404);
-        let variant = image.variants?.[selectedVariant] || (selectedVariant === 'listing' ? image.data : null);
+        let variant = selectedVariant === 'zoom'
+          ? image.data
+          : image.variants?.[selectedVariant] || (selectedVariant === 'listing' ? image.data : null);
         let responseContentType = image.variants?.[selectedVariant] ? 'image/webp' : (image.contentType || 'image/jpeg');
         if (!variant) {
         // Legacy records may not have a requested derivative. Fetch the stored
@@ -1112,12 +1116,14 @@ registerHttp('product-image', {
             ? { width: 320, height: 420, quality: 78 }
             : selectedVariant === 'card'
               ? { width: 600, height: 800, quality: 80 }
-              : { width: 900, height: 1200, quality: 84 };
+              : selectedVariant === 'zoom'
+                ? { width: 1600, height: 2133, quality: 88 }
+                : { width: 900, height: 1200, quality: 84 };
           variant = await sharp(original, { failOn: 'none', limitInputPixels: 80_000_000 }).rotate()
             .resize({ width: dimensions.width, height: dimensions.height, fit: 'inside', withoutEnlargement: true })
             .webp({ quality: dimensions.quality }).toBuffer();
           responseContentType = 'image/webp';
-          if (selectedVariant !== 'listing') {
+          if (selectedVariant !== 'listing' && selectedVariant !== 'zoom') {
             await db.collection('productImages').updateOne({ productId, index, version }, { $set: { [`variants.${selectedVariant}`]: variant } });
           }
         }

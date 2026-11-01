@@ -61,6 +61,9 @@ const CategoryPage = ({ title }) => {
     }, [categoryKey]);
 
     const categoryProducts = (() => {
+        if (categoryKey === 'Buy 1 Get 1') {
+            return catalogProducts.filter((product) => product.buyOneGetOne === true);
+        }
         if (categoryKey !== 'Flash Sale') {
             return catalogProducts.filter((product) => product.category === categoryKey);
         }
@@ -197,9 +200,10 @@ const CategoryPage = ({ title }) => {
         });
     };
 
-    const breadcrumbItems = [
-        { label: displayTitle, path: `/${displayTitle.toLowerCase().replace(/ /g, '-')}` }
-    ];
+    const categoryPath = categoryKey === 'Buy 1 Get 1'
+        ? '/buy-one-get-one'
+        : `/${displayTitle.toLowerCase().replace(/ /g, '-')}`;
+    const breadcrumbItems = [{ label: displayTitle, path: categoryPath }];
 
     return (
         <div className="category-page container">
@@ -208,7 +212,9 @@ const CategoryPage = ({ title }) => {
                 <h1 className="section-title">{displayTitle}</h1>
                 <p>{displayTitle === "Women's Wear"
                     ? "Discover our latest Women’s Wear collection—where modern trends meet timeless elegance."
-                    : `Explore our latest collection of ${displayTitle}.`}
+                    : displayTitle === 'Buy 1 Get 1'
+                        ? 'Shop every product currently included in the Buy 1 Get 1 offer. Add eligible items to see the offer applied in your cart.'
+                        : `Explore our latest collection of ${displayTitle}.`}
                 </p>
             </header>
 

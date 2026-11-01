@@ -77,8 +77,8 @@
     display: none;
     z-index: 100;
     pointer-events: none;
-    background-size: calc(var(--img-width) * 3) calc(var(--img-height) * 3);
-    /* 3x zoom */
+    background-size: calc(var(--img-width) * 2) calc(var(--img-height) * 2);
+    /* A clear 2x view avoids enlarging source pixels beyond their useful detail. */
     background-position: var(--bg-x) var(--bg-y);
 }
 
@@ -203,7 +203,7 @@
 }
 
 .product-detail-prices { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.product-detail-prices del { color: #928981; font-size: 1rem; }
+.product-detail-prices del { color: #766d66; font-size: 1.25rem; font-weight: 600; line-height: 1.2; }
 .product-detail-prices span { color: #a4452b; font-size: .78rem; font-weight: 700; }
 
 .product-description {

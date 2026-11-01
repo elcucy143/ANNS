@@ -61,6 +61,7 @@ const Navbar = () => {
     { name: 'Gifts', path: '/gifts' },
     { name: 'Jewellery', path: '/jewellery' },
     { name: 'Flash Sale', path: '/flash-sale' },
+    { name: 'Buy 1 Get 1', path: '/buy-one-get-one' },
     { name: 'Contact', path: '/contact' },
   ];
   const offers = [

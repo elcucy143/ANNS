@@ -20,6 +20,7 @@ const Footer = () => {
                         <li><Link to="/gifts">Gifts</Link></li>
                         <li><Link to="/jewellery">Jewellery</Link></li>
                         <li><Link to="/flash-sale">Flash Sale</Link></li>
+                        <li><Link to="/buy-one-get-one">Buy 1 Get 1</Link></li>
                     </ul>
                 </div>
 
