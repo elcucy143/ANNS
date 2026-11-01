@@ -1341,6 +1341,52 @@ registerHttp('flash-sale', {
   },
 });
 
+registerHttp('instagram-reels', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'instagram/reels',
+  handler: async (_request, context) => {
+    const profileUrl = 'https://www.instagram.com/a.s.trends_gifts/';
+    const accessToken = String(process.env.INSTAGRAM_ACCESS_TOKEN || '').trim();
+    if (!accessToken) {
+      const response = json({ connected: false, profileUrl, items: [] });
+      response.headers['Cache-Control'] = 'public, max-age=300, s-maxage=900, stale-while-revalidate=86400';
+      return response;
+    }
+    try {
+      const graphVersion = String(process.env.INSTAGRAM_GRAPH_VERSION || 'v25.0').replace(/[^v0-9.]/gi, '') || 'v25.0';
+      const fields = 'id,caption,media_type,media_product_type,media_url,permalink,thumbnail_url,timestamp';
+      const url = new URL(`https://graph.instagram.com/${graphVersion}/me/media`);
+      url.searchParams.set('fields', fields);
+      url.searchParams.set('limit', '25');
+      url.searchParams.set('access_token', accessToken);
+      const graphResponse = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const result = await graphResponse.json().catch(() => ({}));
+      if (!graphResponse.ok) throw new Error(result?.error?.message || `Instagram API returned ${graphResponse.status}`);
+      const items = (Array.isArray(result.data) ? result.data : [])
+        .filter((item) => item.media_product_type === 'REELS' || item.media_type === 'VIDEO')
+        .map((item) => ({
+          id: cleanText(item.id, 120),
+          caption: cleanText(item.caption, 400),
+          permalink: /^https:\/\/(www\.)?instagram\.com\//i.test(item.permalink || '') ? item.permalink : profileUrl,
+          thumbnailUrl: /^https:\/\//i.test(item.thumbnail_url || '') ? item.thumbnail_url : '',
+          timestamp: item.timestamp || '',
+        }))
+        .filter((item) => item.id && item.thumbnailUrl)
+        .slice(0, 12);
+      const response = json({ connected: true, profileUrl, items });
+      response.headers['Cache-Control'] = 'public, max-age=300, s-maxage=900, stale-while-revalidate=86400';
+      response.headers['Vercel-CDN-Cache-Control'] = 'public, s-maxage=900, stale-while-revalidate=86400';
+      return response;
+    } catch (error) {
+      context.error('[instagram-reels]', error);
+      const response = json({ connected: false, profileUrl, items: [] });
+      response.headers['Cache-Control'] = 'public, max-age=60, s-maxage=300, stale-while-revalidate=3600';
+      return response;
+    }
+  },
+});
+
 registerHttp('admin-flash-sale', {
   methods: ['GET', 'POST', 'DELETE'],
   authLevel: 'anonymous',

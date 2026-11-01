@@ -4,6 +4,7 @@ import ProductCarousel from '../components/ProductCarousel';
 import CampaignCarousel from '../components/CampaignCarousel';
 import ReviewsSection from '../components/ReviewsSection';
 import FlashSaleSection from '../components/FlashSaleSection';
+import InstagramReelsSection from '../components/InstagramReelsSection';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 
@@ -18,6 +19,7 @@ const Home = () => {
             <FlashSaleSection />
             <ProductCarousel />
             {recentlyViewed.length > 0 && <ProductCarousel products={recentlyViewed} title="Recently viewed" />}
+            <InstagramReelsSection />
             <ReviewsSection featured title="Loved by our customers" />
         </div>
     );

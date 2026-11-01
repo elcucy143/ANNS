@@ -61,6 +61,7 @@ export const approveOrderCancellation = (id) => request('orders', {
 export const getPublishedReviews = () => request('reviews');
 export const getAdminReviews = () => request('admin/reviews', { admin: true });
 export const getFlashSale = () => request('flash-sale');
+export const getInstagramReels = () => request('instagram/reels');
 export const getAdminFlashSale = () => request('admin/flash-sale', { admin: true, cache: 'no-store' });
 export const getAdminAnalytics = (days = 30) => request(`analytics?days=${days}`, { admin: true, cache: 'no-store' });
 export const getAdminStorageCapacity = () => request('admin/storage-capacity', { admin: true, cache: 'no-store' });
