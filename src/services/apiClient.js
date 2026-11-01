@@ -108,6 +108,20 @@ export const saveHomepageBanners = (slides) => request('admin/homepage-banners',
   body: JSON.stringify({ slides }),
 });
 
+export const normalizeAdminImage = (file, purpose = 'image') => request('admin/image-normalize', {
+  method: 'POST',
+  admin: true,
+  headers: {
+    'Content-Type': file.type || 'application/octet-stream',
+    'x-file-name': encodeURIComponent(file.name || 'admin-image'),
+    'x-image-purpose': purpose,
+  },
+  body: file,
+}).then((result) => {
+  if (!result?.image) throw new Error(`${file.name} could not be normalized.`);
+  return result.image;
+});
+
 export const deleteCustomersFromDatabase = (ids) => request('customers', {
   method: 'DELETE',
   admin: true,

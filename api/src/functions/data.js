@@ -1436,6 +1436,41 @@ registerHttp('admin-homepage-banners', {
   },
 });
 
+registerHttp('admin-image-normalize', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'admin/image-normalize',
+  handler: async (request, context) => {
+    try {
+      const unauthorized = requireAdmin(request);
+      if (unauthorized) return unauthorized;
+      const source = Buffer.from(await request.arrayBuffer());
+      if (!source.length) return json({ error: 'The selected image is empty' }, 400);
+      if (source.length > 3.5 * 1024 * 1024) {
+        return json({ error: 'This browser could not decode the image and the safe server fallback supports files up to 3.5 MB' }, 413);
+      }
+
+      const banner = request.headers.get('x-image-purpose') === 'banner';
+      const pipeline = sharp(source, { failOn: 'none', limitInputPixels: 80_000_000 })
+        .rotate()
+        .resize(banner
+          ? { width: 2400, height: 1400, fit: 'inside', withoutEnlargement: true }
+          : { width: 1800, height: 2200, fit: 'inside', withoutEnlargement: true })
+        .flatten({ background: '#ffffff' });
+      let prepared;
+      const maximumBytes = banner ? 850 * 1024 : 450 * 1024;
+      for (const quality of [88, 80, 72, 64, 56, 48]) {
+        prepared = await pipeline.clone().jpeg({ quality, progressive: true, mozjpeg: true }).toBuffer();
+        if (prepared.length <= maximumBytes) break;
+      }
+      return json({ image: `data:image/jpeg;base64,${prepared.toString('base64')}` });
+    } catch (error) {
+      context.error(error);
+      return json({ error: 'This file does not contain a readable image. Please choose the original photo or banner file.' }, 415);
+    }
+  },
+});
+
 registerHttp('flash-sale', {
   methods: ['GET'],
   authLevel: 'anonymous',

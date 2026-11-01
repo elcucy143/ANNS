@@ -54,6 +54,7 @@ import {
     getOrdersFromDatabase,
     getProductsFromDatabase,
     hasAdminKey,
+    normalizeAdminImage,
     saveProductsToDatabase,
     saveReviewToDatabase,
     saveFlashSale,
@@ -743,7 +744,7 @@ const ProductManager = () => {
         }
         try {
             setNotification('Preparing review image…');
-            const image = await prepareImageFile(file);
+            const image = await prepareImageFile(file, normalizeAdminImage);
             setReviewForm((current) => ({ ...current, image }));
             setNotification('Review image is ready. Save the review to publish it.');
         } catch (error) {
@@ -790,7 +791,7 @@ const ProductManager = () => {
         }
         try {
             setNotification('Preparing sale banner…');
-            const bannerImage = await prepareImageFile(file);
+            const bannerImage = await prepareImageFile(file, normalizeAdminImage);
             setFlashSale((current) => ({ ...current, bannerImage }));
             setNotification('Sale banner is ready. Save the sale to publish it.');
         } catch (error) { setNotification(error.message || 'The banner could not be prepared.'); }
@@ -828,7 +829,7 @@ const ProductManager = () => {
         try {
             setHomepageBannersSaving(true);
             setNotification('Preparing the wide homepage banner…');
-            const image = await prepareBannerImageFile(file);
+            const image = await prepareBannerImageFile(file, normalizeAdminImage);
             const slide = {
                 id: `banner-${Date.now()}`,
                 image,
@@ -966,7 +967,7 @@ const ProductManager = () => {
             const dataUrls = [];
             for (const file of files) {
                 setNotification(`Preparing image ${dataUrls.length + 1} of ${files.length}: ${file.name}`);
-                dataUrls.push(await prepareImageFile(file));
+                dataUrls.push(await prepareImageFile(file, normalizeAdminImage));
             }
             setFormData((current) => {
                 const existingImages = [current.image, ...current.otherImages].filter(Boolean);
@@ -1460,7 +1461,7 @@ const ProductManager = () => {
                     try {
                         const blob = await entry.async('blob');
                         const imageFile = new File([blob], filename, { type: blob.type });
-                        prepared.push(await prepareImageFile(imageFile));
+                        prepared.push(await prepareImageFile(imageFile, normalizeAdminImage));
                         preparedCount += 1;
                         setNotification(`Preparing image ${preparedCount}…`);
                     } catch (error) {
