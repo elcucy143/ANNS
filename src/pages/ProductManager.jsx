@@ -316,6 +316,7 @@ const ProductManager = () => {
     const [customerHistoryPage, setCustomerHistoryPage] = useState(1);
     const [analytics, setAnalytics] = useState(null);
     const [analyticsDays, setAnalyticsDays] = useState(30);
+    const [analyticsPage, setAnalyticsPage] = useState(1);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const [storageCapacity, setStorageCapacity] = useState(null);
     const fileInputRef = useRef(null);
@@ -492,10 +493,12 @@ const ProductManager = () => {
         window.setTimeout(() => setNotification(''), 3000);
     };
 
-    const refreshAnalytics = async (days = analyticsDays) => {
+    const refreshAnalytics = async (days = analyticsDays, page = analyticsPage) => {
         setAnalyticsLoading(true);
         try {
-            setAnalytics(await getAdminAnalytics(days));
+            const result = await getAdminAnalytics(days, page, 50);
+            setAnalytics(result);
+            setAnalyticsPage(result.recentPage || page);
             setDatabaseStatus('connected');
         } catch (error) {
             setNotification(error.message || 'Visitor analytics could not be loaded.');
@@ -1397,6 +1400,43 @@ const ProductManager = () => {
         URL.revokeObjectURL(url);
     };
 
+    const exportAnalyticsCsv = async () => {
+        setAnalyticsLoading(true);
+        setNotification('Preparing the complete visitor CSV…');
+        try {
+            const rows = [];
+            let page = 1;
+            let pageCount = 1;
+            do {
+                const result = await getAdminAnalytics(analyticsDays, page, 500);
+                rows.push(...(result.recent || []));
+                pageCount = result.recentPageCount || 1;
+                page += 1;
+            } while (page <= pageCount);
+            downloadCsv(`ANNS-visitors-${analyticsDays}-days.csv`, rows.map((visit) => ({
+                visitedAt: visit.createdAt,
+                page: visit.path,
+                customerStatus: visit.customerId ? 'Signed in' : 'Anonymous',
+                customerId: visit.customerId || '',
+                customerName: visit.customerName || '',
+                customerEmail: visit.customerEmail || '',
+                customerMobile: visit.customerPhone || '',
+                city: visit.city || '',
+                region: visit.region || '',
+                country: visit.country || '',
+                timezone: visit.timezone || '',
+                visitorId: visit.visitorId,
+                sessionId: visit.sessionId,
+            })));
+            setNotification(`${rows.length.toLocaleString('en-IN')} visitor records downloaded.`);
+        } catch (error) {
+            setNotification(error.message || 'Visitor data could not be downloaded.');
+        } finally {
+            setAnalyticsLoading(false);
+            window.setTimeout(() => setNotification(''), 4000);
+        }
+    };
+
     const exportInventoryCsv = () => downloadCsv('ANNS-stock.csv', allProducts.map((product) => ({
         category: product.category,
         productCode: product.id,
@@ -1699,8 +1739,8 @@ const ProductManager = () => {
                 {activeView === 'analytics' && (
                     <div className="admin-view-stack">
                         <section className="admin-panel analytics-toolbar">
-                            <div><p className="admin-kicker">STORE TRAFFIC</p><h2>Visitor activity</h2><small>Privacy-safe first-party analytics. No raw IP addresses are stored.</small></div>
-                            <div><label>Period<select value={analyticsDays} onChange={(event) => { const days = Number(event.target.value); setAnalyticsDays(days); void refreshAnalytics(days); }}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label><button type="button" className="admin-secondary-button" disabled={analyticsLoading} onClick={() => refreshAnalytics()}><RefreshCw size={17} /> {analyticsLoading ? 'Loading…' : 'Refresh'}</button></div>
+                            <div><p className="admin-kicker">STORE TRAFFIC</p><h2>Visitor activity</h2><small>Signed-in visits show verified customer details. Anonymous visitors show only approximate city/region—no raw IP address is stored.</small></div>
+                            <div><label>Period<select value={analyticsDays} onChange={(event) => { const days = Number(event.target.value); setAnalyticsDays(days); setAnalyticsPage(1); void refreshAnalytics(days, 1); }}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 180 days</option></select></label><button type="button" className="admin-secondary-button" disabled={analyticsLoading} onClick={() => refreshAnalytics(analyticsDays, analyticsPage)}><RefreshCw size={17} /> {analyticsLoading ? 'Loading…' : 'Refresh'}</button><button type="button" className="admin-secondary-button" disabled={analyticsLoading || !analytics?.recentTotal} onClick={exportAnalyticsCsv}><FileSpreadsheet size={17} /> Download CSV</button></div>
                         </section>
                         <section className="customer-stat-grid">
                             <article className="customer-stat"><Users size={21} /><div><span>Unique visitors</span><strong>{(analytics?.uniqueVisitors || 0).toLocaleString('en-IN')}</strong><small>Different browsers/devices</small></div></article>
@@ -1724,7 +1764,7 @@ const ProductManager = () => {
                                 <article className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">FROM WHERE</p><h2>Top visitor locations</h2></div></div><div className="analytics-ranking">{analytics.locations.map((location, index) => <div key={`${location.country}-${location.region}-${location.city}-${index}`}><span><strong>{[location.city, location.region, location.country].filter(Boolean).join(', ') || 'Unknown location'}</strong><small>{location.visitors} visitors</small></span><b>{location.views} views</b></div>)}{!analytics.locations.length && <p>No location data yet.</p>}</div></article>
                                 <article className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">POPULAR CONTENT</p><h2>Top pages</h2></div></div><div className="analytics-ranking">{analytics.pages.map((page) => <div key={page.path}><span><strong>{page.path}</strong><small>{page.visitors} visitors</small></span><b>{page.views} views</b></div>)}{!analytics.pages.length && <p>No page views yet.</p>}</div></article>
                             </section>
-                            <section className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">RECENT VISITS</p><h2>When people visited</h2></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Time</th><th>Page</th><th>Location</th><th>Visitor</th></tr></thead><tbody>{analytics.recent.map((visit, index) => <tr key={`${visit.sessionId}-${visit.createdAt}-${index}`}><td><Clock3 size={14} /> {new Date(visit.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{visit.path}</td><td>{[visit.city, visit.region, visit.country].filter(Boolean).join(', ') || 'Unknown'}</td><td>{visit.visitorId.slice(0, 8)}…</td></tr>)}</tbody></table></div>{!analytics.recent.length && <div className="admin-empty-state"><Eye size={28} /><p>No visits recorded in this period.</p></div>}</section>
+                            <section className="admin-panel"><div className="admin-panel-heading"><div><p className="admin-kicker">VISIT HISTORY</p><h2>{(analytics.recentTotal || 0).toLocaleString('en-IN')} recorded page views</h2><small>50 records per page · retained for 180 days</small></div></div><div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Time</th><th>Page</th><th>Approximate location</th><th>Customer</th><th>Visitor ID</th></tr></thead><tbody>{analytics.recent.map((visit, index) => <tr key={`${visit.sessionId}-${visit.createdAt}-${index}`}><td><Clock3 size={14} /> {new Date(visit.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{visit.path}</td><td>{[visit.city, visit.region, visit.country].filter(Boolean).join(', ') || 'Unknown'}</td><td>{visit.customerId ? <><strong>{visit.customerName || 'Signed-in customer'}</strong><small>{[visit.customerEmail, visit.customerPhone].filter(Boolean).join(' · ') || visit.customerId}</small></> : <><strong>Anonymous visitor</strong><small>No verified account details</small></>}</td><td>{visit.visitorId.slice(0, 8)}…</td></tr>)}</tbody></table></div><AdminPagination page={analytics.recentPage || analyticsPage} pageCount={analytics.recentPageCount || 1} onChange={(page) => { setAnalyticsPage(page); void refreshAnalytics(analyticsDays, page); }} total={analytics.recentTotal || 0} noun="visitor records" />{!analytics.recent.length && <div className="admin-empty-state"><Eye size={28} /><p>No visits recorded in this period.</p></div>}</section>
                         </>}
                     </div>
                 )}

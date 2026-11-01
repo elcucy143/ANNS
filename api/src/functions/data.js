@@ -938,10 +938,12 @@ registerHttp('analytics', {
         };
         let referrerHost = '';
         try { referrerHost = body?.referrer ? new URL(body.referrer).hostname : ''; } catch { referrerHost = ''; }
+        const signedInCustomer = authenticateRequest(request);
         const createdAt = new Date();
         await collection.insertOne({
           visitorId,
           sessionId,
+          customerId: signedInCustomer?.provider !== 'admin' ? cleanText(signedInCustomer?.sub, 160) : '',
           path,
           referrerHost: cleanText(referrerHost, 200),
           country: header('x-vercel-ip-country') || 'Unknown',
@@ -952,14 +954,19 @@ registerHttp('analytics', {
           screen: cleanText(body?.screen, 30),
           createdAt,
         });
-        // Analytics are intentionally retained for 180 days and contain no raw IP address.
+        // Analytics are intentionally retained for 180 days and contain no raw
+        // IP address. Identity is attached only from a verified ANNS session;
+        // anonymous browser data can never supply a trusted name or phone.
         return json({ ok: true }, 202);
       }
 
       const unauthorized = requireAdmin(request);
       if (unauthorized) return unauthorized;
       const url = new URL(request.url);
-      const days = Math.max(1, Math.min(90, Number(url.searchParams.get('days')) || 30));
+      const days = Math.max(1, Math.min(180, Number(url.searchParams.get('days')) || 30));
+      const page = Math.max(1, Math.trunc(Number(url.searchParams.get('page')) || 1));
+      const limit = Math.max(1, Math.min(500, Math.trunc(Number(url.searchParams.get('limit')) || 50)));
+      const skip = (page - 1) * limit;
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       const match = { createdAt: { $gte: since } };
       const [summary] = await collection.aggregate([
@@ -970,12 +977,39 @@ registerHttp('analytics', {
           locations: [{ $group: { _id: { country: '$country', region: '$region', city: '$city' }, views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } }, { $sort: { views: -1 } }, { $limit: 25 }],
           pages: [{ $group: { _id: '$path', views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } }, { $sort: { views: -1 } }, { $limit: 20 }],
           hours: [{ $group: { _id: { $hour: { date: '$createdAt', timezone: 'Asia/Kolkata' } }, views: { $sum: 1 } } }, { $sort: { _id: 1 } }],
-          recent: [{ $sort: { createdAt: -1 } }, { $limit: 30 }, { $project: { _id: 0, visitorId: 1, sessionId: 1, path: 1, country: 1, region: 1, city: 1, timezone: 1, createdAt: 1 } }],
+          recentTotal: [{ $count: 'count' }],
+          recent: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            { $lookup: { from: 'customers', localField: 'customerId', foreignField: 'id', as: 'customer' } },
+            { $set: { customer: { $arrayElemAt: ['$customer', 0] } } },
+            { $project: {
+              _id: 0,
+              visitorId: 1,
+              sessionId: 1,
+              customerId: 1,
+              path: 1,
+              country: 1,
+              region: 1,
+              city: 1,
+              timezone: 1,
+              createdAt: 1,
+              customerName: { $ifNull: ['$customer.name', ''] },
+              customerEmail: { $ifNull: ['$customer.email', ''] },
+              customerPhone: { $ifNull: ['$customer.phone', ''] },
+            } },
+          ],
         } },
       ]).toArray();
       const totals = summary?.totals?.[0] || { pageViews: 0, visitors: [], sessions: [] };
+      const recentTotal = Number(summary?.recentTotal?.[0]?.count || 0);
       return json({
         days,
+        recentPage: page,
+        recentPageSize: limit,
+        recentTotal,
+        recentPageCount: Math.max(1, Math.ceil(recentTotal / limit)),
         pageViews: totals.pageViews,
         uniqueVisitors: totals.visitors.length,
         sessions: totals.sessions.length,
