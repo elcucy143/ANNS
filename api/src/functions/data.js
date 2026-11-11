@@ -185,9 +185,11 @@ const normalizeProduct = (product) => {
 const dataImagePattern = /^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=\r\n]+)$/i;
 const productImageUrl = (productId, index, version) => `/api/product-image?id=${encodeURIComponent(productId)}&index=${index}&v=${version}`;
 const mediaImageUrl = (key, version) => `/api/media-image?key=${encodeURIComponent(key)}&v=${version}`;
-const mediaVariantConfig = (variant) => variant === 'hero-v1'
-  ? { width: 1800, height: 1000, quality: 76 }
-  : null;
+const mediaVariantConfig = (variant) => {
+  if (variant === 'hero-v1') return { width: 1800, height: 1000, quality: 76 };
+  if (variant === 'review-v1') return { width: 900, height: 1100, quality: 78 };
+  return null;
+};
 const optimizeMediaVariant = async (data, variant) => {
   const config = mediaVariantConfig(variant);
   if (!config) return null;
@@ -205,7 +207,9 @@ const externalizeMediaImage = async (db, key, value, operationTime = nowIso()) =
   const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
   const variants = /banner/i.test(key)
     ? { 'hero-v1': await optimizeMediaVariant(data, 'hero-v1') }
-    : {};
+    : /^review-/i.test(key)
+      ? { 'review-v1': await optimizeMediaVariant(data, 'review-v1') }
+      : {};
   await db.collection('mediaImages').updateOne(
     { key },
     { $set: { key, contentType: match[1].toLowerCase(), data, variants, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },

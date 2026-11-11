@@ -98,7 +98,7 @@ const FlashSaleSection = () => {
                                         <img
                                             src={images[filename] || productImageVariant(product.image, 'card')}
                                             srcSet={images[filename] ? undefined : productImageSrcSet(product.image)}
-                                            sizes="(max-width: 600px) 88vw, (max-width: 900px) 44vw, 280px"
+                                            sizes="(max-width: 600px) 72vw, (max-width: 900px) 44vw, 280px"
                                             alt={product.name}
                                             loading="lazy"
                                             decoding="async"

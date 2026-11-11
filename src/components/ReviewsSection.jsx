@@ -1,6 +1,7 @@
 import React from 'react';
 import { Quote, Star } from 'lucide-react';
 import { useReviews } from '../context/ReviewContext';
+import { mediaImageVariant } from '../utils/imageUrl';
 import './ReviewsSection.css';
 
 const Stars = ({ rating }) => (
@@ -13,7 +14,7 @@ const Stars = ({ rating }) => (
 
 const ReviewCard = ({ review }) => (
     <article className={`testimonial-card ${review.image ? 'with-image' : ''}`}>
-        {review.image && <img src={review.image} alt={`Review shared by ${review.reviewerName}`} loading="lazy" />}
+        {review.image && <img src={mediaImageVariant(review.image, 'review-v1')} alt={`Review shared by ${review.reviewerName}`} loading="lazy" decoding="async" />}
         <div className="testimonial-copy">
             <Quote className="testimonial-quote" size={28} />
             <Stars rating={Number(review.rating) || 5} />
