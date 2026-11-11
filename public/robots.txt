@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /product-manager
+Disallow: /checkout
+
+Sitemap: https://www.annsonline.shop/sitemap.xml

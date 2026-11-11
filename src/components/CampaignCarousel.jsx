@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import './CampaignCarousel.css';
-import cmpWw from '../assets/cmp-ww.jpg';
-import cmpJw from '../assets/cmp-jw.jpg';
-import cmpGf from '../assets/cmp-gf.jpg';
+import cmpWw from '../assets/cmp-ww.webp';
+import cmpJw from '../assets/cmp-jw.webp';
+import cmpGf from '../assets/cmp-gf.webp';
 
 /*
 const campaigns = [
@@ -79,7 +79,7 @@ const CampaignCarousel = () => {
         <section className="campaign-carousel">
             <div className="container">
                 <div className="carousel-wrapper">
-                    <button className="carousel-btn prev" onClick={prevSlide}>
+                    <button type="button" className="carousel-btn prev" onClick={prevSlide} aria-label="Show previous collection">
                         <ChevronLeft size={32} />
                     </button>
 
@@ -101,7 +101,7 @@ const CampaignCarousel = () => {
                         ))}
                     </div>
 
-                    <button className="carousel-btn next" onClick={nextSlide}>
+                    <button type="button" className="carousel-btn next" onClick={nextSlide} aria-label="Show next collection">
                         <ChevronRight size={32} />
                     </button>
                 </div>
@@ -109,9 +109,12 @@ const CampaignCarousel = () => {
                 <div className="carousel-indicators">
                     {campaigns.map((_, index) => (
                         <button
+                            type="button"
                             key={index}
                             className={`indicator ${index === currentIndex ? 'active' : ''}`}
                             onClick={() => setCurrentIndex(index)}
+                            aria-label={`Show collection ${index + 1}: ${campaigns[index].title}`}
+                            aria-current={index === currentIndex ? 'true' : undefined}
                         />
                     ))}
                 </div>

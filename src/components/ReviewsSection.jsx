@@ -4,7 +4,7 @@ import { useReviews } from '../context/ReviewContext';
 import './ReviewsSection.css';
 
 const Stars = ({ rating }) => (
-    <span className="testimonial-stars" aria-label={`${rating} out of 5 stars`}>
+    <span className="testimonial-stars" role="img" aria-label={`${rating} out of 5 stars`}>
         {[1, 2, 3, 4, 5].map((value) => (
             <Star key={value} size={16} fill={value <= rating ? 'currentColor' : 'none'} />
         ))}

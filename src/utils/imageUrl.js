@@ -13,6 +13,12 @@ export const productImageSrcSet = (url) => {
   ].join(', ');
 };
 
+export const mediaImageVariant = (url, variant = 'hero-v1') => {
+  if (typeof url !== 'string' || !url.startsWith('/api/media-image?')) return url;
+  if (/[?&]variant=/.test(url)) return url;
+  return `${url}&variant=${encodeURIComponent(variant)}`;
+};
+
 const imageFallback = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><rect width="600" height="800" fill="#f5f1ed"/><text x="300" y="385" text-anchor="middle" font-family="Arial,sans-serif" font-size="52" font-weight="700" fill="#382e28">ANNS</text><text x="300" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" fill="#8a7d74">Product image unavailable</text></svg>');
 
 // A transient mobile-network or stale browser-cache failure should not leave a

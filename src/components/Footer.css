@@ -19,7 +19,7 @@
     display: block;
 }
 
-.footer-section h4 {
+.footer-section h2 {
     font-size: 1.1rem;
     margin-bottom: 20px;
     text-transform: uppercase;
@@ -80,7 +80,7 @@
     text-align: center;
     padding-top: 20px;
     border-top: 1px solid #222;
-    color: #666;
+    color: #aaa;
     font-size: 0.8rem;
     display: flex;
     flex-direction: column;
@@ -104,7 +104,7 @@
     .footer-container { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 18px; margin-bottom: 28px; }
     .footer-section:first-child, .footer-section:last-child { grid-column: 1 / -1; }
     .footer-logo { max-width: 170px; margin-bottom: 12px; }
-    .footer-section h4 { margin-bottom: 11px; font-size: .9rem; }
+    .footer-section h2 { margin-bottom: 11px; font-size: .9rem; }
     .footer-section p, .footer-section a, .contact-info li { font-size: .8rem; }
     .footer-section ul { gap: 7px; }
     .footer-bottom { padding-top: 16px; }

@@ -185,15 +185,30 @@ const normalizeProduct = (product) => {
 const dataImagePattern = /^data:(image\/(?:jpeg|png|webp));base64,([a-z0-9+/=\r\n]+)$/i;
 const productImageUrl = (productId, index, version) => `/api/product-image?id=${encodeURIComponent(productId)}&index=${index}&v=${version}`;
 const mediaImageUrl = (key, version) => `/api/media-image?key=${encodeURIComponent(key)}&v=${version}`;
+const mediaVariantConfig = (variant) => variant === 'hero-v1'
+  ? { width: 1800, height: 1000, quality: 76 }
+  : null;
+const optimizeMediaVariant = async (data, variant) => {
+  const config = mediaVariantConfig(variant);
+  if (!config) return null;
+  return sharp(data, { failOn: 'none', limitInputPixels: 80_000_000 })
+    .rotate()
+    .resize({ width: config.width, height: config.height, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: config.quality, effort: 4 })
+    .toBuffer();
+};
 const externalizeMediaImage = async (db, key, value, operationTime = nowIso()) => {
   const image = String(value || '').trim();
   const match = image.match(dataImagePattern);
   if (!match) return image;
   const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
   const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
+  const variants = /banner/i.test(key)
+    ? { 'hero-v1': await optimizeMediaVariant(data, 'hero-v1') }
+    : {};
   await db.collection('mediaImages').updateOne(
     { key },
-    { $set: { key, contentType: match[1].toLowerCase(), data, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
+    { $set: { key, contentType: match[1].toLowerCase(), data, variants, version, updatedAt: operationTime }, $setOnInsert: { createdAt: operationTime } },
     { upsert: true },
   );
   return mediaImageUrl(key, version);
@@ -1172,18 +1187,32 @@ registerHttp('media-image', {
       const url = new URL(request.url);
       const key = cleanText(url.searchParams.get('key'), 100);
       const version = cleanText(url.searchParams.get('v'), 16).toLowerCase();
+      const variant = cleanText(url.searchParams.get('variant'), 20).toLowerCase();
       if (!key || !/^[a-z0-9-]{1,100}$/i.test(key) || !/^[a-f0-9]{16}$/.test(version)) return json({ error: 'Image was not found' }, 404);
+      if (variant && !mediaVariantConfig(variant)) return json({ error: 'Image variant is invalid' }, 400);
       return withDbRetry(async (db) => {
         const image = await db.collection('mediaImages').findOne({ key, version });
         if (!image?.data) return json({ error: 'Image was not found' }, 404);
-        const data = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+        const source = Buffer.isBuffer(image.data) ? image.data : Buffer.from(image.data.buffer || image.data.value?.() || []);
+        let data = source;
+        let contentType = image.contentType || 'image/jpeg';
+        if (variant) {
+          const stored = image.variants?.[variant];
+          data = stored
+            ? (Buffer.isBuffer(stored) ? stored : Buffer.from(stored.buffer || stored.value?.() || []))
+            : await optimizeMediaVariant(source, variant);
+          contentType = 'image/webp';
+          if (!stored && data?.length) {
+            await db.collection('mediaImages').updateOne({ key, version }, { $set: { [`variants.${variant}`]: data } });
+          }
+        }
         return {
           status: 200,
           body: data,
           headers: {
             'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
             'Vercel-CDN-Cache-Control': 'public, s-maxage=31536000, immutable',
-            'Content-Type': image.contentType || 'image/jpeg',
+            'Content-Type': contentType,
             'Content-Length': String(data.length),
             'X-Content-Type-Options': 'nosniff',
           },

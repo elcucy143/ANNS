@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock3, Heart, ShoppingBag, Sparkles } from 'lucide-react';
 import images from '../assets/images';
-import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
+import { mediaImageVariant, productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import { useCart } from '../context/CartContext';
 import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
@@ -77,7 +77,7 @@ const FlashSaleSection = () => {
     return (
         <section className="flash-sale-section" aria-labelledby="flash-sale-title">
             <div className="container">
-                <header className={`flash-sale-header ${sale.bannerImage ? 'with-banner' : ''}`} style={sale.bannerImage ? { backgroundImage: `linear-gradient(90deg, rgba(35,22,17,.92), rgba(35,22,17,.48)), url("${sale.bannerImage}")` } : undefined}>
+                <header className={`flash-sale-header ${sale.bannerImage ? 'with-banner' : ''}`} style={sale.bannerImage ? { backgroundImage: `linear-gradient(90deg, rgba(35,22,17,.92), rgba(35,22,17,.48)), url("${mediaImageVariant(sale.bannerImage)}")` } : undefined}>
                     <div>
                         <span className="flash-sale-badge"><Sparkles size={15} /> {sale.badge}</span>
                         <h2 id="flash-sale-title">{sale.title}</h2>

@@ -108,18 +108,19 @@
 }
 
 .indicator {
-    width: 12px;
-    height: 12px;
+    width: 30px;
+    height: 30px;
+    position: relative;
     border-radius: 50%;
-    border: 2px solid var(--color-primary);
-    background-color: transparent;
+    border: 0;
+    background: transparent;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
-.indicator.active {
-    background-color: var(--color-primary);
-}
+.indicator::after { position: absolute; inset: 9px; border: 2px solid var(--color-primary); border-radius: 50%; content: ''; }
+
+.indicator.active::after { background-color: var(--color-primary); }
 
 @media (max-width: 768px) {
     .campaign-carousel { padding: 36px 0; }

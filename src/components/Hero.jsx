@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Hero.css';
-import heroBanner1 from '../assets/hero-banner1.jpg';
-import heroBanner2 from '../assets/hero-banner2.jpg';
+import heroBanner1 from '../assets/hero-banner1.webp';
+import heroBanner2 from '../assets/hero-banner2.webp';
 import { getHomepageBanners } from '../services/apiClient';
+import { mediaImageVariant } from '../utils/imageUrl';
 
 const fallbackSlides = [
     { id: 'default-1', image: heroBanner1, alt: 'ANNS featured collection', link: '/womens-wear' },
@@ -37,7 +38,7 @@ const Hero = () => {
     const slide = slides[activeSlide] || slides[0] || fallbackSlides[0];
 
     return (
-        <section className="hero" aria-label={slide.alt || 'ANNS featured collection'} style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("${slide.image}")` }}>
+        <section className="hero" aria-label={slide.alt || 'ANNS featured collection'} style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("${mediaImageVariant(slide.image)}")` }}>
             <div className="hero-content">
                 {/* 
                 <h1>Elevate Your Style</h1>

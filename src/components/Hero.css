@@ -1,6 +1,6 @@
 .hero {
     height: clamp(520px, 68vh, 760px);
-    background-size: cover;
+    background-size: cover, cover;
     background-position: center;
     background-color: #f5f5f5;
     /* Fallback color */
@@ -24,18 +24,25 @@
 .dot {
     padding: 0;
     border: 0;
-    height: 12px;
-    width: 12px;
-    background-color: rgba(255, 255, 255, 0.5);
+    height: 30px;
+    width: 30px;
+    display: grid;
+    place-items: center;
+    background: transparent;
     border-radius: 50%;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
 
-.dot.active {
-    background-color: white;
-    transform: scale(1.2);
+.dot::after {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.62);
+    content: '';
 }
+
+.dot.active::after { background: #fff; transform: scale(1.2); }
 
 .hero-content {
     max-width: 800px;
@@ -70,8 +77,12 @@
 
 @media (max-width: 768px) {
     .hero {
-        height: min(64svh, 560px);
-        min-height: 430px;
+        height: clamp(220px, 58vw, 320px);
+        min-height: 0;
+        background-color: #2d231f;
+        background-position: center, center;
+        background-repeat: no-repeat, no-repeat;
+        background-size: cover, contain;
     }
 
     .hero-content { padding-inline: 16px; }
@@ -83,5 +94,5 @@
 
     .hero p { margin-bottom: 24px; font-size: 1rem; line-height: 1.45; }
     .carousel-dots { bottom: 14px; }
-    .dot { width: 10px; height: 10px; }
+    .dot { width: 30px; height: 30px; }
 }

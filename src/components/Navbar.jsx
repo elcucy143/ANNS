@@ -4,7 +4,7 @@ import { ChevronDown, Heart, Menu, X, ShoppingBag, Search, User } from 'lucide-r
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
-import logo from '../assets/logo-corrected.jpg';
+import logo from '../assets/logo-corrected.webp';
 
 import categoriesData from '../assets/json/categories.json';
 import { displaySubcategoryLabel } from '../utils/productOptions';
@@ -93,11 +93,11 @@ const Navbar = () => {
             <User size={24} />
             {user && <span className="signed-in-dot" />}
           </Link>
-          <Link to="/cart" className="cart-icon-link">
+          <Link to="/cart" className="cart-icon-link" aria-label={`Shopping cart with ${getCartCount()} items`}>
             <ShoppingBag size={24} />
             {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
           </Link>
-          <button onClick={toggleMenu} className="menu-toggle">
+          <button type="button" onClick={toggleMenu} className="menu-toggle" aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={isOpen}>
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -175,7 +175,7 @@ const Navbar = () => {
             <User size={24} className="icon" />
             {user && <span className="signed-in-dot" />}
           </Link>
-          <Link to="/cart" className="cart-icon-link">
+          <Link to="/cart" className="cart-icon-link" aria-label={`Shopping cart with ${getCartCount()} items`} title="Shopping cart">
             <ShoppingBag size={24} className="icon" />
             {getCartCount() > 0 && <span className="cart-count">{getCartCount()}</span>}
           </Link>

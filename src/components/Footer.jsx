@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Mail, MapPin, MessageCircle } from 'lucide-react';
 import './Footer.css';
-import logo from '../assets/logo-corrected.jpg';
+import logo from '../assets/logo-corrected.webp';
 import { businessContact } from '../config/contact';
 
 const Footer = () => {
@@ -14,7 +14,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-section">
-                    <h4>Quick Links</h4>
+                    <h2>Quick Links</h2>
                     <ul>
                         <li><Link to="/womens-wear">Women's Wear</Link></li>
                         <li><Link to="/gifts">Gifts</Link></li>
@@ -25,7 +25,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-section">
-                    <h4>Policies</h4>
+                    <h2>Policies</h2>
                     <ul>
                         <li><Link to="/return-policy">Return & Cancellation policy</Link></li>
                         <li><Link to="/shipping-policy">Shipping & Delivery policy</Link></li>
@@ -35,7 +35,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-section">
-                    <h4>Contact Us</h4>
+                    <h2>Contact Us</h2>
                     <ul className="contact-info">
                         <li><MapPin size={16} /> <span>{businessContact.addressLines[0]}<br />{businessContact.addressLines[1]}</span></li>
                         <li><MessageCircle size={16} /> <a href={`https://wa.me/${businessContact.whatsappNumber}`} target="_blank" rel="noreferrer">WhatsApp {businessContact.whatsappDisplay}</a></li>
@@ -45,11 +45,11 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-section">
-                    <h4>Follow Us</h4>
+                    <h2>Follow Us</h2>
                     <div className="social-icons">
                         <a target="_blank" rel="noreferrer" href={businessContact.instagram} aria-label="Instagram"><Instagram size={20} /></a>
-                        <a target="_blank" rel="noreferrer" href="https://www.facebook.com/share/1DtVBiVhwX/"><Facebook size={20} /></a>
-                        <a target="_blank" rel="noreferrer" href="https://www.youtube.com/@a.s.trendsgifts"><Youtube size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href="https://www.facebook.com/share/1DtVBiVhwX/" aria-label="ANNS on Facebook"><Facebook size={20} /></a>
+                        <a target="_blank" rel="noreferrer" href="https://www.youtube.com/@a.s.trendsgifts" aria-label="ANNS on YouTube"><Youtube size={20} /></a>
                     </div>
                 </div>
             </div>
