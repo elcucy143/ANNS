@@ -9,7 +9,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import images from '../assets/images';
 import ProductCarousel from '../components/ProductCarousel';
 import { useProductCatalog } from '../context/ProductCatalogContext';
-import { normalizeSizeList } from '../utils/productOptions';
+import { getProductSizePrice, normalizeSizeList, normalizeSizePrices } from '../utils/productOptions';
 import { businessContact } from '../config/contact';
 import { useReviews } from '../context/ReviewContext';
 import ReviewsSection from '../components/ReviewsSection';
@@ -98,6 +98,10 @@ const ProductDetails = () => {
         rating: averageRating,
         reviewCount: productReviews.length,
     };
+    const sizePrices = normalizeSizePrices(product.sizePrices);
+    const effectiveSelectedSize = selectedSize || product.sizes[0] || '';
+    const selectedSizePrice = getProductSizePrice(product, effectiveSelectedSize);
+    const displayedPrice = selectedSizePrice || Number(product.price);
 
     const breadcrumbItems = [
         { label: category, path: `/${category.toLowerCase().replace(/ /g, '-')}` },
@@ -113,7 +117,10 @@ const ProductDetails = () => {
     };
 
     const handleAddToCart = () => {
-        addToCart(product, quantity, selectedSize, selectedColor);
+        const cartProduct = selectedSizePrice > 0
+            ? { ...product, price: selectedSizePrice, originalPrice: selectedSizePrice, regularPrice: selectedSizePrice }
+            : product;
+        addToCart(cartProduct, quantity, effectiveSelectedSize, selectedColor);
         navigate('/cart');
     };
 
@@ -224,8 +231,8 @@ const ProductDetails = () => {
                         <a href="#customer-reviews" className="review-link">{product.rating.toFixed(1)} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</a>
                     </div>}
                     <div className="product-detail-prices">
-                        <p className="product-price">₹{product.price}</p>
-                        {product.originalPrice > product.price && <>
+                        <p className="product-price">₹{displayedPrice.toLocaleString('en-IN')}</p>
+                        {!selectedSizePrice && product.originalPrice > product.price && <>
                             <del>₹{product.originalPrice}</del>
                             <span>{product.flashSale ? 'FLASH SALE' : 'SALE'} · {product.discountPercent}% OFF</span>
                         </>}
@@ -290,19 +297,19 @@ const ProductDetails = () => {
 
                     {/* Sizes */}
                     {product.sizes.length > 0 && <div className="product-option">
-                        <h3>Size: {selectedSize}</h3>
+                        <h3>{category === 'Gifts' && sizePrices.length ? 'Choose size' : 'Size'}: {effectiveSelectedSize}</h3>
                         <div className="size-options">
                             {product.sizes.map(size => (
                                 <button
                                     key={size}
-                                    className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
+                                    className={`size-btn ${getProductSizePrice(product, size) > 0 ? 'priced' : ''} ${effectiveSelectedSize === size ? 'selected' : ''}`}
                                     onClick={() => setSelectedSize(size)}
                                 >
-                                    {size}
+                                    {size}{getProductSizePrice(product, size) > 0 ? ` · ₹${getProductSizePrice(product, size).toLocaleString('en-IN')}` : ''}
                                 </button>
                             ))}
                         </div>
-                        <details className="size-guide"><summary>Size guide</summary><div><strong>Women's clothing guide (in inches)</strong><table><thead><tr><th>Size</th><th>Bust</th><th>Waist</th><th>Hip</th></tr></thead><tbody><tr><td>S</td><td>34–35</td><td>27–28</td><td>37–38</td></tr><tr><td>M</td><td>36–37</td><td>29–30</td><td>39–40</td></tr><tr><td>L</td><td>38–40</td><td>31–33</td><td>41–43</td></tr><tr><td>XL–4XL</td><td>Check product measurements</td><td>Check product measurements</td><td>Check product measurements</td></tr></tbody></table><small>Measurements can vary by style. Add exact measurements to the product description when available.</small></div></details>
+                        {category !== 'Gifts' && <details className="size-guide"><summary>Size guide</summary><div><strong>Women's clothing guide (in inches)</strong><table><thead><tr><th>Size</th><th>Bust</th><th>Waist</th><th>Hip</th></tr></thead><tbody><tr><td>S</td><td>34–35</td><td>27–28</td><td>37–38</td></tr><tr><td>M</td><td>36–37</td><td>29–30</td><td>39–40</td></tr><tr><td>L</td><td>38–40</td><td>31–33</td><td>41–43</td></tr><tr><td>XL–4XL</td><td>Check product measurements</td><td>Check product measurements</td><td>Check product measurements</td></tr></tbody></table><small>Measurements can vary by style. Add exact measurements to the product description when available.</small></div></details>}
                     </div>}
 
                     {/* Quantity & Add to Cart */}

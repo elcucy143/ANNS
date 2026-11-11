@@ -38,6 +38,38 @@ export const normalizeSizeList = (value) => {
   });
 };
 
+const parsePositivePrice = (value) => {
+  const parsed = Number(String(value ?? '').replace(/[^0-9.]/g, ''));
+  return Number.isFinite(parsed) && parsed > 0 ? Number(parsed.toFixed(2)) : 0;
+};
+
+export const normalizeSizePrices = (value) => {
+  const entries = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object'
+      ? Object.entries(value).map(([size, price]) => ({ size, price }))
+      : [];
+  const normalized = new Map();
+  entries.forEach((entry) => {
+    const size = String(entry?.size ?? entry?.label ?? '').trim();
+    const price = parsePositivePrice(entry?.price);
+    if (size && price > 0) normalized.set(size.toUpperCase(), { size, price });
+  });
+  return [...normalized.values()];
+};
+
+export const getProductSizePrice = (product, size) => {
+  const normalizedSize = String(size || '').trim().toUpperCase();
+  if (!normalizedSize) return 0;
+  return normalizeSizePrices(product?.sizePrices)
+    .find((entry) => entry.size.toUpperCase() === normalizedSize)?.price || 0;
+};
+
+export const getMinimumSizePrice = (product) => {
+  const prices = normalizeSizePrices(product?.sizePrices).map((entry) => entry.price);
+  return prices.length ? Math.min(...prices) : 0;
+};
+
 const SUBCATEGORY_ALIASES = new Map([
   ['kurti', 'One piece kurtis'],
   ['kurtis', 'One piece kurtis'],
@@ -88,12 +120,16 @@ export const subcategoryMatchKey = (value) => String(value || '')
   .replace(/&/g, 'and')
   .replace(/[^a-z0-9]+/g, '');
 
-export const normalizeCatalogProduct = (product) => ({
-  ...product,
-  sizes: normalizeSizeList(product?.sizes),
-  otherImages: normalizeList(product?.otherImages),
-  subcategory: normalizeSubcategoryList(product?.subcategory),
-  similarProducts: [...new Set(normalizeList(product?.similarProducts))],
-  stock: Math.max(0, Number(product?.stock) || 0),
-  sold: Math.max(0, Number(product?.sold) || 0),
-});
+export const normalizeCatalogProduct = (product) => {
+  const sizePrices = normalizeSizePrices(product?.sizePrices);
+  return {
+    ...product,
+    sizePrices,
+    sizes: normalizeSizeList([product?.sizes, sizePrices.map((entry) => entry.size)]),
+    otherImages: normalizeList(product?.otherImages),
+    subcategory: normalizeSubcategoryList(product?.subcategory),
+    similarProducts: [...new Set(normalizeList(product?.similarProducts))],
+    stock: Math.max(0, Number(product?.stock) || 0),
+    sold: Math.max(0, Number(product?.sold) || 0),
+  };
+};

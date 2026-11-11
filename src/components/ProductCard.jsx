@@ -6,17 +6,23 @@ import images from '../assets/images';
 import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import { Heart } from 'lucide-react';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
+import { getMinimumSizePrice } from '../utils/productOptions';
 
 const ProductCard = ({ product, priority = false }) => {
     const { addToCart } = useCart();
     const { wishlistIds, toggleWishlist } = useShoppingHistory();
     const navigate = useNavigate();
+    const minimumSizePrice = getMinimumSizePrice(product);
 
     const handleAddToCart = (event) => {
         event.preventDefault();
         event.stopPropagation();
-        addToCart(product);
-        navigate('/cart');
+        if (minimumSizePrice > 0) {
+            navigate(`/product/${product.id}`);
+        } else {
+            addToCart(product);
+            navigate('/cart');
+        }
     };
 
     const filename = product.image ? product.image.split('/').pop() : '';
@@ -39,11 +45,11 @@ const ProductCard = ({ product, priority = false }) => {
                         decoding="async"
                         onError={recoverProductImage}
                     />
-                    <button className="add-to-cart-btn" onClick={handleAddToCart}>Add to Cart</button>
+                    <button className="add-to-cart-btn" onClick={handleAddToCart}>{minimumSizePrice > 0 ? 'Choose size' : 'Add to Cart'}</button>
                 </div>
                 <div className="product-info">
                     <h3>{product.name}</h3>
-                    <span className="price">₹{product.price}</span>
+                    <span className="price">{minimumSizePrice > 0 ? 'From ' : ''}₹{(minimumSizePrice || Number(product.price)).toLocaleString('en-IN')}</span>
                     {product.originalPrice > product.price && <><del className="original-price">₹{product.originalPrice}</del><span className="discount-label">{product.discountPercent}% OFF</span></>}
                 </div>
             </Link>

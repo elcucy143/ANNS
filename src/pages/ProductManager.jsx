@@ -63,7 +63,7 @@ import {
     verifyAdminKey,
 } from '../services/apiClient';
 import './ProductManager.css';
-import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSubcategoryList, subcategoryMatchKey, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
+import { displaySubcategoryLabel, normalizeList, normalizeSizeList, normalizeSizePrices, normalizeSubcategoryList, subcategoryMatchKey, STANDARD_CLOTHING_SIZES } from '../utils/productOptions';
 import { IMAGE_FILE_ACCEPT, isSupportedImageFile, MAX_SOURCE_IMAGE_BYTES, prepareBannerImageFile, prepareImageFile } from '../utils/imageUpload';
 
 const ADMIN_SESSION_KEY = 'pm_auth';
@@ -123,6 +123,7 @@ const getInitialFormData = () => ({
     otherImages: [],
     color: '',
     sizes: [],
+    sizePrices: [],
     subcategory: [],
     stock: 0,
     sold: 0,
@@ -318,6 +319,10 @@ const ProductManager = () => {
     const [bulkBogoPairPrice, setBulkBogoPairPrice] = useState('');
     const [bogoSearch, setBogoSearch] = useState('');
     const [bogoDrafts, setBogoDrafts] = useState({});
+    const [selectedBogoProductIds, setSelectedBogoProductIds] = useState([]);
+    const [bulkBogoMrp, setBulkBogoMrp] = useState('');
+    const [bulkBogoSinglePrice, setBulkBogoSinglePrice] = useState('');
+    const [bulkBogoMatchingPairPrice, setBulkBogoMatchingPairPrice] = useState('');
     const [bogoPage, setBogoPage] = useState(1);
     const [inventoryPage, setInventoryPage] = useState(1);
     const [flashSalePage, setFlashSalePage] = useState(1);
@@ -914,6 +919,7 @@ const ProductManager = () => {
             stock: product.stockValue,
             sold: product.soldValue,
             sizes: normalizeSizeList(product.sizes),
+            sizePrices: normalizeSizePrices(product.sizePrices),
             otherImages: parseList(product.otherImages),
             subcategory: normalizeSubcategoryList(product.subcategory),
             similarProducts: parseList(product.similarProducts),
@@ -943,6 +949,29 @@ const ProductManager = () => {
             sizes: current.sizes.includes(size)
                 ? current.sizes.filter((item) => item !== size)
                 : normalizeSizeList([...current.sizes, size]),
+        }));
+    };
+
+    const addGiftSizePrice = () => {
+        setFormData((current) => ({
+            ...current,
+            sizePrices: [...(Array.isArray(current.sizePrices) ? current.sizePrices : []), { size: '', price: '' }],
+        }));
+    };
+
+    const updateGiftSizePrice = (index, field, value) => {
+        setFormData((current) => ({
+            ...current,
+            sizePrices: (Array.isArray(current.sizePrices) ? current.sizePrices : []).map((entry, entryIndex) => (
+                entryIndex === index ? { ...entry, [field]: value } : entry
+            )),
+        }));
+    };
+
+    const removeGiftSizePrice = (index) => {
+        setFormData((current) => ({
+            ...current,
+            sizePrices: (Array.isArray(current.sizePrices) ? current.sizePrices : []).filter((_, entryIndex) => entryIndex !== index),
         }));
     };
 
@@ -1067,6 +1096,23 @@ const ProductManager = () => {
             setNotification(`Unknown subcategory: ${selectedSubcategories.unknown.join(', ')}. Choose a valid ${categoryDisplayName(selectedCategory)} subcategory.`);
             return;
         }
+        const rawGiftSizePrices = selectedCategory === 'Gifts' && Array.isArray(formData.sizePrices)
+            ? formData.sizePrices
+            : [];
+        const incompleteGiftSizePrice = rawGiftSizePrices.some((entry) => {
+            const size = String(entry?.size || '').trim();
+            const price = toNumber(entry?.price, NaN);
+            return !size || !Number.isFinite(price) || price <= 0;
+        });
+        if (incompleteGiftSizePrice) {
+            setNotification('Every gift size must include a label and a price above ₹0.');
+            return;
+        }
+        const giftSizePrices = normalizeSizePrices(rawGiftSizePrices);
+        if (giftSizePrices.length !== rawGiftSizePrices.length) {
+            setNotification('Gift size labels must be unique. Remove duplicate sizes and save again.');
+            return;
+        }
         const normalizedProduct = {
             ...getInitialFormData(),
             ...formData,
@@ -1078,7 +1124,10 @@ const ProductManager = () => {
             bogoPairPrice: formData.buyOneGetOne === 'yes' && formData.bogoPairPrice !== '' ? bogoPairPrice : 0,
             stock: Math.max(0, toNumber(formData.stock)),
             sold: Math.max(0, toNumber(formData.sold)),
-            sizes: normalizeSizeList(formData.sizes),
+            sizes: selectedCategory === 'Gifts' && giftSizePrices.length
+                ? giftSizePrices.map((entry) => entry.size)
+                : normalizeSizeList(formData.sizes),
+            sizePrices: selectedCategory === 'Gifts' ? giftSizePrices : [],
             subcategory: selectedSubcategories.normalized,
             similarProducts: similarProductIds,
             shipping: parseList(formData.shipping),
@@ -1196,18 +1245,86 @@ const ProductManager = () => {
         setBulkBogoPairPrice('');
     };
 
+    const applyBulkBogoPricing = async () => {
+        if (!selectedBogoProductIds.length) {
+            setNotification('Select at least one Buy 1 Get 1 product.');
+            return;
+        }
+        const hasMrp = bulkBogoMrp !== '';
+        const hasSinglePrice = bulkBogoSinglePrice !== '';
+        const hasPairPrice = bulkBogoMatchingPairPrice !== '';
+        if (!hasMrp && !hasSinglePrice && !hasPairPrice) {
+            setNotification('Enter an MRP, single-item price or price for two matching items.');
+            return;
+        }
+        const mrpValue = Number(bulkBogoMrp);
+        const singlePriceValue = Number(bulkBogoSinglePrice);
+        const pairPriceValue = Number(bulkBogoMatchingPairPrice);
+        if ((hasMrp && (!Number.isFinite(mrpValue) || mrpValue <= 0))
+            || (hasSinglePrice && (!Number.isFinite(singlePriceValue) || singlePriceValue <= 0))
+            || (hasPairPrice && (!Number.isFinite(pairPriceValue) || pairPriceValue <= 0))) {
+            setNotification('All entered prices must be valid amounts above ₹0.');
+            return;
+        }
+        const selected = new Set(selectedBogoProductIds);
+        const invalidProducts = allProducts.filter((product) => selected.has(product.id)).filter((product) => {
+            const nextMrp = hasMrp ? mrpValue : toNumber(product.price);
+            const nextSinglePrice = hasSinglePrice ? singlePriceValue : getCurrentCatalogPrice(product);
+            const nextPairPrice = hasPairPrice ? pairPriceValue : toNumber(product.bogoPairPrice);
+            return nextSinglePrice > nextMrp || (nextPairPrice > 0 && nextPairPrice >= nextMrp * 2);
+        });
+        if (invalidProducts.length) {
+            setNotification(`Prices conflict for ${invalidProducts.slice(0, 5).map((product) => product.id).join(', ')}${invalidProducts.length > 5 ? '…' : ''}. Single price cannot exceed MRP and pair price must be below twice the MRP.`);
+            return;
+        }
+        const changedProducts = [];
+        const nextProducts = Object.fromEntries(Object.entries(products).map(([category, items]) => [category, items.map((product) => {
+            if (!selected.has(product.id)) return product;
+            const nextMrp = hasMrp ? mrpValue : toNumber(product.price);
+            const nextSinglePrice = hasSinglePrice ? singlePriceValue : getCurrentCatalogPrice(product);
+            const nextPairPrice = hasPairPrice ? pairPriceValue : toNumber(product.bogoPairPrice);
+            const updated = {
+                ...product,
+                price: String(nextMrp),
+                discount: nextSinglePrice < nextMrp ? String(nextSinglePrice) : '',
+                buyOneGetOne: true,
+                bogoPairPrice: nextPairPrice,
+            };
+            changedProducts.push({ ...updated, category });
+            return updated;
+        })]));
+        await saveProducts(nextProducts, `BOGO prices updated for ${changedProducts.length} products.`, changedProducts);
+        setSelectedBogoProductIds([]);
+        setBulkBogoMrp('');
+        setBulkBogoSinglePrice('');
+        setBulkBogoMatchingPairPrice('');
+    };
+
     const saveBogoProduct = async (product) => {
         const draft = bogoDrafts[product.id] || {};
         const enabled = draft.enabled ?? Boolean(product.buyOneGetOne);
+        const mrpText = draft.mrp ?? String(toNumber(product.price));
+        const singlePriceText = draft.singlePrice ?? String(getCurrentCatalogPrice(product));
         const pairText = draft.pairPrice ?? (toNumber(product.bogoPairPrice) > 0 ? String(toNumber(product.bogoPairPrice)) : '');
+        const mrp = Number(mrpText);
+        const singlePrice = Number(singlePriceText);
         const pairPrice = pairText === '' ? 0 : Number(pairText);
-        const mrp = toNumber(product.price);
+        if (!Number.isFinite(mrp) || mrp <= 0 || !Number.isFinite(singlePrice) || singlePrice <= 0 || singlePrice > mrp) {
+            setNotification('MRP and single-item price must be above ₹0, and the single-item price cannot exceed the MRP.');
+            return;
+        }
         if (enabled && (!Number.isFinite(pairPrice) || pairPrice < 0 || pairPrice >= mrp * 2)) {
             setNotification(`Enter a BOGO price below ${formatCurrency(mrp * 2)}, or leave it blank to charge one MRP for each pair.`);
             return;
         }
         const category = product.category;
-        const changedProduct = { ...product, buyOneGetOne: enabled, bogoPairPrice: enabled ? pairPrice : 0 };
+        const changedProduct = {
+            ...product,
+            price: String(mrp),
+            discount: singlePrice < mrp ? String(singlePrice) : '',
+            buyOneGetOne: enabled,
+            bogoPairPrice: enabled ? pairPrice : 0,
+        };
         delete changedProduct.category;
         delete changedProduct.stockValue;
         delete changedProduct.soldValue;
@@ -1750,7 +1867,14 @@ const ProductManager = () => {
         if (view === 'reviews') refreshReviews();
         if (view === 'banners') refreshHomepageBanners();
         if (view === 'flash-sale') refreshFlashSale();
-        if (view === 'bogo') { setBogoDrafts({}); refreshProductsFromDatabase(); }
+        if (view === 'bogo') {
+            setBogoDrafts({});
+            setSelectedBogoProductIds([]);
+            setBulkBogoMrp('');
+            setBulkBogoSinglePrice('');
+            setBulkBogoMatchingPairPrice('');
+            refreshProductsFromDatabase();
+        }
         if (view === 'analytics') refreshAnalytics();
         if ((view === 'overview' || view === 'inventory') && hasAdminKey()) {
             refreshProductsFromDatabase();
@@ -2204,20 +2328,32 @@ const ProductManager = () => {
                         <section className="admin-panel">
                             <div className="inventory-toolbar"><div className="admin-search"><Search size={18} /><input value={bogoSearch} onChange={(event) => { setBogoSearch(event.target.value); setBogoPage(1); }} placeholder="Search any product by code, name or category" /></div></div>
                             <div className="inventory-summary-line"><strong>{matchingBogoProducts.length}</strong> products found <span>·</span> Enabled products are shown first</div>
+                            {selectedBogoProductIds.length > 0 && <div className="bulk-product-toolbar bogo-bulk-toolbar">
+                                <strong>{selectedBogoProductIds.length} selected</strong>
+                                <label>MRP ₹<input type="number" min="0.01" step="0.01" value={bulkBogoMrp} onChange={(event) => setBulkBogoMrp(event.target.value)} placeholder="No change" /></label>
+                                <label>Single-item price ₹<input type="number" min="0.01" step="0.01" value={bulkBogoSinglePrice} onChange={(event) => setBulkBogoSinglePrice(event.target.value)} placeholder="No change" /></label>
+                                <label>2 matching items ₹<input type="number" min="0.01" step="0.01" value={bulkBogoMatchingPairPrice} onChange={(event) => setBulkBogoMatchingPairPrice(event.target.value)} placeholder="No change" /></label>
+                                <button type="button" className="admin-primary-button compact" onClick={applyBulkBogoPricing}><Save size={15} /> Apply prices + enable BOGO</button>
+                                <button type="button" className="admin-secondary-button" onClick={() => setSelectedBogoProductIds([])}>Clear</button>
+                                <small>Blank fields remain unchanged. The selected products are enabled for Buy 1 Get 1.</small>
+                            </div>}
                             <div className="admin-table-wrap">
                                 <table className="admin-table bogo-admin-table">
-                                    <thead><tr><th>Product</th><th>Category</th><th>MRP</th><th>Single-item price</th><th>BOGO enabled</th><th>Price for 2 matching items</th><th aria-label="Actions" /></tr></thead>
+                                    <thead><tr><th><input type="checkbox" aria-label="Select this BOGO page" checked={pagedBogoProducts.length > 0 && pagedBogoProducts.every((product) => selectedBogoProductIds.includes(product.id))} onChange={(event) => setSelectedBogoProductIds((current) => event.target.checked ? [...new Set([...current, ...pagedBogoProducts.map((product) => product.id)])] : current.filter((id) => !pagedBogoProducts.some((product) => product.id === id)))} /></th><th>Product</th><th>Category</th><th>MRP</th><th>Single-item price</th><th>BOGO enabled</th><th>Price for 2 matching items</th><th aria-label="Actions" /></tr></thead>
                                     <tbody>{pagedBogoProducts.map((product) => {
                                         const draft = bogoDrafts[product.id] || {};
                                         const enabled = draft.enabled ?? Boolean(product.buyOneGetOne);
+                                        const mrp = draft.mrp ?? String(toNumber(product.price));
+                                        const singlePrice = draft.singlePrice ?? String(getCurrentCatalogPrice(product));
                                         const pairPrice = draft.pairPrice ?? (toNumber(product.bogoPairPrice) > 0 ? String(toNumber(product.bogoPairPrice)) : '');
                                         return <tr key={`bogo-${product.id}`}>
+                                            <td><input type="checkbox" aria-label={`Select ${product.name} for bulk BOGO pricing`} checked={selectedBogoProductIds.includes(product.id)} onChange={(event) => setSelectedBogoProductIds((current) => event.target.checked ? [...new Set([...current, product.id])] : current.filter((id) => id !== product.id))} /></td>
                                             <td><strong>{product.name}</strong><small>{product.id}</small></td>
                                             <td>{categoryDisplayName(product.category)}</td>
-                                            <td><strong>{formatCurrency(product.price)}</strong></td>
-                                            <td>{formatCurrency(getCurrentCatalogPrice(product))}</td>
-                                            <td><label className="bogo-table-toggle"><input type="checkbox" checked={enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], enabled: event.target.checked, pairPrice } }))} /><span>{enabled ? 'Enabled' : 'Not selected'}</span></label></td>
-                                            <td><input className="bogo-pair-input" type="number" min="0" max={Math.max(0, toNumber(product.price) * 2 - .01)} step="0.01" value={pairPrice} disabled={!enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], enabled, pairPrice: event.target.value } }))} placeholder={`Default ${formatCurrency(product.price)}`} /><small>Blank = one MRP for the pair</small></td>
+                                            <td><input className="bogo-price-input" type="number" min="0.01" step="0.01" value={mrp} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], mrp: event.target.value, singlePrice, enabled, pairPrice } }))} aria-label={`MRP for ${product.name}`} /></td>
+                                            <td><input className="bogo-price-input" type="number" min="0.01" max={mrp || undefined} step="0.01" value={singlePrice} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], mrp, singlePrice: event.target.value, enabled, pairPrice } }))} aria-label={`Single-item price for ${product.name}`} /></td>
+                                            <td><label className="bogo-table-toggle"><input type="checkbox" checked={enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], mrp, singlePrice, enabled: event.target.checked, pairPrice } }))} /><span>{enabled ? 'Enabled' : 'Not selected'}</span></label></td>
+                                            <td><input className="bogo-pair-input" type="number" min="0" max={Math.max(0, toNumber(mrp) * 2 - .01)} step="0.01" value={pairPrice} disabled={!enabled} onChange={(event) => setBogoDrafts((current) => ({ ...current, [product.id]: { ...current[product.id], mrp, singlePrice, enabled, pairPrice: event.target.value } }))} placeholder={`Default ${formatCurrency(mrp)}`} /><small>Blank = one MRP for the pair</small></td>
                                             <td><button type="button" className="admin-primary-button compact" onClick={() => saveBogoProduct(product)}>Save offer</button></td>
                                         </tr>;
                                     })}</tbody>
@@ -2452,14 +2588,32 @@ const ProductManager = () => {
                                     <label className="full-width image-upload-control">Upload images<input type="file" accept={IMAGE_FILE_ACCEPT} multiple onChange={handleImageFiles} /><small>Select up to five common image files. JPEG, PNG, WebP, GIF, BMP, AVIF, SVG and iPhone/HEIC images up to 75 MB each are converted into safe, optimized web images automatically.</small></label>
                                     {[formData.image, ...formData.otherImages].filter(Boolean).length > 0 && <div className="editor-image-preview full-width">{[formData.image, ...formData.otherImages].filter(Boolean).map((image, index) => <figure key={`${image.slice(0, 40)}-${index}`}><img src={image} alt={`${formData.name || 'Product'} ${index + 1}`} /><figcaption>{index === 0 ? 'Main image' : `Gallery ${index}`}</figcaption><button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove ${index === 0 ? 'main image' : `gallery image ${index}`}`}><XCircle size={17} /></button></figure>)}</div>}
                                     <label className="full-width">Additional image URLs<textarea value={formData.otherImages.filter((image) => !image.startsWith('data:image/')).join('\n')} onChange={handleOtherImageUrls} rows="3" placeholder="One public image URL per line (optional)" /></label>
-                                    <fieldset className="size-selector-control full-width">
-                                        <legend>Available sizes</legend>
-                                        <p>Choose every size you will sell for this product.</p>
-                                        <div className="size-selector-buttons">
-                                            {STANDARD_CLOTHING_SIZES.map((size) => <button key={size} type="button" className={formData.sizes.includes(size) ? 'selected' : ''} onClick={() => toggleSize(size)} aria-pressed={formData.sizes.includes(size)}>{size}</button>)}
-                                        </div>
-                                        <small>{formData.sizes.length ? `Selected: ${formData.sizes.join(', ')}` : 'Select at least one size for clothing, or leave empty for non-sized products.'}</small>
-                                    </fieldset>
+                                    {selectedCategory === 'Gifts' ? (
+                                        <fieldset className="gift-size-pricing-control full-width">
+                                            <legend>Gift sizes and prices</legend>
+                                            <p>Add every available gift size with its customer price. Example: <strong>4×6 — ₹499</strong> and <strong>8×9 — ₹799</strong>.</p>
+                                            <div className="gift-size-price-list">
+                                                {(Array.isArray(formData.sizePrices) ? formData.sizePrices : []).map((entry, index) => (
+                                                    <div className="gift-size-price-row" key={`gift-size-${index}`}>
+                                                        <label>Size / dimensions<input type="text" value={entry.size ?? ''} onChange={(event) => updateGiftSizePrice(index, 'size', event.target.value)} placeholder="Example: 4×6" /></label>
+                                                        <label>Price ₹<input type="number" min="0.01" step="0.01" value={entry.price ?? ''} onChange={(event) => updateGiftSizePrice(index, 'price', event.target.value)} placeholder="499" /></label>
+                                                        <button type="button" className="table-delete-button" onClick={() => removeGiftSizePrice(index)} aria-label={`Remove gift size ${entry.size || index + 1}`}><Trash2 size={17} /></button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button type="button" className="admin-secondary-button gift-size-add-button" onClick={addGiftSizePrice}><Plus size={16} /> Add size and price</button>
+                                            <small>{formData.sizePrices?.length ? `${formData.sizePrices.length} size option${formData.sizePrices.length === 1 ? '' : 's'} configured. Customers must choose one before adding the gift to cart.` : 'Optional. If no rows are added, the normal product price is used.'}</small>
+                                        </fieldset>
+                                    ) : (
+                                        <fieldset className="size-selector-control full-width">
+                                            <legend>Available sizes</legend>
+                                            <p>Choose every size you will sell for this product.</p>
+                                            <div className="size-selector-buttons">
+                                                {STANDARD_CLOTHING_SIZES.map((size) => <button key={size} type="button" className={formData.sizes.includes(size) ? 'selected' : ''} onClick={() => toggleSize(size)} aria-pressed={formData.sizes.includes(size)}>{size}</button>)}
+                                            </div>
+                                            <small>{formData.sizes.length ? `Selected: ${formData.sizes.join(', ')}` : 'Select at least one size for clothing, or leave empty for non-sized products.'}</small>
+                                        </fieldset>
+                                    )}
                                     <label>Subcategories<select multiple value={formData.subcategory} onChange={(event) => setFormData((current) => ({ ...current, subcategory: [...event.target.selectedOptions].map((option) => option.value) }))}>{getSubcategories().map((subcategory) => <option key={subcategory} value={subcategory}>{displaySubcategoryLabel(subcategory)}</option>)}</select><small>Use Cmd/Ctrl for multiple</small></label>
                                     <label className="full-width">Shipping information<input value={formData.shipping.join(', ')} onChange={(event) => handleArrayChange(event, 'shipping')} placeholder="Comma separated" /></label>
                                     <label className="full-width">Campaign labels<input value={formData.campaign.join(', ')} onChange={(event) => handleArrayChange(event, 'campaign')} placeholder="Comma separated" /></label>

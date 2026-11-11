@@ -8,6 +8,7 @@ import { useProductCatalog } from '../context/ProductCatalogContext';
 import { getFlashSale } from '../services/apiClient';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
 import './FlashSaleSection.css';
+import { getMinimumSizePrice } from '../utils/productOptions';
 
 const money = (value) => Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 const HOMEPAGE_SALE_PRODUCT_LIMIT = 4;
@@ -88,6 +89,7 @@ const FlashSaleSection = () => {
                     {previewProducts.map((product) => {
                         const filename = product.image ? product.image.split('/').pop() : '';
                         const saved = wishlistIds.includes(String(product.id));
+                        const minimumSizePrice = getMinimumSizePrice(product);
                         return (
                             <article className="flash-sale-card" key={product.id}>
                                 <Link to={`/product/${product.id}`} className="flash-sale-product-link">
@@ -111,7 +113,7 @@ const FlashSaleSection = () => {
                                         <span className="flash-sale-saving">You save ₹{money(product.originalPrice - product.price)}</span>
                                     </div>
                                 </Link>
-                                <button type="button" onClick={() => { addToCart(product); navigate('/cart'); }}><ShoppingBag size={17} /> Add to cart</button>
+                                <button type="button" onClick={() => { if (minimumSizePrice > 0) navigate(`/product/${product.id}`); else { addToCart(product); navigate('/cart'); } }}><ShoppingBag size={17} /> {minimumSizePrice > 0 ? 'Choose size' : 'Add to cart'}</button>
                             </article>
                         );
                     })}

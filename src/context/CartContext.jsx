@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { useProductCatalog } from './ProductCatalogContext';
 import { metaProduct, trackMetaEvent } from '../utils/metaPixel';
 import { calculateBogoPricing, isBogoEligible } from '../utils/promotions';
+import { getProductSizePrice } from '../utils/productOptions';
 
 const CartContext = createContext();
 export const CART_STORAGE_KEY = 'anns-cart-v2';
@@ -86,8 +87,9 @@ export const CartProvider = ({ children }) => {
             const product = catalog.get(String(item.id));
             if (!product) return item;
             const nextBuyOneGetOne = isBogoEligible(product.buyOneGetOne);
-            const nextMrp = parsePrice(product.originalPrice ?? product.regularPrice ?? product.price);
-            const nextPrice = parsePrice(product.price);
+            const sizePrice = getProductSizePrice(product, item.size);
+            const nextMrp = sizePrice || parsePrice(product.originalPrice ?? product.regularPrice ?? product.price);
+            const nextPrice = sizePrice || parsePrice(product.price);
             const nextBogoPairPrice = parsePrice(product.bogoPairPrice);
             const nextImage = typeof product.image === 'string' && !product.image.startsWith('data:') ? product.image : item.image;
             const nextShippingCharge = parsePrice(product.shippingCharge);

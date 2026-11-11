@@ -4,6 +4,7 @@ const sharp = require('sharp');
 const { getClient, getDb, withDbRetry } = require('../lib/db');
 const { applyBuyOneGetOne, getBillableUnitPrice, isBogoEligible } = require('../lib/promotions');
 const { FIRST_ORDER_COUPON, calculateCheckoutOffers } = require('../lib/storeOffers');
+const { getSizePrice, normalizeSizePrices } = require('../lib/sizePricing');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
   authenticateRequest,
@@ -167,6 +168,7 @@ const normalizeProduct = (product) => {
     stock,
     sold,
     sizes: normalizeSizes(product.sizes ?? product.size),
+    sizePrices: normalizeSizePrices(product.sizePrices),
     subcategory: normalizeList(product.subcategory),
     similarProducts: normalizeList(product.similarProducts).map(normalizeProductId).filter(Boolean),
     reviews: normalizeList(product.reviews),
@@ -1694,8 +1696,16 @@ registerHttp('razorpay-create-order', {
           error.status = 400;
           throw error;
         }
-        const mrp = numericPrice(product.price);
-        const regularPrice = catalogPrice(product);
+        const requestedSize = cleanText(requestedItem.size, 50);
+        const configuredSizePrices = normalizeSizePrices(product.sizePrices);
+        const selectedSizePrice = getSizePrice(product, requestedSize);
+        if (configuredSizePrices.length && !selectedSizePrice) {
+          const error = new Error(`Choose an available size for ${product.name}`);
+          error.status = 400;
+          throw error;
+        }
+        const mrp = selectedSizePrice || numericPrice(product.price);
+        const regularPrice = selectedSizePrice || catalogPrice(product);
         const configuredSalePrice = activeSalePrices.get(id);
         const sellingPrice = Number.isFinite(configuredSalePrice) && configuredSalePrice > 0 && configuredSalePrice < regularPrice
           ? configuredSalePrice
@@ -1718,7 +1728,7 @@ registerHttp('razorpay-create-order', {
           id,
           name: cleanText(product.name, 200),
           image: cleanText(product.image, 1000),
-          size: cleanText(requestedItem.size, 50),
+          size: requestedSize,
           color: cleanText(requestedItem.color, 80),
           quantity,
           price,

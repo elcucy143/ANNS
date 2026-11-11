@@ -9,6 +9,7 @@ import { useCart } from '../context/CartContext';
 import { productImageSrcSet, productImageVariant, recoverProductImage } from '../utils/imageUrl';
 import { Heart } from 'lucide-react';
 import { useShoppingHistory } from '../context/ShoppingHistoryContext';
+import { getMinimumSizePrice } from '../utils/productOptions';
 
 // Flatten products from all categories and filter those marked as featured
 const ProductCarousel = ({ products: inputProducts, title = "Featured Collection" }) => {
@@ -27,6 +28,7 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                         {products.map((product) => {
                             const filename = product.image ? product.image.split('/').pop() : '';
                             const saved = wishlistIds.includes(String(product.id));
+                            const minimumSizePrice = getMinimumSizePrice(product);
                             return (
                                 <div key={product.id} className="carousel-card">
                                     <Link to={`/product/${product.id}`} className="carousel-product-link">
@@ -46,16 +48,19 @@ const ProductCarousel = ({ products: inputProducts, title = "Featured Collection
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    addToCart(product);
-                                                    navigate('/cart');
+                                                    if (minimumSizePrice > 0) navigate(`/product/${product.id}`);
+                                                    else {
+                                                        addToCart(product);
+                                                        navigate('/cart');
+                                                    }
                                                 }}
                                             >
-                                                Add to Cart
+                                                {minimumSizePrice > 0 ? 'Choose size' : 'Add to Cart'}
                                             </button>
                                         </div>
                                         <div className="product-info">
                                             <h3>{product.name}</h3>
-                                            <span className="price">₹{product.price}</span>
+                                            <span className="price">{minimumSizePrice > 0 ? 'From ' : ''}₹{(minimumSizePrice || Number(product.price)).toLocaleString('en-IN')}</span>
                                             {product.originalPrice > product.price && <><del className="original-price">₹{product.originalPrice}</del><span className="discount-label">{product.discountPercent}% OFF</span></>}
                                         </div>
                                     </Link>
