@@ -13,16 +13,16 @@ const fallbackSlides = [
 
 const Hero = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
-    const [slides, setSlides] = useState(fallbackSlides);
+    const [slides, setSlides] = useState([]);
 
     useEffect(() => {
         let active = true;
         getHomepageBanners()
             .then((result) => {
                 const published = Array.isArray(result?.slides) ? result.slides.filter((slide) => slide.active !== false && slide.image) : [];
-                if (active && published.length) setSlides(published);
+                if (active) setSlides(published.length ? published : fallbackSlides);
             })
-            .catch(() => { /* Bundled banners remain available if the API is temporarily unavailable. */ });
+            .catch(() => { if (active) setSlides(fallbackSlides); });
         return () => { active = false; };
     }, []);
 
@@ -35,11 +35,11 @@ const Hero = () => {
     }, [slides.length]);
 
     const activeSlide = currentSlide < slides.length ? currentSlide : 0;
-    const slide = slides[activeSlide] || slides[0] || fallbackSlides[0];
+    const slide = slides[activeSlide] || slides[0] || null;
 
     return (
-        <section className="hero" aria-label={slide.alt || 'ANNS featured collection'}>
-            <img
+        <section className="hero" aria-label={slide?.alt || 'Loading ANNS featured collection'}>
+            {slide && <img
                 className="hero-image"
                 src={mediaImageVariant(slide.image)}
                 srcSet={slide.image?.startsWith('/api/media-image?') ? `${mediaImageVariant(slide.image, 'hero-mobile-v1')} 900w, ${mediaImageVariant(slide.image)} 1800w` : undefined}
@@ -49,13 +49,13 @@ const Hero = () => {
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
-            />
+            />}
             <div className="hero-content">
                 {/* 
                 <h1>Elevate Your Style</h1>
                 <p>Discover the latest trends in fashion and luxury.</p> 
                 */}
-                <Link to={slide.link || '/womens-wear'} className="btn">Shop Collection</Link>
+                {slide && <Link to={slide.link || '/womens-wear'} className="btn">Shop Collection</Link>}
             </div>
             {slides.length > 1 && <div className="carousel-dots">
                 {slides.map((item, index) => (
