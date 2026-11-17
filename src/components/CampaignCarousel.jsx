@@ -45,7 +45,7 @@ const campaigns = [
         title: 'Jewellery Collection',
         description: 'Browse our latest traditional and modern jewellery collection. Find handcrafted earrings, designer necklaces, and premium accessories perfect for every occasion.',
         image: cmpJw,
-        link: '/sale'
+        link: '/jewellery'
     },
     {
         id: 3,

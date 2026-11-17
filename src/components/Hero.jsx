@@ -38,7 +38,16 @@ const Hero = () => {
     const slide = slides[activeSlide] || slides[0] || fallbackSlides[0];
 
     return (
-        <section className="hero" aria-label={slide.alt || 'ANNS featured collection'} style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("${mediaImageVariant(slide.image)}")` }}>
+        <section className="hero" aria-label={slide.alt || 'ANNS featured collection'}>
+            <img
+                className="hero-image"
+                src={mediaImageVariant(slide.image)}
+                alt=""
+                aria-hidden="true"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+            />
             <div className="hero-content">
                 {/* 
                 <h1>Elevate Your Style</h1>

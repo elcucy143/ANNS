@@ -84,7 +84,7 @@ const Cart = () => {
                         <span>Shipping</span>
                         <span>{offerPricing.freeShippingApplied ? 'Free' : offerPricing.shippingTotal > 0 ? `₹ ${offerPricing.shippingTotal.toFixed(2)}` : 'Free'}</span>
                     </div>
-                    {freeShippingRemaining > 0 && <p className="cart-offer-hint">Add ₹{freeShippingRemaining.toLocaleString('en-IN')} more for free shipping.</p>}
+                    {freeShippingRemaining > 0 && getShippingTotal() > 0 && <p className="cart-offer-hint">Add ₹{freeShippingRemaining.toLocaleString('en-IN')} more for free shipping.</p>}
                     {freeShippingRemaining === 0 && cartDiscountRemaining > 0 && <p className="cart-offer-hint">Add ₹{cartDiscountRemaining.toLocaleString('en-IN')} more to save ₹150.</p>}
                     <p className="cart-offer-hint">First order? Use <strong>FIRST10</strong> at checkout for 10% off.</p>
                     <div className="summary-divider"></div>

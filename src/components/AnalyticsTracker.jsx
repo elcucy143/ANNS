@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { recordPageView } from '../services/apiClient';
-import { trackMetaPageView } from '../utils/metaPixel';
+import { trackGooglePageView, trackMetaPageView } from '../utils/metaPixel';
 
 const safeStorageId = (storage, key) => {
   try {
@@ -33,11 +33,7 @@ export default function AnalyticsTracker() {
       screen: `${window.screen.width}x${window.screen.height}`,
     };
     void recordPageView(event).catch(() => {});
-    window.gtag?.('event', 'page_view', {
-      page_path: event.path,
-      page_location: window.location.href,
-      page_title: document.title,
-    });
+    trackGooglePageView({ path: event.path, location: window.location.href, title: document.title });
     trackMetaPageView();
   }, [location.pathname, location.search]);
 

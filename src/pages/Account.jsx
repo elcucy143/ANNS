@@ -72,7 +72,14 @@ const Account = () => {
       return undefined;
     }
 
-    const script = document.getElementById(GOOGLE_IDENTITY_SCRIPT_ID);
+    let script = document.getElementById(GOOGLE_IDENTITY_SCRIPT_ID);
+    if (!script) {
+      script = document.createElement('script');
+      script.id = GOOGLE_IDENTITY_SCRIPT_ID;
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      document.head.appendChild(script);
+    }
     script?.addEventListener('load', renderGoogleButton, { once: true });
     const handleScriptError = () => setGoogleError('Google sign-in could not be loaded. Please check your connection.');
     script?.addEventListener('error', handleScriptError, { once: true });

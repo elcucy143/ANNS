@@ -27,6 +27,8 @@ const Navbar = () => {
     ? searchProducts(products, searchQuery, 6)
     : [], [products, searchQuery]);
 
+  const desktopHoverNavigation = () => window.matchMedia('(min-width: 769px) and (hover: hover)').matches;
+
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
@@ -111,8 +113,8 @@ const Navbar = () => {
                 <li
                   key={link.name}
                   className="nav-item"
-                  onMouseEnter={() => setActiveDropdown(link.name)}
-                  onMouseLeave={() => setActiveDropdown(null)}
+                  onMouseEnter={() => { if (desktopHoverNavigation()) setActiveDropdown(link.name); }}
+                  onMouseLeave={() => { if (desktopHoverNavigation()) setActiveDropdown(null); }}
                 >
                   <Link
                     to={link.path}
