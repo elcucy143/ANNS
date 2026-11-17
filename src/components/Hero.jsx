@@ -30,7 +30,7 @@ const Hero = () => {
         if (slides.length < 2) return undefined;
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % slides.length);
-        }, 5000);
+        }, 8000);
         return () => clearInterval(interval);
     }, [slides.length]);
 
@@ -42,6 +42,8 @@ const Hero = () => {
             <img
                 className="hero-image"
                 src={mediaImageVariant(slide.image)}
+                srcSet={slide.image?.startsWith('/api/media-image?') ? `${mediaImageVariant(slide.image, 'hero-mobile-v1')} 900w, ${mediaImageVariant(slide.image)} 1800w` : undefined}
+                sizes="100vw"
                 alt=""
                 aria-hidden="true"
                 loading="eager"

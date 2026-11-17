@@ -187,6 +187,7 @@ const productImageUrl = (productId, index, version) => `/api/product-image?id=${
 const mediaImageUrl = (key, version) => `/api/media-image?key=${encodeURIComponent(key)}&v=${version}`;
 const mediaVariantConfig = (variant) => {
   if (variant === 'hero-v1') return { width: 1800, height: 1000, quality: 76 };
+  if (variant === 'hero-mobile-v1') return { width: 900, height: 500, quality: 74 };
   if (variant === 'review-v1') return { width: 900, height: 1100, quality: 78 };
   return null;
 };
@@ -206,7 +207,10 @@ const externalizeMediaImage = async (db, key, value, operationTime = nowIso()) =
   const data = Buffer.from(match[2].replace(/\s/g, ''), 'base64');
   const version = crypto.createHash('sha256').update(data).digest('hex').slice(0, 16);
   const variants = /banner/i.test(key)
-    ? { 'hero-v1': await optimizeMediaVariant(data, 'hero-v1') }
+    ? {
+        'hero-v1': await optimizeMediaVariant(data, 'hero-v1'),
+        'hero-mobile-v1': await optimizeMediaVariant(data, 'hero-mobile-v1'),
+      }
     : /^review-/i.test(key)
       ? { 'review-v1': await optimizeMediaVariant(data, 'review-v1') }
       : {};
