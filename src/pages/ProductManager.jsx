@@ -165,7 +165,14 @@ const getCurrentCatalogPrice = (product) => {
     return discountedPrice > 0 && discountedPrice < originalPrice ? discountedPrice : originalPrice;
 };
 const mergeCatalogDiscountsIntoSale = (items = [], catalogProducts = []) => {
-    const manualItems = items.filter((item) => item.source !== 'catalog');
+    const catalogDiscounts = new Map(catalogProducts.map((product) => {
+        const mrp = toNumber(product.price);
+        const discount = toNumber(product.discount);
+        return [String(product.id), mrp > 0 && discount > 0 && discount < mrp ? discount : 0];
+    }));
+    const manualItems = items.filter((item) => item.source !== 'catalog'
+        && !(catalogDiscounts.get(String(item.productId)) > 0
+            && toNumber(item.salePrice) >= catalogDiscounts.get(String(item.productId))));
     const manualIds = new Set(manualItems.map((item) => String(item.productId)));
     const catalogItems = catalogProducts.filter((product) => {
         const mrp = toNumber(product.price);
@@ -893,7 +900,10 @@ const ProductManager = () => {
             };
             const result = await saveFlashSale(payload);
             setFlashSale((current) => ({ ...current, ...result.sale, startsAt: toLocalDateTimeInput(result.sale.startsAt), endsAt: toLocalDateTimeInput(result.sale.endsAt) }));
-            setNotification(result.sale.active ? 'Flash sale saved and published on the homepage.' : 'Flash sale saved as inactive.');
+            const syncNote = Array.isArray(result.warnings) && result.warnings.length
+                ? ` ${result.warnings.length} product price${result.warnings.length === 1 ? ' was' : 's were'} automatically synced to the current catalog discount.`
+                : '';
+            setNotification(`${result.sale.active ? 'Flash sale saved and published on the homepage.' : 'Flash sale saved as inactive.'}${syncNote}`);
         } catch (error) { setNotification(error.message || 'The flash sale could not be saved.'); }
         finally { setFlashSaleSaving(false); window.setTimeout(() => setNotification(''), 4000); }
     };
@@ -2434,14 +2444,15 @@ const ProductManager = () => {
                                 {pagedFlashSaleItems.map((item) => {
                                     const product = allProducts.find((entry) => entry.id === item.productId);
                                     const originalPrice = toNumber(product?.price);
-                                    const regularPrice = originalPrice;
+                                    const currentCatalogPrice = getCurrentCatalogPrice(product);
+                                    const regularPrice = item.source === 'catalog' ? originalPrice : currentCatalogPrice;
                                     const salePrice = toNumber(item.salePrice);
                                     const percent = regularPrice > salePrice && regularPrice ? Math.round((1 - salePrice / regularPrice) * 100) : 0;
                                     const isSearchedProduct = exactFlashSaleSearchProduct
                                         && normalizeProductCode(exactFlashSaleSearchProduct.id) === normalizeProductCode(item.productId);
                                     return <article key={item.productId} className={isSearchedProduct ? 'flash-sale-search-match' : ''}>
                                         {product?.image && <img src={product.image} alt="" />}
-                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · MRP {formatCurrency(originalPrice)}{item.source === 'catalog' ? ' · Synced from discounted price' : ''}</small></div>
+                                        <div><strong>{product?.name || item.productId}</strong><small>{item.productId} · MRP {formatCurrency(originalPrice)}{currentCatalogPrice < originalPrice ? ` · Current catalog ${formatCurrency(currentCatalogPrice)}` : ''}{item.source === 'catalog' ? ' · Synced automatically' : ''}</small></div>
                                         <label>Sale price (₹)<input type="number" min="1" max={Math.max(1, regularPrice - 1)} step="0.01" value={item.salePrice} required onChange={(event) => setFlashSale((current) => ({ ...current, items: current.items.map((entry) => entry.productId === item.productId ? { ...entry, salePrice: event.target.value, source: 'manual' } : entry) }))} /></label>
                                         <span className={percent > 0 ? 'valid' : 'invalid'}>{percent > 0 ? `${percent}% off` : 'Must be lower'}</span>
                                         {item.source === 'catalog'

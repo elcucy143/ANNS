@@ -3,7 +3,7 @@ const crypto = require('node:crypto');
 const sharp = require('sharp');
 const { getClient, getDb, withDbRetry } = require('../lib/db');
 const { applyBuyOneGetOne, getBillableUnitPrice, isBogoEligible } = require('../lib/promotions');
-const { FIRST_ORDER_COUPON, calculateCheckoutOffers } = require('../lib/storeOffers');
+const { FIRST_ORDER_COUPON, calculateCheckoutOffers, reconcileFlashSaleItems } = require('../lib/storeOffers');
 const { getSizePrice, normalizeSizePrices } = require('../lib/sizePricing');
 const { handleError, isAdminKeyRequest, json, parseJson, requireAdmin } = require('../lib/http');
 const {
@@ -1599,12 +1599,9 @@ registerHttp('admin-flash-sale', {
       const products = productIds.length
         ? await db.collection('products').find({ id: { $in: productIds } }, { projection: { id: 1, price: 1, discount: 1 } }).toArray()
         : [];
-      const prices = new Map(products.map((product) => [String(product.id), catalogPrice(product)]));
-      for (const item of sale.items) {
-        const currentPrice = prices.get(item.productId);
-        if (!Number.isFinite(currentPrice)) return json({ error: `Product ${item.productId} was not found` }, 400);
-        if (item.salePrice >= currentPrice) return json({ error: `Flash Sale price for ${item.productId} must be lower than its current catalog price` }, 400);
-      }
+      const reconciled = reconcileFlashSaleItems(sale.items, products);
+      if (reconciled.error) return json({ error: reconciled.error }, 400);
+      sale.items = reconciled.items;
       if (sale.active && !sale.items.length) return json({ error: 'Add at least one product before activating the flash sale' }, 400);
       if (sale.startsAt && sale.endsAt && new Date(sale.startsAt) >= new Date(sale.endsAt)) {
         return json({ error: 'The sale end must be after its start' }, 400);
@@ -1618,7 +1615,7 @@ registerHttp('admin-flash-sale', {
         { upsert: true },
       );
       await recordAdminAudit(db, request, 'flash_sale.saved', 'homepage', { active: sale.active, itemCount: sale.items.length });
-      return json({ ok: true, sale: cleanDocument(await collection.findOne({ id: 'homepage' })) });
+      return json({ ok: true, sale: cleanDocument(await collection.findOne({ id: 'homepage' })), warnings: reconciled.warnings });
     } catch (error) {
       return handleError(context, error);
     }
